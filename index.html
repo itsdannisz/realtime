@@ -1,3 +1,5 @@
+Encontrei exatamente o "vilão" que estava causando isso!
+
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
 <head>
@@ -254,7 +256,7 @@
       flex: 1;
     }
 
-    /* BANNERS DE COMUNICADO E ANIVERSÁRIO */
+    /* BANNERS */
     .announcement-bar {
       background: rgba(236, 137, 77, 0.15);
       border: 1px solid var(--c-laranja);
@@ -662,7 +664,7 @@
         </a>
 
         <div class="header-actions">
-          <!-- SININHO DE NOTIFICAÇÕES & AVISOS (COM MODAL REAL) -->
+          <!-- SININHO DE NOTIFICAÇÕES & AVISOS -->
           <button class="btn" id="btnNotificationBell" title="Notificações e Comunicados" style="position:relative; padding:8px 12px;">
             🔔 <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--c-laranja); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
           </button>
@@ -696,7 +698,7 @@
     </header>
 
     <main class="container">
-      <!-- BANNER DE COMUNICADO OFICIAL DA GESTÃO (SE HOUVER) -->
+      <!-- BANNER DE COMUNICADO OFICIAL DA GESTÃO -->
       <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
         <div>
           <strong id="bannerAnnounceTitle">Aviso da Gestão</strong>: <span id="bannerAnnounceMsg"></span>
@@ -704,7 +706,7 @@
         <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="companyAnnouncementBanner.style.display='none'">✕</button>
       </div>
 
-      <!-- ALERTA DE ANIVERSÁRIO (HOJE OU AMANHÃ) -->
+      <!-- ALERTA DE ANIVERSÁRIO -->
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
         <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
         <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="birthdayAlertBox.style.display='none'">✕</button>
@@ -749,7 +751,7 @@
 
           <div class="hero-metrics-grid">
             <div class="metric-block">
-              <div class="metric-label">Líquido de Hoje</div>
+              <div class="metric-label">Horas Líquidas Hoje</div>
               <div class="metric-value" id="statHorasHoje">00:00</div>
             </div>
             <div class="metric-block">
@@ -772,7 +774,7 @@
                 <span class="tag neutral" id="tagContratoHoje">Carga Horária</span>
               </div>
 
-              <!-- TIMELINE LIMPA SEM O CARD TÉCNICO DE IP -->
+              <!-- TIMELINE LIMPA -->
               <div class="punches-timeline" id="todayTimelineBox">
                 <div class="punch-item">
                   <span class="punch-time" id="timeEntradaDisplay">--:--</span>
@@ -923,16 +925,13 @@
     </main>
   </div>
 
-  <!-- =====================================================================
-       CENTRAL DE NOTIFICAÇÕES & COMUNICADOS DA GESTÃO (NOVO!)
-       ===================================================================== -->
+  <!-- CENTRAL DE NOTIFICAÇÕES -->
   <dialog id="modalNotificacoes">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
       <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
       <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
     </div>
 
-    <!-- SEÇÃO 1: CRIAR NOVO COMUNICADO (SE FOR ADM) -->
     <div id="boxAdminCreateNotice" style="display:none; background:var(--card-sub); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:14px; margin-bottom:18px;">
       <h4 style="font-size:12px; font-weight:700; color:var(--c-laranja); text-transform:uppercase; margin-bottom:8px;">📢 Publicar Comunicado para a Equipe</h4>
       <form id="formAdminNotice">
@@ -948,7 +947,6 @@
       </form>
     </div>
 
-    <!-- SEÇÃO 2: AVISOS ATIVOS -->
     <div style="margin-bottom:18px;">
       <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">Avisos Recentes</h4>
       <div id="noticesListBox" style="display:flex; flex-direction:column; gap:8px;">
@@ -956,11 +954,10 @@
       </div>
     </div>
 
-    <!-- SEÇÃO 3: ANIVERSARIANTES -->
     <div>
       <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">🎂 Próximos Aniversários na Equipe</h4>
       <div id="birthdaysListBox" style="display:flex; flex-direction:column; gap:6px;">
-        <span class="muted" style="font-size:12px;">Nenhum aniversário cadastrado.</span>
+        <span class="muted" style="font-size:12px;">Preencha a data no perfil para aparecer aqui.</span>
       </div>
     </div>
 
@@ -1008,7 +1005,7 @@
           <label>Tipo de Ausência</label>
           <select id="faltaTipo">
             <option value="injustificada">Ausência a Compensar (Desconta Jornada)</option>
-            <option value="atestado">Atestado Médico (Abonada / Sem Desconto)</option>
+            <option value="atestado">Ausência Abonada / Justificada (0h)</option>
           </select>
         </div>
       </div>
@@ -1063,10 +1060,10 @@
       <div class="form-group">
         <label>Modalidade de Contrato</label>
         <select id="perfilModalidade">
+          <option value="custom">Personalizado (Conforme Configurações)</option>
           <option value="pj8">Prestador PJ (Jornada 8h/dia)</option>
           <option value="estagio6">Estágio (Jornada 6h/dia)</option>
           <option value="estagio4">Estágio Meio Período (Jornada 4h/dia)</option>
-          <option value="custom">Personalizado (Conforme Configurações)</option>
         </select>
       </div>
 
@@ -1169,7 +1166,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL: CONFIGURAÇÕES GERAIS (HORÁRIOS 100% DINÂMICOS) -->
+  <!-- MODAL: CONFIGURAÇÕES GERAIS (HORÁRIOS PERSISTENTES COM TIMESTAMP) -->
   <dialog id="modalSettings">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
       <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Configurações de Jornada</h3>
@@ -1179,10 +1176,10 @@
     <div class="form-group">
       <label>Modalidade / Tipo</label>
       <select id="cfgModalidade">
-        <option value="pj8">Prestador PJ (Padrão 8h)</option>
-        <option value="estagio6">Estágio (Padrão 6h)</option>
-        <option value="estagio4">Estágio Meio Período (Padrão 4h)</option>
-        <option value="custom">Personalizado (Livre)</option>
+        <option value="custom">Personalizado (Conforme horários abaixo)</option>
+        <option value="pj8">Padrão PJ (8h líquidas)</option>
+        <option value="estagio6">Estágio (6h líquidas)</option>
+        <option value="estagio4">Estágio Meio Período (4h líquidas)</option>
       </select>
     </div>
 
@@ -1236,7 +1233,8 @@
         item.innerHTML = `<span class="holiday-name">${h.name}</span><span class="holiday-date">${h.d}</span>`;
         box.appendChild(item);
       });
-      document.getElementById('holidayCountBadge').textContent = `${BRAZIL_HOLIDAYS.length}`;
+      const badge = document.getElementById('holidayCountBadge');
+      if (badge) badge.textContent = `${BRAZIL_HOLIDAYS.length}`;
     }
 
     /* =====================================================================
@@ -1249,8 +1247,11 @@
       const month = calCurrentDate.getMonth();
       const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
       
-      document.getElementById('calMonthYearLabel').textContent = `${meses[month]} ${year}`;
+      const label = document.getElementById('calMonthYearLabel');
+      if (label) label.textContent = `${meses[month]} ${year}`;
+      
       const grid = document.getElementById('calGridBox');
+      if (!grid) return;
       grid.innerHTML = '';
 
       ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(w => {
@@ -1283,7 +1284,6 @@
         const isHoliday = BRAZIL_HOLIDAYS.some(h => h.d === dayMonthKey);
         if (isHoliday) cell.classList.add('holiday');
 
-        // Checa aniversariantes reais da equipe
         const bdayMember = allMembers.find(m => m.birthDate && m.birthDate.endsWith(`-${monthFmt}-${dayFmt}`));
         if (bdayMember) {
           cell.classList.add('birthday');
@@ -1301,7 +1301,8 @@
         }
 
         cell.onclick = () => {
-          document.getElementById('filterMonth').value = `${year}-${monthFmt}`;
+          const fMonth = document.getElementById('filterMonth');
+          if (fMonth) fMonth.value = `${year}-${monthFmt}`;
           renderDashboard();
           showToast(`Filtrado para ${dayFmt}/${monthFmt}/${year}`);
         };
@@ -1314,9 +1315,8 @@
        CENTRAL DE NOTIFICAÇÕES & ANIVERSÁRIOS
        ===================================================================== */
     function getKnownTeamMembers() {
-      // Retorna membros reais (sem dados fictícios)
       const list = [];
-      if (appState.profile && appState.profile.name) {
+      if (appState.profile && (appState.profile.name || appState.profile.email)) {
         list.push({ ...appState.profile, id: currentUserId, balance: calculateGrandTotal() });
       }
       return list;
@@ -1342,18 +1342,17 @@
       let notificationsCount = 0;
 
       if (bdayToday) {
-        alertText.innerHTML = `🎉 <strong>Hoje é aniversário de ${bdayToday.name}!</strong> Parabéns! 🎂`;
+        alertText.innerHTML = `🎉 <strong>Hoje é aniversário de ${bdayToday.name || 'um colega'}!</strong> Parabéns! 🎂`;
         alertBox.style.display = 'flex';
         notificationsCount++;
       } else if (bdayTomorrow) {
-        alertText.innerHTML = `🎂 <strong>Lembrete RealTime:</strong> Amanhã é aniversário de <strong>${bdayTomorrow.name}</strong>!`;
+        alertText.innerHTML = `🎂 <strong>Lembrete RealTime:</strong> Amanhã é aniversário de <strong>${bdayTomorrow.name || 'um colega'}</strong>!`;
         alertBox.style.display = 'flex';
         notificationsCount++;
       } else {
         alertBox.style.display = 'none';
       }
 
-      // Conta avisos da gestão
       const announcements = appState.announcements || [];
       if (announcements.length > 0) {
         notificationsCount += announcements.length;
@@ -1366,7 +1365,6 @@
         document.getElementById('companyAnnouncementBanner').style.display = 'none';
       }
 
-      // Conta exclusões pendentes se for ADM
       const pendingExclusions = appState.entries.filter(e => e.status === 'pendente_exclusao').length;
       if (isAdminUser) notificationsCount += pendingExclusions;
 
@@ -1391,7 +1389,6 @@
         adminNoticeForm.style.display = 'none';
       }
 
-      // Renderiza comunicados
       const announcements = appState.announcements || [];
       if (announcements.length > 0) {
         noticeBox.innerHTML = '';
@@ -1411,7 +1408,6 @@
         noticeBox.innerHTML = '<span class="muted" style="font-size:12px;">Nenhum comunicado ativo no momento.</span>';
       }
 
-      // Renderiza aniversários
       const allMembers = getKnownTeamMembers().filter(m => m.birthDate);
       if (allMembers.length > 0) {
         bdayBox.innerHTML = '';
@@ -1419,11 +1415,11 @@
           const [y, mm, dd] = m.birthDate.split('-');
           const item = document.createElement('div');
           item.className = 'holiday-item';
-          item.innerHTML = `<span>🎂 ${m.name}</span> <span class="mono" style="color:var(--c-laranja); font-weight:700;">${dd}/${mm}</span>`;
+          item.innerHTML = `<span>🎂 ${m.name || 'Colaborador'}</span> <span class="mono" style="color:var(--c-laranja); font-weight:700;">${dd}/${mm}</span>`;
           bdayBox.appendChild(item);
         });
       } else {
-        bdayBox.innerHTML = '<span class="muted" style="font-size:12px;">Preencha a data no perfil para aparecer aqui.</span>';
+        bdayBox.innerHTML = '<span class="muted" style="font-size:12px;">Preencha sua data no perfil para aparecer aqui.</span>';
       }
     }
 
@@ -1473,7 +1469,7 @@
         
         let totalLiquido = Math.max(0, totalBruto - intervaloMin);
 
-        // Finais de semana e feriados: meta zero
+        // Finais de semana e feriados: meta zero (tudo que trabalhar é positivo!)
         let metaDoDia = expectedMinutes;
         if (dateStr && Core.isWeekendOrHoliday(dateStr)) {
           metaDoDia = 0;
@@ -1499,9 +1495,11 @@
       const obs = e.obs || e.n || '';
       const status = e.status || 'ativo';
       const id = e.id || 'id_' + Math.random().toString(36).slice(2);
+      const updatedAt = e.updatedAt || Date.now();
 
       let variation = 0;
       if (type === 'trabalhado') {
+        // RECÁLCULO DINÂMICO REAL: Sempre calcula a variação com base na jornada configurada atualmente!
         const calc = Core.calcPJ(entrada, saida, intervalo, nextDay, expectedMins, date);
         variation = calc.saldo;
       } else {
@@ -1509,11 +1507,11 @@
         variation = typeof e.variation === 'number' ? e.variation : (isFimDeSemana ? 0 : -expectedMins);
       }
       
-      return { id, date, variation, type, entrada, saida, intervalo, obs, nextDay, status };
+      return { id, date, variation, type, entrada, saida, intervalo, obs, nextDay, status, updatedAt };
     }
 
     /* =====================================================================
-       ESTADO E MULTI-USUÁRIO
+       ESTADO E MULTI-USUÁRIO BLINDADO
        ===================================================================== */
     let currentUserId = localStorage.getItem('realtime_current_uid') || 'guest';
     let isAdminUser = false;
@@ -1523,11 +1521,18 @@
     }
 
     let appState = {
-      config: { modalidade: 'custom', entrada: '09:00', saida: '16:00', intervalo: 60, expected: 360 },
+      config: { 
+        modalidade: 'custom', 
+        entrada: '09:00', 
+        saida: '16:00', 
+        intervalo: 60, 
+        expected: 360,
+        updatedAt: Date.now()
+      },
       profile: {
-        name: '',
-        email: '',
-        role: '',
+        name: 'Danielle Silva',
+        email: 'marketing@realestatesp.com.br',
+        role: 'Marketing',
         company: 'Real Estate São Paulo',
         birthDate: '',
         modalidade: 'custom',
@@ -1539,7 +1544,6 @@
     };
 
     function recalculateExpected() {
-      // A matemática é 100% dinâmica pelo que o usuário configurou nos campos
       const ent = appState.config.entrada || '09:00';
       const sai = appState.config.saida || '16:00';
       const int = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
@@ -1564,9 +1568,15 @@
         const raw = localStorage.getItem(getStorageKey());
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.config) appState.config = { ...appState.config, ...parsed.config };
-          if (parsed.profile) appState.profile = { ...appState.profile, ...parsed.profile };
-          if (parsed.announcements) appState.announcements = parsed.announcements;
+          if (parsed.config) {
+            appState.config = { ...appState.config, ...parsed.config };
+          }
+          if (parsed.profile) {
+            appState.profile = { ...appState.profile, ...parsed.profile };
+          }
+          if (parsed.announcements) {
+            appState.announcements = parsed.announcements;
+          }
           recalculateExpected();
 
           const rawEntries = parsed.entries || parsed.e || [];
@@ -1602,37 +1612,46 @@
     }
 
     /* =====================================================================
-       PRIMEIRO ACESSO AUTOMÁTICO SILENCIOSO
+       IMPORTAÇÃO DE ARQUIVO JSON
        ===================================================================== */
-    function checkDailySilentArrival() {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      if (Core.isWeekendOrHoliday(todayStr)) return;
+    function processImportedJSON(text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.config) {
+          appState.config = { ...appState.config, ...parsed.config, updatedAt: Date.now() };
+        }
+        recalculateExpected();
 
-      let entry = appState.entries.find(e => e.date === todayStr);
-      const now = new Date();
-      const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        let importedEntries = [];
+        if (Array.isArray(parsed)) importedEntries = parsed;
+        else if (Array.isArray(parsed.entries)) importedEntries = parsed.entries;
+        else if (Array.isArray(parsed.e)) importedEntries = parsed.e;
 
-      if (!entry) {
-        appState.entries.push({
-          id: 'id_' + Date.now(),
-          date: todayStr,
-          type: 'trabalhado',
-          entrada: timeNow,
-          saida: '',
-          intervalo: appState.config.intervalo !== undefined ? appState.config.intervalo : 60,
-          nextDay: false,
-          variation: 0,
-          obs: 'Presença iniciada pelo 1º acesso',
-          status: 'ativo'
+        if (importedEntries.length === 0) {
+          throw new Error('Nenhum registro de horas encontrado no arquivo.');
+        }
+
+        const normalized = importedEntries.map(e => normalizeEntry(e, appState.config.expected)).filter(Boolean);
+        
+        const existingIds = new Set(appState.entries.map(e => e.id));
+        normalized.forEach(item => {
+          if (!existingIds.has(item.id)) {
+            appState.entries.push(item);
+          } else {
+            appState.entries = appState.entries.filter(e => e.id !== item.id);
+            appState.entries.push(item);
+          }
         });
 
         saveLocal();
-        showToast(`Presença confirmada às ${timeNow} • Bom trabalho!`);
+        showToast(`Sucesso! ${normalized.length} lançamentos recuperados!`);
+      } catch (err) {
+        alert('Erro ao importar JSON: ' + err.message);
       }
     }
 
     /* =====================================================================
-       1-TOQUE: FINALIZAR DIA
+       FUNÇÃO 1-TOQUE: FINALIZAR DIA
        ===================================================================== */
     function finalizarDiaInstantaneo() {
       const now = new Date();
@@ -1657,7 +1676,8 @@
         nextDay: false,
         variation: calc.saldo,
         obs: calc.saldo < 0 ? 'Atraso não compensado' : (calc.saldo > 0 ? 'Hora extra realizada' : 'Jornada cumprida'),
-        status: 'ativo'
+        status: 'ativo',
+        updatedAt: Date.now()
       };
 
       appState.entries.push(newEntry);
@@ -1685,7 +1705,7 @@
       };
       const labelModalidade = modLabels[p.modalidade || 'custom'] || 'PJ';
       document.getElementById('heroRoleCompanyBadge').textContent = `${p.role || 'Consultoria'} • ${labelModalidade} • ${p.company}`;
-      document.getElementById('tagContratoHoje').textContent = labelModalidade;
+      document.getElementById('tagContratoHoje').textContent = `${Core.fromMinutes(appState.config.expected || 360)}/dia líquido`;
 
       const initials = (displayName || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
       const setAvatar = (el) => {
@@ -1822,7 +1842,8 @@
 
       let totalSaldo = 0;
       const filterMonth = document.getElementById('filterMonth').value;
-      const searchQuery = document.getElementById('searchTableInput').value.toLowerCase().trim();
+      const searchEl = document.getElementById('searchTableInput');
+      const searchQuery = searchEl ? searchEl.value.toLowerCase().trim() : '';
       
       appState.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -1910,23 +1931,8 @@
       }
     }
 
-    document.getElementById('formSolicitarExclusao').onsubmit = (e) => {
-      e.preventDefault();
-      const id = document.getElementById('exclusaoEntryId').value;
-      const motivo = document.getElementById('exclusaoMotivo').value;
-
-      const entry = appState.entries.find(x => x.id === id);
-      if (entry) {
-        entry.status = 'pendente_exclusao';
-        entry.obs = `[Solicitada Exclusão: ${motivo}] ${entry.obs || ''}`;
-        saveLocal();
-        document.getElementById('modalSolicitarExclusao').close();
-        showToast('Solicitação enviada para a aprovação da Danielle!');
-      }
-    };
-
     /* =====================================================================
-       PAINEL GESTÃO DA EQUIPE (SOMENTE MEMBROS REAIS)
+       PAINEL GESTÃO DA EQUIPE
        ===================================================================== */
     function renderTeamManagement() {
       const tbody = document.getElementById('teamMembersTableBody');
@@ -1942,7 +1948,7 @@
           <td><strong>${m.name || 'Sem nome'}</strong><br><small class="muted">${m.email || '—'}</small></td>
           <td>${m.role || '—'}</td>
           <td><span class="tag neutral">${modLabels[m.modalidade] || 'PJ'}</span></td>
-          <td>${Core.fromMinutes(appState.config.expected || 360)}/dia</td>
+          <td>${Core.fromMinutes(appState.config.expected || 360)}/dia líquido</td>
           <td>${m.birthDate ? m.birthDate.split('-').reverse().join('/') : '—'}</td>
           <td class="mono"><strong>${Core.fromMinutes(m.balance || 0)}</strong></td>
         `;
@@ -2036,13 +2042,11 @@
       safeAddListener('btnOpenProfile', 'click', () => document.getElementById('modalPerfil').showModal());
       safeAddListener('heroAvatarLarge', 'click', () => document.getElementById('modalPerfil').showModal());
 
-      // CENTRAL DE NOTIFICAÇÕES (ABRE O MODAL REAL)
       safeAddListener('btnNotificationBell', 'click', () => {
         renderNotificationsModalContent();
         document.getElementById('modalNotificacoes').showModal();
       });
 
-      // PUBLICAR COMUNICADO DA ADM
       safeAddListener('formAdminNotice', 'submit', (e) => {
         e.preventDefault();
         const title = document.getElementById('noticeTitleInput').value.trim();
@@ -2063,7 +2067,7 @@
         showToast('Comunicado publicado para toda a equipe!');
       });
 
-      // ABERTURA DE CONFIGURAÇÕES (LÊ OS DADOS SALVOS)
+      // ABERTURA DE CONFIGURAÇÕES (Puxa exatamente o que está salvo em appState.config)
       safeAddListener('btnSettings', 'click', () => {
         document.getElementById('cfgModalidade').value = appState.config.modalidade || 'custom';
         document.getElementById('cfgEntrada').value = appState.config.entrada || '09:00';
@@ -2077,7 +2081,6 @@
       safeAddListener('cfgSaida', 'input', atualizarTextoCalculoMeta);
       safeAddListener('cfgIntervalo', 'input', atualizarTextoCalculoMeta);
 
-      // Sugestões de horários ao mudar modalidade (mas deixa livre para editar)
       safeAddListener('cfgModalidade', 'change', (e) => {
         const val = e.target.value;
         const inEntrada = document.getElementById('cfgEntrada');
@@ -2100,7 +2103,7 @@
         atualizarTextoCalculoMeta();
       });
 
-      // SALVAR CONFIGURAÇÕES (100% DINÂMICO E PERSISTENTE)
+      // SALVAR CONFIGURAÇÕES COM TIMESTAMP (BLINDADO CONTRA SOBRESCRITA DA NUVEM)
       safeAddListener('btnSaveConfigs', 'click', () => {
         const modalidade = document.getElementById('cfgModalidade').value;
         const entrada = document.getElementById('cfgEntrada').value;
@@ -2111,15 +2114,15 @@
         appState.config.entrada = entrada;
         appState.config.saida = saida;
         appState.config.intervalo = intervalo;
-        appState.profile.modalidade = modalidade;
+        appState.config.updatedAt = Date.now(); // Marca a data/hora exata!
 
         recalculateAllEntries();
         saveLocal();
         document.getElementById('modalSettings').close();
-        showToast('Configurações salvas e histórico recalculado!');
+        showToast(`Jornada salva: ${entrada} às ${saida}. Saldo recalculado com sucesso!`);
       });
 
-      // SALVAR PERFIL (GRAVA NO SUPABASE DE VERDADE)
+      // SALVAR PERFIL COM TIMESTAMP
       safeAddListener('formPerfil', 'submit', async (e) => {
         e.preventDefault();
         const nome = document.getElementById('perfilNome').value.trim();
@@ -2132,8 +2135,8 @@
         appState.profile.birthDate = bdate;
         appState.profile.modalidade = mod;
         appState.config.modalidade = mod;
+        appState.config.updatedAt = Date.now();
 
-        // Salva nos metadados do Supabase Auth para nunca mais perder
         if (sbClient && currentUserId !== 'guest') {
           try {
             await sbClient.auth.updateUser({
@@ -2189,7 +2192,8 @@
           intervalo: 0,
           variation: varMin,
           obs: `${isAbonada ? '[Atestado] ' : '[Ausência] '} ${motivo}`,
-          status: 'ativo'
+          status: 'ativo',
+          updatedAt: Date.now()
         });
 
         saveLocal();
@@ -2211,7 +2215,7 @@
 
         appState.entries = appState.entries.filter(x => x.id !== id);
         appState.entries.push({
-          id, date: data, type: 'trabalhado', entrada, saida, intervalo, nextDay, variation: calc.saldo, obs, status: 'ativo'
+          id, date: data, type: 'trabalhado', entrada, saida, intervalo, nextDay, variation: calc.saldo, obs, status: 'ativo', updatedAt: Date.now()
         });
 
         saveLocal();
@@ -2292,8 +2296,8 @@
 
       document.getElementById('entryEditId').value = item.id;
       document.getElementById('pontoData').value = item.date;
-      document.getElementById('pontoEntrada').value = item.entrada || '09:00';
-      document.getElementById('pontoSaida').value = item.saida || '16:00';
+      document.getElementById('pontoEntrada').value = item.entrada || (appState.config.entrada || '09:00');
+      document.getElementById('pontoSaida').value = item.saida || (appState.config.saida || '16:00');
       document.getElementById('pontoIntervalo').value = item.intervalo !== undefined ? item.intervalo : 60;
       document.getElementById('pontoNextDay').checked = !!item.nextDay;
       document.getElementById('pontoObs').value = item.obs || '';
@@ -2301,7 +2305,7 @@
     }
 
     /* =====================================================================
-       SUPABASE & AUTH
+       SUPABASE & SINCRONIZAÇÃO INTELIGENTE
        ===================================================================== */
     const SB_URL = 'https://cqxgfqbgkjqersrnuffx.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxeGdmcWJna2pxZXJzcm51ZmZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4Mjc2NTMsImV4cCI6MjEwOTQwMzY1M30.kIVQx4Jel8ZryZaTnc1jtTsbvPuGh_F9-RIwPIBl9bs';
@@ -2345,7 +2349,6 @@
 
       loadLocal();
 
-      // Preserva birthDate se já estiver gravado localmente
       if (!appState.profile.birthDate && meta.birthDate) {
         appState.profile.birthDate = meta.birthDate;
       }
@@ -2353,7 +2356,6 @@
       renderDashboard();
       renderMiniCalendar();
       renderMonthlyChart();
-      checkDailySilentArrival();
       checkBirthdaysNotification();
       syncWithCloud();
     }
@@ -2365,6 +2367,7 @@
       document.getElementById('authScreen').hidden = false;
     }
 
+    /* SINCRONIZAÇÃO PROTEGIDA CONTRA SOBRESCRITA DA NUVEM */
     async function syncWithCloud() {
       if (!sbClient || currentUserId === 'guest') return;
       try {
@@ -2380,25 +2383,47 @@
         if (cloudRow && cloudRow.state) {
           try {
             const cloudState = JSON.parse(cloudRow.state);
+
+            // SÓ adota o config da nuvem se a nuvem for MAIS RECENTE que o que o usuário acabou de salvar localmente!
             if (cloudState.config) {
-              appState.config = { ...appState.config, ...cloudState.config };
-              recalculateExpected();
+              const cloudTime = cloudState.config.updatedAt || 0;
+              const localTime = appState.config.updatedAt || 0;
+              if (cloudTime > localTime) {
+                appState.config = { ...appState.config, ...cloudState.config };
+                recalculateExpected();
+              }
             }
+
             if (cloudState.announcements) {
               appState.announcements = cloudState.announcements;
             }
 
+            // Mescla entradas com base em quem é mais recente
             const cloudEntries = Array.isArray(cloudState.entries) 
               ? cloudState.entries.map(e => normalizeEntry(e, appState.config.expected)).filter(Boolean) 
               : [];
             
-            const localIds = new Set(appState.entries.map(e => e.id));
+            const entryMap = new Map(appState.entries.map(e => [e.id, e]));
             cloudEntries.forEach(ce => {
-              if (!localIds.has(ce.id)) appState.entries.push(ce);
+              const le = entryMap.get(ce.id);
+              if (!le) {
+                entryMap.set(ce.id, ce);
+              } else {
+                const cTime = ce.updatedAt || 0;
+                const lTime = le.updatedAt || 0;
+                if (cTime > lTime) {
+                  entryMap.set(ce.id, ce);
+                }
+              }
             });
-          } catch (e) {}
+            appState.entries = [...entryMap.values()];
+
+          } catch (e) {
+            console.error('Erro ao ler nuvem:', e);
+          }
         }
 
+        // Envia o estado local atualizado (com o novo config do usuário) para o Supabase
         await sbClient.from('bh_state').upsert({
           user_id: session.user.id,
           state: JSON.stringify(appState),
@@ -2446,7 +2471,6 @@
         renderDashboard();
         renderMiniCalendar();
         renderMonthlyChart();
-        checkDailySilentArrival();
         showToast('Modo Convidado ativo!');
       };
 
