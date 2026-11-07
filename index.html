@@ -254,19 +254,30 @@
       flex: 1;
     }
 
-    /* BANNER DE ANIVERSÁRIO */
-    .birthday-alert-bar {
+    /* BANNERS DE COMUNICADO E ANIVERSÁRIO */
+    .announcement-bar {
       background: rgba(236, 137, 77, 0.15);
-      border: 1px solid rgba(236, 137, 77, 0.4);
+      border: 1px solid var(--c-laranja);
       border-radius: var(--radius-md);
       padding: 12px 18px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       color: var(--text-main);
       font-size: 13px;
-      font-weight: 600;
+    }
+    .birthday-alert-bar {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid var(--pos);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-main);
+      font-size: 13px;
     }
 
     /* HERO BANNER */
@@ -563,7 +574,7 @@
 <body>
 
   <!-- =====================================================================
-       TELA DE LOGIN E CADASTRO REALTIME
+       TELA DE LOGIN E CADASTRO
        ===================================================================== -->
   <section id="authScreen">
     <div class="auth-container">
@@ -597,23 +608,12 @@
             <input type="text" id="authName" placeholder="Ex: Danielle Silva">
           </div>
           <div class="form-group">
-            <label>Modalidade de Contrato</label>
-            <select id="authModalidade">
-              <option value="pj8">Prestador PJ (8h/dia • 40h semanais)</option>
-              <option value="estagio6">Estágio (6h/dia • 30h semanais)</option>
-              <option value="estagio4">Estágio Meio Período (4h/dia • 20h semanais)</option>
-              <option value="custom">Personalizado (Horas Livres)</option>
-            </select>
+            <label>Cargo / Função</label>
+            <input type="text" id="authRole" placeholder="Ex: Marketing / Gestão">
           </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label>Cargo / Função</label>
-              <input type="text" id="authRole" placeholder="Ex: Marketing / Consultoria">
-            </div>
-            <div class="form-group">
-              <label>Data de Nascimento</label>
-              <input type="date" id="authBirthDate">
-            </div>
+          <div class="form-group">
+            <label>Data de Nascimento</label>
+            <input type="date" id="authBirthDate">
           </div>
         </div>
 
@@ -640,7 +640,7 @@
   </section>
 
   <!-- =====================================================================
-       APLICAÇÃO DO BANCO DE HORAS
+       DASHBOARD PRINCIPAL
        ===================================================================== -->
   <div id="appScreen" hidden>
     <header>
@@ -662,14 +662,14 @@
         </a>
 
         <div class="header-actions">
-          <!-- SININHO DE ALERTAS & ANIVERSÁRIOS -->
-          <button class="btn" id="btnNotificationBell" title="Notificações e Aniversários" style="position:relative; padding:8px 12px;">
-            🔔 <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--coral-accent); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
+          <!-- SININHO DE NOTIFICAÇÕES & AVISOS (COM MODAL REAL) -->
+          <button class="btn" id="btnNotificationBell" title="Notificações e Comunicados" style="position:relative; padding:8px 12px;">
+            🔔 <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--c-laranja); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
           </button>
 
           <button class="profile-chip-btn" id="btnOpenProfile" title="Meu Perfil">
-            <div class="avatar-mini" id="topAvatarMini">DS</div>
-            <span id="topProfileName">Danielle Silva</span>
+            <div class="avatar-mini" id="topAvatarMini">U</div>
+            <span id="topProfileName">Colaborador</span>
           </button>
 
           <div class="sync-badge" id="syncStatusBadge">
@@ -679,6 +679,11 @@
 
           <button class="btn" id="btnTopLogout" title="Sair da Conta" style="color:var(--neg);">Sair</button>
 
+          <button class="btn" id="btnImportJSONQuick" title="Restaurar o mês trabalhado do seu JSON" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">
+            📥 Importar Meu JSON
+          </button>
+          <input type="file" id="jsonQuickInput" accept=".json" style="display:none">
+          
           <button class="btn" id="btnThemeToggle" title="Alternar tema">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           </button>
@@ -691,13 +696,21 @@
     </header>
 
     <main class="container">
+      <!-- BANNER DE COMUNICADO OFICIAL DA GESTÃO (SE HOUVER) -->
+      <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
+        <div>
+          <strong id="bannerAnnounceTitle">Aviso da Gestão</strong>: <span id="bannerAnnounceMsg"></span>
+        </div>
+        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="companyAnnouncementBanner.style.display='none'">✕</button>
+      </div>
+
       <!-- ALERTA DE ANIVERSÁRIO (HOJE OU AMANHÃ) -->
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
         <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
         <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="birthdayAlertBox.style.display='none'">✕</button>
       </div>
 
-      <!-- NAVEGAÇÃO PRINCIPAL (ABAS DE ADMIN SE FOR ADM) -->
+      <!-- NAVEGAÇÃO PRINCIPAL -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
         <div class="main-nav-tabs">
           <button class="active" data-view="v-banco">⏱️ Meu Banco</button>
@@ -716,7 +729,7 @@
         </div>
       </div>
 
-      <!-- VIEW 1: BANCO DE HORAS DO COLABORADOR -->
+      <!-- VIEW 1: BANCO DE HORAS -->
       <section id="v-banco">
         <div class="hero-banner">
           <div class="hero-top-wrap">
@@ -731,7 +744,7 @@
                 </div>
               </div>
             </div>
-            <div class="avatar-large" id="heroAvatarLarge" title="Editar Perfil">DS</div>
+            <div class="avatar-large" id="heroAvatarLarge" title="Editar Perfil">U</div>
           </div>
 
           <div class="hero-metrics-grid">
@@ -751,15 +764,15 @@
         </div>
 
         <div class="dashboard-grid">
-          <!-- Coluna Esquerda: Ações Rápidas + Mini Calendário + Feriados -->
+          <!-- Coluna Esquerda: Ações + Calendário + Feriados -->
           <div>
             <div class="content-card">
               <div class="card-title">
                 <span>Expediente de Hoje</span>
-                <span class="tag neutral" id="tagContratoHoje">PJ / Estágio</span>
+                <span class="tag neutral" id="tagContratoHoje">Carga Horária</span>
               </div>
 
-              <!-- RESUMO LIMPO SEM CARD TÉCNICO DE IP -->
+              <!-- TIMELINE LIMPA SEM O CARD TÉCNICO DE IP -->
               <div class="punches-timeline" id="todayTimelineBox">
                 <div class="punch-item">
                   <span class="punch-time" id="timeEntradaDisplay">--:--</span>
@@ -851,15 +864,15 @@
         </div>
       </section>
 
-      <!-- VIEW 2: GESTÃO DA EQUIPE (EXCLUSIVA ADM / DANIELLE) -->
+      <!-- VIEW 2: GESTÃO DA EQUIPE (EXCLUSIVA ADM) -->
       <section id="v-equipe" style="display:none;">
         <div class="content-card">
           <div class="card-title">
-            <span>Membros da Equipe Cadastrados</span>
-            <span class="tag primary">Controle Total da Gestão</span>
+            <span>Membros da Equipe</span>
+            <span class="tag primary">Painel Administrativo</span>
           </div>
           <p class="muted" style="margin-bottom:16px;">
-            Como Administradora, você pode visualizar e editar as horas, perfil e carga horária (PJ ou Estágio) de qualquer colaborador.
+            Visualize os membros reais cadastrados no sistema e seus saldos atuais.
           </p>
 
           <div class="table-container">
@@ -872,18 +885,15 @@
                   <th>Jornada Diária</th>
                   <th>Aniversário</th>
                   <th>Saldo Atual</th>
-                  <th style="text-align:center;">Ações</th>
                 </tr>
               </thead>
-              <tbody id="teamMembersTableBody">
-                <!-- Preenchido via JS com os membros -->
-              </tbody>
+              <tbody id="teamMembersTableBody"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- VIEW 3: SOLICITAÇÕES / APROVAÇÕES PENDENTES (EXCLUSIVA ADM) -->
+      <!-- VIEW 3: SOLICITAÇÕES PENDENTES (EXCLUSIVA ADM) -->
       <section id="v-aprovacoes" style="display:none;">
         <div class="content-card">
           <div class="card-title">
@@ -891,7 +901,7 @@
             <span class="tag warn" id="badgePendingCount">0 pendentes</span>
           </div>
           <p class="muted" style="margin-bottom:16px;">
-            Quando um colaborador solicita excluir uma batida errada, o pedido cai aqui para você conferir a justificativa antes de apagar.
+            Aprovações de exclusão de ponto solicitadas pelos colaboradores.
           </p>
 
           <div class="table-container">
@@ -900,14 +910,12 @@
                 <tr>
                   <th>Data do Ponto</th>
                   <th>Colaborador</th>
-                  <th>Horário Registrado</th>
-                  <th>Justificativa da Exclusão</th>
+                  <th>Horário</th>
+                  <th>Justificativa</th>
                   <th style="text-align:center;">Decisão</th>
                 </tr>
               </thead>
-              <tbody id="pendingApprovalsTableBody">
-                <!-- Linhas de aprovação -->
-              </tbody>
+              <tbody id="pendingApprovalsTableBody"></tbody>
             </table>
           </div>
         </div>
@@ -915,7 +923,53 @@
     </main>
   </div>
 
-  <!-- MODAL: SOLICITAR EXCLUSÃO (COLABORADOR) -->
+  <!-- =====================================================================
+       CENTRAL DE NOTIFICAÇÕES & COMUNICADOS DA GESTÃO (NOVO!)
+       ===================================================================== -->
+  <dialog id="modalNotificacoes">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
+      <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+    </div>
+
+    <!-- SEÇÃO 1: CRIAR NOVO COMUNICADO (SE FOR ADM) -->
+    <div id="boxAdminCreateNotice" style="display:none; background:var(--card-sub); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:14px; margin-bottom:18px;">
+      <h4 style="font-size:12px; font-weight:700; color:var(--c-laranja); text-transform:uppercase; margin-bottom:8px;">📢 Publicar Comunicado para a Equipe</h4>
+      <form id="formAdminNotice">
+        <div class="form-group">
+          <input type="text" id="noticeTitleInput" placeholder="Título (Ex: Reunião Geral de Fechamento)" required>
+        </div>
+        <div class="form-group">
+          <textarea id="noticeMsgInput" placeholder="Mensagem para aparecer no painel de todos os colaboradores..." rows="2" required></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="submit" class="btn-laranja" style="width:auto; padding:6px 14px; font-size:12px;">Publicar Comunicado</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- SEÇÃO 2: AVISOS ATIVOS -->
+    <div style="margin-bottom:18px;">
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">Avisos Recentes</h4>
+      <div id="noticesListBox" style="display:flex; flex-direction:column; gap:8px;">
+        <span class="muted" style="font-size:12px;">Nenhum comunicado ativo no momento.</span>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3: ANIVERSARIANTES -->
+    <div>
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">🎂 Próximos Aniversários na Equipe</h4>
+      <div id="birthdaysListBox" style="display:flex; flex-direction:column; gap:6px;">
+        <span class="muted" style="font-size:12px;">Nenhum aniversário cadastrado.</span>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+      <button type="button" class="btn" data-close>Fechar</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL: SOLICITAR EXCLUSÃO -->
   <dialog id="modalSolicitarExclusao">
     <form id="formSolicitarExclusao">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -923,7 +977,7 @@
         <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
       </div>
       <p class="muted" style="font-size:12px; margin-bottom:14px;">
-        Para segurança e auditoria da empresa, a exclusão de um registro precisa ser aprovada pela gestão (Danielle).
+        Para segurança da empresa, a exclusão de um registro precisa ser aprovada pela gestão.
       </p>
       <input type="hidden" id="exclusaoEntryId">
       <div class="form-group">
@@ -971,7 +1025,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL: PERFIL DO COLABORADOR -->
+  <!-- MODAL: PERFIL -->
   <dialog id="modalPerfil">
     <form id="formPerfil">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -980,7 +1034,7 @@
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 18px;">
-        <div class="avatar-large" id="modalProfileAvatar" style="width: 72px; height: 72px; font-size: 24px; cursor: pointer;">DS</div>
+        <div class="avatar-large" id="modalProfileAvatar" style="width: 72px; height: 72px; font-size: 24px; cursor: pointer;">U</div>
         <button type="button" class="btn" style="margin-top: 8px; font-size: 11px;" id="btnTrocarFoto">Trocar Foto</button>
         <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
       </div>
@@ -1007,12 +1061,12 @@
       </div>
 
       <div class="form-group">
-        <label>Modalidade de Trabalho</label>
+        <label>Modalidade de Contrato</label>
         <select id="perfilModalidade">
-          <option value="pj8">Prestador PJ (8h/dia • 40h semanais)</option>
-          <option value="estagio6">Estágio (6h/dia • 30h semanais)</option>
-          <option value="estagio4">Estágio Meio Período (4h/dia • 20h semanais)</option>
-          <option value="custom">Personalizado (Horário livre)</option>
+          <option value="pj8">Prestador PJ (Jornada 8h/dia)</option>
+          <option value="estagio6">Estágio (Jornada 6h/dia)</option>
+          <option value="estagio4">Estágio Meio Período (Jornada 4h/dia)</option>
+          <option value="custom">Personalizado (Conforme Configurações)</option>
         </select>
       </div>
 
@@ -1026,7 +1080,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL: REGISTRAR DIA / PONTO MANUAL -->
+  <!-- MODAL: REGISTRAR DIA MANUAL -->
   <dialog id="modalPonto">
     <form id="formPonto">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -1115,7 +1169,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL: CONFIGURAÇÕES GERAIS -->
+  <!-- MODAL: CONFIGURAÇÕES GERAIS (HORÁRIOS 100% DINÂMICOS) -->
   <dialog id="modalSettings">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
       <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Configurações de Jornada</h3>
@@ -1123,12 +1177,12 @@
     </div>
 
     <div class="form-group">
-      <label>Modalidade de Contrato Padrão</label>
+      <label>Modalidade / Tipo</label>
       <select id="cfgModalidade">
-        <option value="pj8">Prestador PJ (8h/dia • 40h semanais)</option>
-        <option value="estagio6">Estágio (6h/dia • 30h semanais)</option>
-        <option value="estagio4">Estágio Meio Período (4h/dia • 20h semanais)</option>
-        <option value="custom">Personalizado (Horas Livres)</option>
+        <option value="pj8">Prestador PJ (Padrão 8h)</option>
+        <option value="estagio6">Estágio (Padrão 6h)</option>
+        <option value="estagio4">Estágio Meio Período (Padrão 4h)</option>
+        <option value="custom">Personalizado (Livre)</option>
       </select>
     </div>
 
@@ -1141,7 +1195,7 @@
     </div>
 
     <div class="form-group">
-      <label>Duração do Almoço (minutos)</label>
+      <label>Duração do Almoço (minutos deduzidos)</label>
       <input type="number" id="cfgIntervalo" value="60" min="0" max="180">
       <small class="muted" style="font-size:11px" id="cfgCalculoMetaTexto">Meta líquida calculada: 06:00 por dia útil</small>
     </div>
@@ -1158,7 +1212,7 @@
 
   <script>
     /* =====================================================================
-       FERIADOS NACIONAIS & EQUIPE ANIVERSÁRIOS
+       FERIADOS NACIONAIS
        ===================================================================== */
     const BRAZIL_HOLIDAYS = [
       { d: '01/01', name: 'Confraternização Universal' },
@@ -1170,13 +1224,6 @@
       { d: '15/11', name: 'Proclamação da República' },
       { d: '20/11', name: 'Dia da Consciência Negra' },
       { d: '25/12', name: 'Natal' }
-    ];
-
-    // Lista da equipe (Danielle + membros sincronizados)
-    let teamMembers = [
-      { id: 'danielle_admin', name: 'Danielle Silva', email: 'marketing@realestatesp.com.br', role: 'Marketing / Gestão', birthDate: '1995-11-08', modality: 'pj8', balance: 0 },
-      { id: 'alex_consultor', name: 'Alex Santos', email: 'alex@realestatesp.com.br', role: 'Consultor Imobiliário', birthDate: '1998-05-15', modality: 'pj8', balance: 0 },
-      { id: 'estagiario_1', name: 'Lucas Gabriel', email: 'lucas@realestatesp.com.br', role: 'Estagiário de Marketing', birthDate: '2004-03-22', modality: 'estagio6', balance: 0 }
     ];
 
     function renderHolidaysList() {
@@ -1221,6 +1268,7 @@
       }
 
       const todayStr = new Date().toISOString().slice(0, 10);
+      const allMembers = getKnownTeamMembers();
 
       for (let day = 1; day <= daysInMonth; day++) {
         const cell = document.createElement('div');
@@ -1232,12 +1280,11 @@
         const dateKey = `${year}-${monthFmt}-${dayFmt}`;
         const dayMonthKey = `${dayFmt}/${monthFmt}`;
 
-        // Verifica se é feriado
         const isHoliday = BRAZIL_HOLIDAYS.some(h => h.d === dayMonthKey);
         if (isHoliday) cell.classList.add('holiday');
 
-        // Verifica aniversariantes da equipe
-        const bdayMember = teamMembers.find(m => m.birthDate && m.birthDate.endsWith(`-${monthFmt}-${dayFmt}`));
+        // Checa aniversariantes reais da equipe
+        const bdayMember = allMembers.find(m => m.birthDate && m.birthDate.endsWith(`-${monthFmt}-${dayFmt}`));
         if (bdayMember) {
           cell.classList.add('birthday');
           cell.title = `🎂 Aniversário de ${bdayMember.name}`;
@@ -1263,7 +1310,18 @@
       }
     }
 
-    // Checagem de aniversários: hoje e amanhã
+    /* =====================================================================
+       CENTRAL DE NOTIFICAÇÕES & ANIVERSÁRIOS
+       ===================================================================== */
+    function getKnownTeamMembers() {
+      // Retorna membros reais (sem dados fictícios)
+      const list = [];
+      if (appState.profile && appState.profile.name) {
+        list.push({ ...appState.profile, id: currentUserId, balance: calculateGrandTotal() });
+      }
+      return list;
+    }
+
     function checkBirthdaysNotification() {
       const now = new Date();
       const tomorrow = new Date();
@@ -1273,8 +1331,9 @@
       const todayKey = formatMD(now);
       const tomorrowKey = formatMD(tomorrow);
 
-      const bdayToday = teamMembers.find(m => m.birthDate && m.birthDate.endsWith(todayKey));
-      const bdayTomorrow = teamMembers.find(m => m.birthDate && m.birthDate.endsWith(tomorrowKey));
+      const allMembers = getKnownTeamMembers();
+      const bdayToday = allMembers.find(m => m.birthDate && m.birthDate.endsWith(todayKey));
+      const bdayTomorrow = allMembers.find(m => m.birthDate && m.birthDate.endsWith(tomorrowKey));
 
       const alertBox = document.getElementById('birthdayAlertBox');
       const alertText = document.getElementById('birthdayAlertText');
@@ -1283,16 +1342,31 @@
       let notificationsCount = 0;
 
       if (bdayToday) {
-        alertText.innerHTML = `🎉 <strong>Hoje é aniversário de ${bdayToday.name}!</strong> Não esqueça de parabenizar! 🎂`;
+        alertText.innerHTML = `🎉 <strong>Hoje é aniversário de ${bdayToday.name}!</strong> Parabéns! 🎂`;
         alertBox.style.display = 'flex';
         notificationsCount++;
       } else if (bdayTomorrow) {
         alertText.innerHTML = `🎂 <strong>Lembrete RealTime:</strong> Amanhã é aniversário de <strong>${bdayTomorrow.name}</strong>!`;
         alertBox.style.display = 'flex';
         notificationsCount++;
+      } else {
+        alertBox.style.display = 'none';
       }
 
-      // Conta solicitações de exclusão pendentes para a ADM
+      // Conta avisos da gestão
+      const announcements = appState.announcements || [];
+      if (announcements.length > 0) {
+        notificationsCount += announcements.length;
+        const latest = announcements[0];
+        const bannerBox = document.getElementById('companyAnnouncementBanner');
+        document.getElementById('bannerAnnounceTitle').textContent = latest.title;
+        document.getElementById('bannerAnnounceMsg').textContent = latest.message;
+        bannerBox.style.display = 'flex';
+      } else {
+        document.getElementById('companyAnnouncementBanner').style.display = 'none';
+      }
+
+      // Conta exclusões pendentes se for ADM
       const pendingExclusions = appState.entries.filter(e => e.status === 'pendente_exclusao').length;
       if (isAdminUser) notificationsCount += pendingExclusions;
 
@@ -1302,38 +1376,67 @@
       } else {
         bellBadge.style.display = 'none';
       }
+
+      renderNotificationsModalContent();
+    }
+
+    function renderNotificationsModalContent() {
+      const noticeBox = document.getElementById('noticesListBox');
+      const bdayBox = document.getElementById('birthdaysListBox');
+      const adminNoticeForm = document.getElementById('boxAdminCreateNotice');
+
+      if (isAdminUser) {
+        adminNoticeForm.style.display = 'block';
+      } else {
+        adminNoticeForm.style.display = 'none';
+      }
+
+      // Renderiza comunicados
+      const announcements = appState.announcements || [];
+      if (announcements.length > 0) {
+        noticeBox.innerHTML = '';
+        announcements.forEach((a, idx) => {
+          const item = document.createElement('div');
+          item.className = 'holiday-item';
+          item.innerHTML = `
+            <div>
+              <strong style="color:var(--c-laranja);">${a.title}</strong>
+              <div style="font-size:11px; margin-top:2px;">${a.message}</div>
+            </div>
+            ${isAdminUser ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" onclick="deleteAnnouncement(${idx})">✕</button>` : ''}
+          `;
+          noticeBox.appendChild(item);
+        });
+      } else {
+        noticeBox.innerHTML = '<span class="muted" style="font-size:12px;">Nenhum comunicado ativo no momento.</span>';
+      }
+
+      // Renderiza aniversários
+      const allMembers = getKnownTeamMembers().filter(m => m.birthDate);
+      if (allMembers.length > 0) {
+        bdayBox.innerHTML = '';
+        allMembers.forEach(m => {
+          const [y, mm, dd] = m.birthDate.split('-');
+          const item = document.createElement('div');
+          item.className = 'holiday-item';
+          item.innerHTML = `<span>🎂 ${m.name}</span> <span class="mono" style="color:var(--c-laranja); font-weight:700;">${dd}/${mm}</span>`;
+          bdayBox.appendChild(item);
+        });
+      } else {
+        bdayBox.innerHTML = '<span class="muted" style="font-size:12px;">Preencha a data no perfil para aparecer aqui.</span>';
+      }
+    }
+
+    function deleteAnnouncement(index) {
+      if (!confirm('Remover este comunicado da equipe?')) return;
+      appState.announcements.splice(index, 1);
+      saveLocal();
+      checkBirthdaysNotification();
+      showToast('Comunicado removido.');
     }
 
     /* =====================================================================
-       CAPTURA AUTOMÁTICA SILENCIOSA (IP & DISPOSITIVO)
-       ===================================================================== */
-    let detectedIP = '191.185.24.112';
-    let detectedDevice = 'Windows / Chrome';
-
-    async function fetchClientMetadata() {
-      try {
-        const ua = navigator.userAgent;
-        let os = 'Windows';
-        if (/Macintosh|Mac OS/i.test(ua)) os = 'macOS';
-        else if (/iPhone|iPad/i.test(ua)) os = 'iOS';
-        else if (/Android/i.test(ua)) os = 'Android';
-
-        let browser = 'Chrome';
-        if (/Firefox/i.test(ua)) browser = 'Firefox';
-        else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
-        else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
-
-        detectedDevice = `${os} / ${browser}`;
-        const res = await fetch('https://api.ipify.org?format=json');
-        if (res.ok) {
-          const data = await res.json();
-          detectedIP = data.ip;
-        }
-      } catch (e) {}
-    }
-
-    /* =====================================================================
-       MOTOR CORE DE CÁLCULO & REGRAS DE FINAIS DE SEMANA / FERIADOS
+       MOTOR CORE DE CÁLCULO
        ===================================================================== */
     const Core = {
       toMinutes(timeStr) {
@@ -1354,7 +1457,7 @@
       isWeekendOrHoliday(dateStr) {
         const [y, m, d] = dateStr.split('-').map(Number);
         const dayOfWeek = new Date(y, m - 1, d).getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // Domingo ou Sábado
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
         const dayMonth = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
         const isHoliday = BRAZIL_HOLIDAYS.some(h => h.d === dayMonth);
         return isWeekend || isHoliday;
@@ -1370,7 +1473,7 @@
         
         let totalLiquido = Math.max(0, totalBruto - intervaloMin);
 
-        // FINAIS DE SEMANA E FERIADOS: Meta zero (não gera débito; tudo que trabalhar é crédito positivo)
+        // Finais de semana e feriados: meta zero
         let metaDoDia = expectedMinutes;
         if (dateStr && Core.isWeekendOrHoliday(dateStr)) {
           metaDoDia = 0;
@@ -1389,12 +1492,12 @@
       if (e.t === 'uso' || e.type === 'uso') type = 'uso';
       else if (e.t === 'falta' || e.type === 'falta') type = 'falta';
 
-      const entrada = e.entrada || e.start || (e.punches ? e.punches.e1 : '09:00');
-      const saida = e.saida || e.s || (e.punches ? e.punches.s2 : '16:00');
-      const intervalo = typeof e.intervalo === 'number' ? e.intervalo : 60;
+      const entrada = e.entrada || e.start || (e.punches ? e.punches.e1 : (appState.config.entrada || '09:00'));
+      const saida = e.saida || e.s || (e.punches ? e.punches.s2 : (appState.config.saida || '16:00'));
+      const intervalo = typeof e.intervalo === 'number' ? e.intervalo : (appState.config.intervalo !== undefined ? appState.config.intervalo : 60);
       const nextDay = !!(e.nextDay || e.next);
       const obs = e.obs || e.n || '';
-      const status = e.status || 'ativo'; // ativo ou pendente_exclusao
+      const status = e.status || 'ativo';
       const id = e.id || 'id_' + Math.random().toString(36).slice(2);
 
       let variation = 0;
@@ -1410,7 +1513,7 @@
     }
 
     /* =====================================================================
-       ESTADO E MULTI-USUÁRIO / ADMIN
+       ESTADO E MULTI-USUÁRIO
        ===================================================================== */
     let currentUserId = localStorage.getItem('realtime_current_uid') || 'guest';
     let isAdminUser = false;
@@ -1420,32 +1523,30 @@
     }
 
     let appState = {
-      config: { modalidade: 'pj8', entrada: '09:00', saida: '16:00', intervalo: 60, expected: 360 },
+      config: { modalidade: 'custom', entrada: '09:00', saida: '16:00', intervalo: 60, expected: 360 },
       profile: {
-        name: 'Danielle Silva',
-        email: 'marketing@realestatesp.com.br',
-        role: 'Marketing / Gestão',
+        name: '',
+        email: '',
+        role: '',
         company: 'Real Estate São Paulo',
-        birthDate: '1995-11-08',
-        modalidade: 'pj8',
+        birthDate: '',
+        modalidade: 'custom',
         photo: ''
       },
+      announcements: [],
       entries: [],
       theme: 'dark'
     };
 
     function recalculateExpected() {
-      const mod = appState.config.modalidade || 'pj8';
-      if (mod === 'estagio6') {
-        appState.config.expected = 360; // 6h líquidas
-      } else if (mod === 'estagio4') {
-        appState.config.expected = 240; // 4h líquidas
-      } else if (mod === 'pj8') {
-        appState.config.expected = 480; // 8h líquidas
-      } else {
-        const span = Core.toMinutes(appState.config.saida) - Core.toMinutes(appState.config.entrada);
-        appState.config.expected = Math.max(0, span - (appState.config.intervalo !== undefined ? appState.config.intervalo : 60));
-      }
+      // A matemática é 100% dinâmica pelo que o usuário configurou nos campos
+      const ent = appState.config.entrada || '09:00';
+      const sai = appState.config.saida || '16:00';
+      const int = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+      
+      let span = Core.toMinutes(sai) - Core.toMinutes(ent);
+      if (span < 0) span += 1440;
+      appState.config.expected = Math.max(0, span - int);
     }
 
     function recalculateAllEntries() {
@@ -1454,13 +1555,18 @@
       appState.entries = appState.entries.map(e => normalizeEntry(e, exp)).filter(Boolean);
     }
 
+    function calculateGrandTotal() {
+      return appState.entries.reduce((acc, cur) => acc + (cur.variation || 0), 0);
+    }
+
     function loadLocal() {
       try {
-        const raw = localStorage.getItem(getStorageKey()) || localStorage.getItem('realtime_realestate_v6');
+        const raw = localStorage.getItem(getStorageKey());
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed.config) appState.config = { ...appState.config, ...parsed.config };
           if (parsed.profile) appState.profile = { ...appState.profile, ...parsed.profile };
+          if (parsed.announcements) appState.announcements = parsed.announcements;
           recalculateExpected();
 
           const rawEntries = parsed.entries || parsed.e || [];
@@ -1469,7 +1575,7 @@
             : [];
         }
       } catch (e) {
-        console.error('Erro local:', e);
+        console.error('Erro ao ler estado local:', e);
       }
     }
 
@@ -1492,19 +1598,15 @@
       if (!t) return;
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3200);
+      setTimeout(() => t.classList.remove('show'), 3000);
     }
 
     /* =====================================================================
-       SOLUÇÃO 2: PRIMEIRO ACESSO SILENCIOSO AUTOMÁTICO (EM DIAS ÚTEIS)
+       PRIMEIRO ACESSO AUTOMÁTICO SILENCIOSO
        ===================================================================== */
     function checkDailySilentArrival() {
       const todayStr = new Date().toISOString().slice(0, 10);
-      
-      // NÃO COMPUTA AUTOMATICAMENTE EM FINAIS DE SEMANA E FERIADOS
-      if (Core.isWeekendOrHoliday(todayStr)) {
-        return;
-      }
+      if (Core.isWeekendOrHoliday(todayStr)) return;
 
       let entry = appState.entries.find(e => e.date === todayStr);
       const now = new Date();
@@ -1517,7 +1619,7 @@
           type: 'trabalhado',
           entrada: timeNow,
           saida: '',
-          intervalo: appState.config.intervalo || 60,
+          intervalo: appState.config.intervalo !== undefined ? appState.config.intervalo : 60,
           nextDay: false,
           variation: 0,
           obs: 'Presença iniciada pelo 1º acesso',
@@ -1525,12 +1627,12 @@
         });
 
         saveLocal();
-        showToast(`Presença digital confirmada às ${timeNow} • Bom trabalho!`);
+        showToast(`Presença confirmada às ${timeNow} • Bom trabalho!`);
       }
     }
 
     /* =====================================================================
-       1-TOQUE: FINALIZAR EXPEDIENTE
+       1-TOQUE: FINALIZAR DIA
        ===================================================================== */
     function finalizarDiaInstantaneo() {
       const now = new Date();
@@ -1564,12 +1666,16 @@
     }
 
     /* =====================================================================
-       PERFIL & ADMIN CONTROLS
+       PERFIL & PERMISSÕES
        ===================================================================== */
     function renderProfile() {
       const p = appState.profile;
-      document.getElementById('topProfileName').textContent = p.name;
-      document.getElementById('heroUserGreeting').textContent = `${getGreeting()}, ${p.name}`;
+      const topName = document.getElementById('topProfileName');
+      const heroGreeting = document.getElementById('heroUserGreeting');
+      
+      const displayName = p.name || 'Colaborador';
+      topName.textContent = displayName;
+      heroGreeting.textContent = `${getGreeting()}, ${displayName}`;
       
       const modLabels = {
         pj8: 'Prestador PJ (8h/dia)',
@@ -1577,11 +1683,11 @@
         estagio4: 'Estágio Meio Período (4h/dia)',
         custom: 'Personalizado'
       };
-      const labelModalidade = modLabels[p.modalidade || 'pj8'] || 'PJ';
+      const labelModalidade = modLabels[p.modalidade || 'custom'] || 'PJ';
       document.getElementById('heroRoleCompanyBadge').textContent = `${p.role || 'Consultoria'} • ${labelModalidade} • ${p.company}`;
       document.getElementById('tagContratoHoje').textContent = labelModalidade;
 
-      const initials = (p.name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+      const initials = (displayName || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
       const setAvatar = (el) => {
         if (!el) return;
         if (p.photo) el.innerHTML = `<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
@@ -1592,14 +1698,16 @@
       setAvatar(document.getElementById('heroAvatarLarge'));
       setAvatar(document.getElementById('modalProfileAvatar'));
 
-      document.getElementById('perfilNome').value = p.name;
-      document.getElementById('perfilEmail').value = p.email;
-      document.getElementById('perfilCargo').value = p.role;
+      document.getElementById('perfilNome').value = p.name || '';
+      document.getElementById('perfilEmail').value = p.email || '';
+      document.getElementById('perfilCargo').value = p.role || '';
       document.getElementById('perfilBirthDate').value = p.birthDate || '';
-      document.getElementById('perfilModalidade').value = p.modalidade || 'pj8';
+      document.getElementById('perfilModalidade').value = p.modalidade || 'custom';
 
-      // Danielle como ADM
-      isAdminUser = p.email.toLowerCase().includes('marketing') || p.email.toLowerCase().includes('danielle') || p.role.toLowerCase().includes('gestão');
+      // Danielle (Admin)
+      isAdminUser = (p.email && p.email.toLowerCase().includes('marketing')) || 
+                    (p.email && p.email.toLowerCase().includes('danielle')) || 
+                    (p.role && p.role.toLowerCase().includes('gestão'));
       
       const tabEquipe = document.getElementById('tabTeamAdmin');
       const tabAprovacoes = document.getElementById('tabApprovals');
@@ -1665,7 +1773,7 @@
     }
 
     /* =====================================================================
-       DASHBOARD & TABELA COM STATUS DE EXCLUSÃO
+       DASHBOARD
        ===================================================================== */
     function renderDashboard() {
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -1779,29 +1887,23 @@
       statBalanceEl.textContent = Core.fromMinutes(totalSaldo);
       statBalanceEl.className = `metric-value ${totalSaldo >= 0 ? 'pos' : 'neg'}`;
 
-      // Renderiza telas de ADM se for Danielle
       if (isAdminUser) {
         renderTeamManagement();
         renderPendingApprovals();
       }
     }
 
-    /* =====================================================================
-       FLUXO DE EXCLUSÃO INTELIGENTE COM APROVAÇÃO ADM
-       ===================================================================== */
     function handleDeleteEntry(id) {
       const entry = appState.entries.find(e => e.id === id);
       if (!entry) return;
 
       if (isAdminUser) {
-        // Danielle exclui na hora com confirmação
-        if (confirm(`Como Administradora, deseja excluir definitivamente o registro de ${entry.date}?`)) {
+        if (confirm(`Como Administradora, deseja excluir o registro de ${entry.date}?`)) {
           appState.entries = appState.entries.filter(e => e.id !== id);
           saveLocal();
           showToast('Registro excluído pela Administradora.');
         }
       } else {
-        // Colaborador comum envia pedido de aprovação
         document.getElementById('exclusaoEntryId').value = id;
         document.getElementById('exclusaoMotivo').value = '';
         document.getElementById('modalSolicitarExclusao').showModal();
@@ -1819,32 +1921,30 @@
         entry.obs = `[Solicitada Exclusão: ${motivo}] ${entry.obs || ''}`;
         saveLocal();
         document.getElementById('modalSolicitarExclusao').close();
-        showToast('Solicitação de exclusão enviada para a aprovação da Danielle!');
+        showToast('Solicitação enviada para a aprovação da Danielle!');
       }
     };
 
     /* =====================================================================
-       PAINEL GESTÃO DA EQUIPE (EXCLUSIVO ADM)
+       PAINEL GESTÃO DA EQUIPE (SOMENTE MEMBROS REAIS)
        ===================================================================== */
     function renderTeamManagement() {
       const tbody = document.getElementById('teamMembersTableBody');
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      teamMembers.forEach(m => {
+      const allMembers = getKnownTeamMembers();
+      allMembers.forEach(m => {
         const tr = document.createElement('tr');
-        const modLabels = { pj8: 'Prestador PJ', estagio6: 'Estágio 6h', estagio4: 'Estágio 4h', custom: 'Personalizado' };
+        const modLabels = { pj8: 'Prestador PJ (8h)', estagio6: 'Estágio (6h)', estagio4: 'Estágio Meio Período (4h)', custom: 'Personalizado' };
         
         tr.innerHTML = `
-          <td><strong>${m.name}</strong><br><small class="muted">${m.email}</small></td>
-          <td>${m.role}</td>
-          <td><span class="tag neutral">${modLabels[m.modality] || 'PJ'}</span></td>
-          <td>${m.modality === 'estagio6' ? '06:00 líquidas' : (m.modality === 'estagio4' ? '04:00 líquidas' : '08:00 líquidas')}</td>
+          <td><strong>${m.name || 'Sem nome'}</strong><br><small class="muted">${m.email || '—'}</small></td>
+          <td>${m.role || '—'}</td>
+          <td><span class="tag neutral">${modLabels[m.modalidade] || 'PJ'}</span></td>
+          <td>${Core.fromMinutes(appState.config.expected || 360)}/dia</td>
           <td>${m.birthDate ? m.birthDate.split('-').reverse().join('/') : '—'}</td>
           <td class="mono"><strong>${Core.fromMinutes(m.balance || 0)}</strong></td>
-          <td style="text-align:center;">
-            <button class="btn btn-sm" onclick="adminEditMemberModal('${m.id}')">Editar Carga / Perfil</button>
-          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -1881,7 +1981,7 @@
     }
 
     function adminApproveDeletion(id) {
-      if (confirm('Aprovar a exclusão deste ponto? Ele será apagado definitivamente.')) {
+      if (confirm('Aprovar a exclusão deste ponto?')) {
         appState.entries = appState.entries.filter(e => e.id !== id);
         saveLocal();
         showToast('Exclusão aprovada com sucesso.');
@@ -1894,7 +1994,7 @@
         entry.status = 'ativo';
         entry.obs = entry.obs.replace(/\[Solicitada Exclusão:.*?\]/g, '');
         saveLocal();
-        showToast('Solicitação de exclusão recusada. O ponto foi mantido.');
+        showToast('Solicitação recusada. O ponto foi mantido.');
       }
     }
 
@@ -1917,7 +2017,6 @@
       safeAddListener('btnFinalizarDiaInstantaneo', 'click', finalizarDiaInstantaneo);
       safeAddListener('btnFinalizarDiaHero', 'click', finalizarDiaInstantaneo);
 
-      // Lançamento manual
       safeAddListener('btnBaterPontoAgora', 'click', () => {
         document.getElementById('formPonto').reset();
         document.getElementById('entryEditId').value = '';
@@ -1937,63 +2036,138 @@
       safeAddListener('btnOpenProfile', 'click', () => document.getElementById('modalPerfil').showModal());
       safeAddListener('heroAvatarLarge', 'click', () => document.getElementById('modalPerfil').showModal());
 
+      // CENTRAL DE NOTIFICAÇÕES (ABRE O MODAL REAL)
+      safeAddListener('btnNotificationBell', 'click', () => {
+        renderNotificationsModalContent();
+        document.getElementById('modalNotificacoes').showModal();
+      });
+
+      // PUBLICAR COMUNICADO DA ADM
+      safeAddListener('formAdminNotice', 'submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('noticeTitleInput').value.trim();
+        const message = document.getElementById('noticeMsgInput').value.trim();
+        if (!title || !message) return;
+
+        appState.announcements = appState.announcements || [];
+        appState.announcements.unshift({
+          title,
+          message,
+          date: new Date().toISOString()
+        });
+
+        saveLocal();
+        document.getElementById('noticeTitleInput').value = '';
+        document.getElementById('noticeMsgInput').value = '';
+        checkBirthdaysNotification();
+        showToast('Comunicado publicado para toda a equipe!');
+      });
+
+      // ABERTURA DE CONFIGURAÇÕES (LÊ OS DADOS SALVOS)
       safeAddListener('btnSettings', 'click', () => {
-        document.getElementById('cfgModalidade').value = appState.config.modalidade || 'pj8';
+        document.getElementById('cfgModalidade').value = appState.config.modalidade || 'custom';
         document.getElementById('cfgEntrada').value = appState.config.entrada || '09:00';
         document.getElementById('cfgSaida').value = appState.config.saida || '16:00';
         document.getElementById('cfgIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+        atualizarTextoCalculoMeta();
         document.getElementById('modalSettings').showModal();
       });
 
-      // Mudança de modalidade de contrato nas configurações
+      safeAddListener('cfgEntrada', 'input', atualizarTextoCalculoMeta);
+      safeAddListener('cfgSaida', 'input', atualizarTextoCalculoMeta);
+      safeAddListener('cfgIntervalo', 'input', atualizarTextoCalculoMeta);
+
+      // Sugestões de horários ao mudar modalidade (mas deixa livre para editar)
       safeAddListener('cfgModalidade', 'change', (e) => {
         const val = e.target.value;
         const inEntrada = document.getElementById('cfgEntrada');
         const inSaida = document.getElementById('cfgSaida');
         const inInt = document.getElementById('cfgIntervalo');
-        const txt = document.getElementById('cfgCalculoMetaTexto');
 
         if (val === 'estagio6') {
           inEntrada.value = '10:00';
           inSaida.value = '17:00';
           inInt.value = '60';
-          txt.textContent = 'Meta líquida calculada: 06:00 por dia útil (Estágio 30h semanais)';
         } else if (val === 'estagio4') {
           inEntrada.value = '08:00';
           inSaida.value = '12:00';
           inInt.value = '0';
-          txt.textContent = 'Meta líquida calculada: 04:00 por dia útil (Estágio Meio Período)';
         } else if (val === 'pj8') {
           inEntrada.value = '08:00';
           inSaida.value = '17:00';
           inInt.value = '60';
-          txt.textContent = 'Meta líquida calculada: 08:00 por dia útil (Padrão PJ 40h semanais)';
         }
+        atualizarTextoCalculoMeta();
       });
 
-      safeAddListener('formPerfil', 'submit', (e) => {
-        e.preventDefault();
-        appState.profile.name = document.getElementById('perfilNome').value;
-        appState.profile.role = document.getElementById('perfilCargo').value;
-        appState.profile.birthDate = document.getElementById('perfilBirthDate').value;
-        appState.profile.modalidade = document.getElementById('perfilModalidade').value;
-        appState.config.modalidade = appState.profile.modalidade;
+      // SALVAR CONFIGURAÇÕES (100% DINÂMICO E PERSISTENTE)
+      safeAddListener('btnSaveConfigs', 'click', () => {
+        const modalidade = document.getElementById('cfgModalidade').value;
+        const entrada = document.getElementById('cfgEntrada').value;
+        const saida = document.getElementById('cfgSaida').value;
+        const intervalo = Number(document.getElementById('cfgIntervalo').value) || 0;
+
+        appState.config.modalidade = modalidade;
+        appState.config.entrada = entrada;
+        appState.config.saida = saida;
+        appState.config.intervalo = intervalo;
+        appState.profile.modalidade = modalidade;
+
         recalculateAllEntries();
         saveLocal();
+        document.getElementById('modalSettings').close();
+        showToast('Configurações salvas e histórico recalculado!');
+      });
+
+      // SALVAR PERFIL (GRAVA NO SUPABASE DE VERDADE)
+      safeAddListener('formPerfil', 'submit', async (e) => {
+        e.preventDefault();
+        const nome = document.getElementById('perfilNome').value.trim();
+        const cargo = document.getElementById('perfilCargo').value.trim();
+        const bdate = document.getElementById('perfilBirthDate').value;
+        const mod = document.getElementById('perfilModalidade').value;
+
+        appState.profile.name = nome;
+        appState.profile.role = cargo;
+        appState.profile.birthDate = bdate;
+        appState.profile.modalidade = mod;
+        appState.config.modalidade = mod;
+
+        // Salva nos metadados do Supabase Auth para nunca mais perder
+        if (sbClient && currentUserId !== 'guest') {
+          try {
+            await sbClient.auth.updateUser({
+              data: {
+                name: nome,
+                role: cargo,
+                birthDate: bdate,
+                modalidade: mod
+              }
+            });
+          } catch (err) {
+            console.warn('Erro ao atualizar metadata:', err);
+          }
+        }
+
+        recalculateAllEntries();
+        saveLocal();
+        renderProfile();
+        renderMiniCalendar();
+        checkBirthdaysNotification();
         document.getElementById('modalPerfil').close();
         showToast('Perfil salvo com sucesso!');
       });
 
-      safeAddListener('btnSaveConfigs', 'click', () => {
-        appState.config.modalidade = document.getElementById('cfgModalidade').value;
-        appState.config.entrada = document.getElementById('cfgEntrada').value;
-        appState.config.saida = document.getElementById('cfgSaida').value;
-        appState.config.intervalo = Number(document.getElementById('cfgIntervalo').value);
-        appState.profile.modalidade = appState.config.modalidade;
-        recalculateAllEntries();
-        saveLocal();
-        document.getElementById('modalSettings').close();
-        showToast('Preferências e carga horária atualizadas!');
+      safeAddListener('btnTrocarFoto', 'click', () => document.getElementById('profilePhotoInput').click());
+      safeAddListener('profilePhotoInput', 'change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          appState.profile.photo = ev.target.result;
+          renderProfile();
+        };
+        reader.readAsDataURL(file);
       });
 
       safeAddListener('formFalta', 'submit', (e) => {
@@ -2020,7 +2194,7 @@
 
         saveLocal();
         document.getElementById('modalFalta').close();
-        showToast('Ausência registrada com sucesso.');
+        showToast('Ausência registrada.');
       });
 
       safeAddListener('formPonto', 'submit', (e) => {
@@ -2060,7 +2234,6 @@
       });
       safeAddListener('btnLogoutSession', 'click', () => document.getElementById('btnTopLogout').click());
 
-      // Navegação por abas principais
       document.querySelectorAll('.main-nav-tabs button').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.main-nav-tabs button').forEach(b => b.classList.remove('active'));
@@ -2090,9 +2263,27 @@
         link.click();
       });
 
-      safeAddListener('btnNotificationBell', 'click', () => {
-        showToast('Notificações checadas! Verifique aniversários e solicitações.');
+      safeAddListener('btnImportJSONQuick', 'click', () => document.getElementById('jsonQuickInput').click());
+      safeAddListener('jsonQuickInput', 'change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => processImportedJSON(ev.target.result);
+        reader.readAsText(file);
       });
+    }
+
+    function atualizarTextoCalculoMeta() {
+      const ent = document.getElementById('cfgEntrada').value;
+      const sai = document.getElementById('cfgSaida').value;
+      const int = Number(document.getElementById('cfgIntervalo').value) || 0;
+      let span = Core.toMinutes(sai) - Core.toMinutes(ent);
+      if (span < 0) span += 1440;
+      const liq = Math.max(0, span - int);
+      const txt = document.getElementById('cfgCalculoMetaTexto');
+      if (txt) {
+        txt.textContent = `Meta líquida calculada: ${Core.fromMinutes(liq)} por dia útil`;
+      }
     }
 
     function editEntry(id) {
@@ -2146,20 +2337,24 @@
       document.getElementById('appScreen').hidden = false;
 
       const meta = user.user_metadata || {};
-      appState.profile.email = user.email;
+      appState.profile.email = user.email || '';
       if (meta.name) appState.profile.name = meta.name;
       if (meta.role) appState.profile.role = meta.role;
       if (meta.birthDate) appState.profile.birthDate = meta.birthDate;
-      if (meta.modalidade) {
-        appState.profile.modalidade = meta.modalidade;
-        appState.config.modalidade = meta.modalidade;
-      }
+      if (meta.modalidade) appState.profile.modalidade = meta.modalidade;
 
       loadLocal();
+
+      // Preserva birthDate se já estiver gravado localmente
+      if (!appState.profile.birthDate && meta.birthDate) {
+        appState.profile.birthDate = meta.birthDate;
+      }
+
       renderDashboard();
       renderMiniCalendar();
       renderMonthlyChart();
       checkDailySilentArrival();
+      checkBirthdaysNotification();
       syncWithCloud();
     }
 
@@ -2188,6 +2383,9 @@
             if (cloudState.config) {
               appState.config = { ...appState.config, ...cloudState.config };
               recalculateExpected();
+            }
+            if (cloudState.announcements) {
+              appState.announcements = cloudState.announcements;
             }
 
             const cloudEntries = Array.isArray(cloudState.entries) 
@@ -2252,6 +2450,24 @@
         showToast('Modo Convidado ativo!');
       };
 
+      document.getElementById('btnForgotPass').onclick = async () => {
+        const email = document.getElementById('authEmail').value.trim();
+        if (!email) {
+          msgBox.style.color = 'var(--warn)';
+          msgBox.textContent = 'Informe seu e-mail para receber o link de redefinição.';
+          return;
+        }
+        if (!sbClient) return alert('Serviço indisponível.');
+        const { error } = await sbClient.auth.resetPasswordForEmail(email);
+        if (error) {
+          msgBox.style.color = 'var(--neg)';
+          msgBox.textContent = error.message;
+        } else {
+          msgBox.style.color = 'var(--pos)';
+          msgBox.textContent = 'Link de redefinição enviado para seu e-mail!';
+        }
+      };
+
       document.getElementById('formAuth').onsubmit = async (e) => {
         e.preventDefault();
         const email = document.getElementById('authEmail').value.trim();
@@ -2259,7 +2475,6 @@
         const name = document.getElementById('authName').value.trim();
         const role = document.getElementById('authRole').value.trim();
         const birthDate = document.getElementById('authBirthDate').value;
-        const modalidade = document.getElementById('authModalidade').value;
 
         msgBox.textContent = '';
         btnSubmit.disabled = true;
@@ -2276,7 +2491,7 @@
             const { data, error } = await sbClient.auth.signUp({
               email,
               password,
-              options: { data: { name: name || 'Colaborador', role: role || 'Consultor Imobiliário', birthDate, modalidade } }
+              options: { data: { name, role, birthDate, modalidade: 'custom' } }
             });
             if (error) throw error;
             if (data.user) onUserSignedIn(data.user);
@@ -2291,10 +2506,9 @@
     }
 
     /* =====================================================================
-       INICIALIZAÇÃO
+       INICIALIZAÇÃO DO SISTEMA
        ===================================================================== */
     document.addEventListener('DOMContentLoaded', () => {
-      fetchClientMetadata();
       loadLocal();
       setupEventListeners();
       setupAuthForm();
