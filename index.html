@@ -254,10 +254,10 @@
       flex: 1;
     }
 
-    /* BARRA DE AVISO DE ANIVERSÁRIO */
+    /* BANNER DE ANIVERSÁRIO */
     .birthday-alert-bar {
       background: rgba(236, 137, 77, 0.15);
-      border: 1px solid rgba(236, 137, 77, 0.35);
+      border: 1px solid rgba(236, 137, 77, 0.4);
       border-radius: var(--radius-md);
       padding: 12px 18px;
       margin-bottom: 20px;
@@ -364,27 +364,19 @@
       align-items: center;
     }
 
-    /* CARD DO EXPEDIENTE SILENCIOSO */
-    .presence-meta-box {
+    /* TIMELINE */
+    .punches-timeline { display: flex; flex-direction: column; gap: 10px; }
+    .punch-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
       background: var(--card-sub);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 16px;
-      margin-bottom: 16px;
     }
-    .meta-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      padding: 5px 0;
-    }
-    .meta-row:not(:last-child) {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .meta-label { color: var(--text-muted); font-weight: 500; }
-    .meta-value { font-weight: 700; font-family: var(--font-mono); color: var(--text-main); }
-
+    .punch-time { font-size: 20px; font-weight: 800; font-family: var(--font-mono); color: var(--text-main); }
+    .punch-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
     .interval-divider {
       background: rgba(236, 137, 77, 0.1);
       border: 1px dashed rgba(236, 137, 77, 0.4);
@@ -436,7 +428,7 @@
 
     .chart-box { width: 100%; height: 130px; margin-top: 10px; }
 
-    /* MINI CALENDÁRIO COM ANIVERSÁRIOS */
+    /* MINI CALENDÁRIO */
     .mini-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .mini-cal-header span { font-weight: 700; font-size: 13px; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
@@ -458,7 +450,7 @@
     .cal-cell:hover { border-color: var(--c-laranja); }
     .cal-cell.today { background: var(--border-color); color: var(--text-main); border-color: var(--c-laranja); }
     .cal-cell.holiday { color: var(--c-laranja); font-weight: 800; }
-    .cal-cell.birthday { border-color: #f43f5e; color: #f43f5e; }
+    .cal-cell.birthday { border-color: #f43f5e; color: #f43f5e; font-weight: 800; }
     .cal-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pos); position: absolute; bottom: 2px; }
     .cal-dot.holiday-dot { background: var(--c-laranja); }
 
@@ -482,30 +474,37 @@
     .tag.pos { background: var(--pos-bg); color: var(--pos); }
     .tag.neg { background: var(--neg-bg); color: var(--neg); }
     .tag.neutral { background: var(--card-sub); color: var(--text-main); border: 1px solid var(--border-color); }
-    .tag.audit { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .tag.falta { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .tag.pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-    /* COMPROVANTE AUDITÁVEL (IMAGEM 2) */
-    .receipt-box {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: var(--radius-md);
-      padding: 18px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.8;
-      color: #f8fafc;
+    /* NAVEGAÇÃO DE ABAS */
+    .main-nav-tabs {
+      display: inline-flex;
+      background: var(--card-sub);
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+      border: 1px solid var(--border-color);
     }
-    .receipt-box h4 {
-      font-family: var(--font-main);
-      font-size: 14px;
-      font-weight: 800;
+    .main-nav-tabs button {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .main-nav-tabs button.active {
+      background: var(--card-white);
       color: var(--c-laranja);
-      margin-bottom: 12px;
-      letter-spacing: -0.3px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    .receipt-box ul { list-style: none; }
-    .receipt-box li { display: flex; gap: 8px; }
-    .receipt-box li::before { content: '•'; color: var(--c-laranja); }
 
     /* MODAIS */
     dialog {
@@ -514,7 +513,7 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       padding: 24px;
-      max-width: 500px;
+      max-width: 520px;
       width: calc(100% - 32px);
       margin: auto;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -564,7 +563,7 @@
 <body>
 
   <!-- =====================================================================
-       TELA DE LOGIN E CADASTRO
+       TELA DE LOGIN E CADASTRO REALTIME
        ===================================================================== -->
   <section id="authScreen">
     <div class="auth-container">
@@ -591,18 +590,30 @@
       </div>
 
       <form id="formAuth">
+        <!-- Campos de Cadastro -->
         <div id="boxSignupFields" style="display:none;">
           <div class="form-group">
             <label>Seu Nome Completo</label>
             <input type="text" id="authName" placeholder="Ex: Danielle Silva">
           </div>
           <div class="form-group">
-            <label>Cargo / Função</label>
-            <input type="text" id="authRole" placeholder="Ex: Marketing / Gestão">
+            <label>Modalidade de Contrato</label>
+            <select id="authModalidade">
+              <option value="pj8">Prestador PJ (8h/dia • 40h semanais)</option>
+              <option value="estagio6">Estágio (6h/dia • 30h semanais)</option>
+              <option value="estagio4">Estágio Meio Período (4h/dia • 20h semanais)</option>
+              <option value="custom">Personalizado (Horas Livres)</option>
+            </select>
           </div>
-          <div class="form-group">
-            <label>Data de Nascimento</label>
-            <input type="date" id="authBirthDate">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Cargo / Função</label>
+              <input type="text" id="authRole" placeholder="Ex: Marketing / Consultoria">
+            </div>
+            <div class="form-group">
+              <label>Data de Nascimento</label>
+              <input type="date" id="authBirthDate">
+            </div>
           </div>
         </div>
 
@@ -651,13 +662,10 @@
         </a>
 
         <div class="header-actions">
-          <!-- SELETOR DE COLABORADOR (EXCLUSIVO PARA A DANIELLE / ADM) -->
-          <div id="adminTeamSelectorWrap" style="display:none; align-items:center; gap:6px;">
-            <span class="tag" style="background:var(--c-laranja); color:#fff; font-size:10px;">ADM</span>
-            <select id="adminSelectMember" style="width:auto; padding:5px 10px; font-size:12px;">
-              <option value="me">Visualizando: Meu Painel</option>
-            </select>
-          </div>
+          <!-- SININHO DE ALERTAS & ANIVERSÁRIOS -->
+          <button class="btn" id="btnNotificationBell" title="Notificações e Aniversários" style="position:relative; padding:8px 12px;">
+            🔔 <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--coral-accent); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
+          </button>
 
           <button class="profile-chip-btn" id="btnOpenProfile" title="Meu Perfil">
             <div class="avatar-mini" id="topAvatarMini">DS</div>
@@ -683,26 +691,24 @@
     </header>
 
     <main class="container">
-      <!-- ALERTA DE ANIVERSÁRIO (1 DIA ANTES) -->
+      <!-- ALERTA DE ANIVERSÁRIO (HOJE OU AMANHÃ) -->
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
-        <span id="birthdayAlertText">🎉 Lembrete: Amanhã é aniversário de alguém da equipe!</span>
+        <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
         <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="birthdayAlertBox.style.display='none'">✕</button>
       </div>
 
-      <!-- BARRA DE AÇÕES -->
+      <!-- NAVEGAÇÃO PRINCIPAL (ABAS DE ADMIN SE FOR ADM) -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
-        <div style="font-weight:700; font-size:16px;">Banco de Horas PJ</div>
-        
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn" id="btnFinalizarDiaHero" style="background:var(--c-laranja); color:#fff; border-color:var(--c-laranja); font-weight:700;">
-            ⚡ Finalizar Expediente Agora
-          </button>
-          
-          <!-- BOTÃO EXCLUSIVO DE AJUSTE MANUAL PARA ADM -->
-          <button class="btn" id="btnAdminAjusteManual" style="display:none; border-color:var(--c-laranja); color:var(--c-laranja);">
-            ✏️ Ajuste Manual (ADM)
-          </button>
+        <div class="main-nav-tabs">
+          <button class="active" data-view="v-banco">⏱️ Meu Banco</button>
+          <button id="tabTeamAdmin" data-view="v-equipe" style="display:none;">👥 Gestão da Equipe (ADM)</button>
+          <button id="tabApprovals" data-view="v-aprovacoes" style="display:none;">⏳ Solicitações (<span id="pendingCountTab">0</span>)</button>
+        </div>
 
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-laranja" id="btnFinalizarDiaHero" style="width:auto; margin-top:0; padding:9px 18px;">
+            ⚡ Finalizar Dia Agora
+          </button>
           <button class="btn" id="btnRegistrarAusencia" style="border-color:rgba(239, 68, 68, 0.4); color:var(--neg);">
             Registrar Ausência / Falta
           </button>
@@ -710,27 +716,22 @@
         </div>
       </div>
 
-      <!-- BANCO DE HORAS -->
+      <!-- VIEW 1: BANCO DE HORAS DO COLABORADOR -->
       <section id="v-banco">
-        <!-- HERO BANNER -->
         <div class="hero-banner">
           <div class="hero-top-wrap">
             <div>
               <div class="hero-greeting" id="heroGreetingDate">Hoje</div>
-              <div class="hero-username" id="heroUserGreeting">Boa tarde, Danielle Silva</div>
-              
+              <div class="hero-username" id="heroUserGreeting">Olá, Colaborador</div>
               <div class="hero-badges-row">
-                <span class="hero-role-company" id="heroRoleCompanyBadge">Marketing • Real Estate São Paulo</span>
+                <span class="hero-role-company" id="heroRoleCompanyBadge">Real Estate São Paulo</span>
                 <div class="live-status-badge" id="liveStatusContainer">
                   <span class="live-dot" id="liveStatusDot"></span>
                   <span id="liveStatusText">Expediente em Andamento</span>
                 </div>
               </div>
             </div>
-
-            <div class="hero-avatar-box" id="heroAvatarClick" title="Editar Perfil">
-              <div class="avatar-large" id="heroAvatarLarge">DS</div>
-            </div>
+            <div class="avatar-large" id="heroAvatarLarge" title="Editar Perfil">DS</div>
           </div>
 
           <div class="hero-metrics-grid">
@@ -739,7 +740,7 @@
               <div class="metric-value" id="statHorasHoje">00:00</div>
             </div>
             <div class="metric-block">
-              <div class="metric-label" id="labelSaldoDiaMeta">Saldo do Dia (vs 06:00)</div>
+              <div class="metric-label" id="labelSaldoDiaMeta">Saldo do Dia</div>
               <div class="metric-value" id="statSaldoHoje">+00:00</div>
             </div>
             <div class="metric-block">
@@ -749,56 +750,38 @@
           </div>
         </div>
 
-        <!-- DASHBOARD GRID -->
         <div class="dashboard-grid">
-          <!-- Coluna Esquerda: Presença Digital Automática + Calendário + Feriados -->
+          <!-- Coluna Esquerda: Ações Rápidas + Mini Calendário + Feriados -->
           <div>
-            <!-- CARTÃO DE PRESENÇA SILENCIOSA (SEM BATER PONTO DE MANHÃ) -->
             <div class="content-card">
               <div class="card-title">
-                <span>Presença Digital de Hoje</span>
-                <span class="tag neutral" id="tagOrigemHoje">Home office</span>
+                <span>Expediente de Hoje</span>
+                <span class="tag neutral" id="tagContratoHoje">PJ / Estágio</span>
               </div>
 
-              <div class="presence-meta-box">
-                <div class="meta-row">
-                  <span class="meta-label">1º Acesso Automático</span>
-                  <span class="meta-value" id="metaPrimeiroAcesso">Detectando...</span>
+              <!-- RESUMO LIMPO SEM CARD TÉCNICO DE IP -->
+              <div class="punches-timeline" id="todayTimelineBox">
+                <div class="punch-item">
+                  <span class="punch-time" id="timeEntradaDisplay">--:--</span>
+                  <span class="punch-label">Entrada</span>
                 </div>
-                <div class="meta-row">
-                  <span class="meta-label">IP Detectado</span>
-                  <span class="meta-value" id="metaIPDisplay">Carregando...</span>
+                <div class="interval-divider">
+                  Intervalo de Almoço: <strong id="intervalDurationDisplay">01:00</strong> deduzida
                 </div>
-                <div class="meta-row">
-                  <span class="meta-label">Dispositivo</span>
-                  <span class="meta-value" id="metaDispositivoDisplay">Detectando...</span>
-                </div>
-                <div class="meta-row">
-                  <span class="meta-label">Saída / Fechamento</span>
-                  <span class="meta-value" id="metaSaidaDisplay">--:--</span>
+                <div class="punch-item">
+                  <span class="punch-time" id="timeSaidaDisplay">--:--</span>
+                  <span class="punch-label">Saída</span>
                 </div>
               </div>
 
-              <div class="interval-divider">
-                INTERVALO DE ALMOÇO: <strong>01:00</strong> deduzida automaticamente
+              <div class="punch-actions-wrap" style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+                <button class="btn-laranja" id="btnFinalizarDiaInstantaneo">
+                  ⚡ Finalizar Expediente Agora
+                </button>
+                <button class="btn" id="btnBaterPontoAgora" style="width:100%;">
+                  ✏️ Lançamento / Ajuste Manual
+                </button>
               </div>
-
-              <div class="form-group" style="margin-top:10px;">
-                <label>Onde você trabalhou hoje?</label>
-                <select id="selectOrigemTrabalho">
-                  <option value="Home office">Home office</option>
-                  <option value="Escritório">Escritório</option>
-                  <option value="Plantão / Externo">Plantão / Externo</option>
-                </select>
-              </div>
-
-              <button class="btn-laranja" id="btnFinalizarDiaInstantaneo">
-                ⚡ Finalizar Expediente Agora
-              </button>
-
-              <button class="btn" id="btnVerComprovanteHoje" style="width:100%; margin-top:8px;">
-                📋 Ver Comprovante Auditável
-              </button>
             </div>
 
             <!-- Mini Calendário -->
@@ -810,14 +793,14 @@
               </div>
               <div class="cal-grid" id="calGridBox"></div>
               <small class="muted" style="display:block; text-align:center; font-size:10px; margin-top:10px;">
-                🟢 Dia com horas &nbsp;|&nbsp; 🎂 Aniversariante &nbsp;|&nbsp; 🟠 Feriado
+                🟢 Dia trabalhado &nbsp;|&nbsp; 🎂 Aniversariante &nbsp;|&nbsp; 🟠 Feriado
               </small>
             </div>
 
             <!-- Feriados -->
             <div class="content-card">
               <div class="card-title">
-                <span>Feriados & Pontos Facultativos</span>
+                <span>Feriados Nacionais</span>
                 <span class="tag neutral" id="holidayCountBadge">10</span>
               </div>
               <div class="holiday-list" id="holidayListBox"></div>
@@ -836,10 +819,10 @@
 
             <div class="content-card">
               <div class="card-title">
-                <span>Histórico de Horas</span>
+                <span>Histórico de Lançamentos</span>
                 <div class="table-actions-bar">
                   <div class="search-input-wrap">
-                    <input type="text" id="searchTableInput" placeholder="Buscar por observação, IP, ausência...">
+                    <input type="text" id="searchTableInput" placeholder="Buscar por observação, ausência...">
                   </div>
                   <select id="filterMonth" style="width:auto; padding:6px 10px; font-size:12px;">
                     <option value="">Todo o Período</option>
@@ -853,11 +836,11 @@
                   <thead>
                     <tr>
                       <th>Data</th>
-                      <th>Presença Detectada → Saída</th>
-                      <th>Origem</th>
+                      <th>Jornada (Entrada → Saída)</th>
+                      <th>Tipo</th>
                       <th style="text-align: right;">Variação</th>
                       <th style="text-align: right;">Saldo</th>
-                      <th style="text-align: center;">Comprovante</th>
+                      <th style="text-align: center;">Ações</th>
                     </tr>
                   </thead>
                   <tbody id="entriesTableBody"></tbody>
@@ -867,55 +850,89 @@
           </div>
         </div>
       </section>
+
+      <!-- VIEW 2: GESTÃO DA EQUIPE (EXCLUSIVA ADM / DANIELLE) -->
+      <section id="v-equipe" style="display:none;">
+        <div class="content-card">
+          <div class="card-title">
+            <span>Membros da Equipe Cadastrados</span>
+            <span class="tag primary">Controle Total da Gestão</span>
+          </div>
+          <p class="muted" style="margin-bottom:16px;">
+            Como Administradora, você pode visualizar e editar as horas, perfil e carga horária (PJ ou Estágio) de qualquer colaborador.
+          </p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Colaborador</th>
+                  <th>Cargo / Função</th>
+                  <th>Modalidade</th>
+                  <th>Jornada Diária</th>
+                  <th>Aniversário</th>
+                  <th>Saldo Atual</th>
+                  <th style="text-align:center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="teamMembersTableBody">
+                <!-- Preenchido via JS com os membros -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: SOLICITAÇÕES / APROVAÇÕES PENDENTES (EXCLUSIVA ADM) -->
+      <section id="v-aprovacoes" style="display:none;">
+        <div class="content-card">
+          <div class="card-title">
+            <span>Solicitações de Exclusão de Ponto</span>
+            <span class="tag warn" id="badgePendingCount">0 pendentes</span>
+          </div>
+          <p class="muted" style="margin-bottom:16px;">
+            Quando um colaborador solicita excluir uma batida errada, o pedido cai aqui para você conferir a justificativa antes de apagar.
+          </p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data do Ponto</th>
+                  <th>Colaborador</th>
+                  <th>Horário Registrado</th>
+                  <th>Justificativa da Exclusão</th>
+                  <th style="text-align:center;">Decisão</th>
+                </tr>
+              </thead>
+              <tbody id="pendingApprovalsTableBody">
+                <!-- Linhas de aprovação -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
-  <!-- MODAL: COMPROVANTE AUDITÁVEL (IMAGEM 2) -->
-  <dialog id="modalComprovante">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Comprovante de Auditoria</h3>
-      <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
-    </div>
-    <div class="receipt-box" id="receiptContentBox">
-      <!-- Preenchido via JS igual Imagem 2 -->
-    </div>
-    <div style="display:flex; justify-content:flex-end; margin-top:16px;">
-      <button type="button" class="btn" data-close>Fechar</button>
-    </div>
-  </dialog>
-
-  <!-- MODAL: AJUSTE MANUAL (EXCLUSIVO PARA A DANIELLE / ADM) -->
-  <dialog id="modalAdminAjuste">
-    <form id="formAdminAjuste">
+  <!-- MODAL: SOLICITAR EXCLUSÃO (COLABORADOR) -->
+  <dialog id="modalSolicitarExclusao">
+    <form id="formSolicitarExclusao">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);">Ajuste Manual Administrativo</h3>
+        <h3 style="font-size:16px; font-weight:800; color:var(--neg);">Solicitar Exclusão de Ponto</h3>
         <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
       </div>
-      <p class="muted" style="font-size:12px; margin-bottom:12px;">
-        Como Administradora, você pode corrigir entradas, saídas ou abonar atrasos de qualquer colaborador.
+      <p class="muted" style="font-size:12px; margin-bottom:14px;">
+        Para segurança e auditoria da empresa, a exclusão de um registro precisa ser aprovada pela gestão (Danielle).
       </p>
-      <input type="hidden" id="ajusteEntryId">
+      <input type="hidden" id="exclusaoEntryId">
       <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="ajusteData" required>
-      </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Entrada Corrigida</label>
-          <input type="time" id="ajusteEntrada" required>
-        </div>
-        <div class="form-group">
-          <label>Saída Corrigida</label>
-          <input type="time" id="ajusteSaida" required>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Motivo da Correção / Parecer da Gestão</label>
-        <input type="text" id="ajusteMotivo" placeholder="Ex: Ajustado conforme autorização da diretoria" required>
+        <label>Motivo da Exclusão</label>
+        <textarea id="exclusaoMotivo" required placeholder="Ex: Bati o ponto no dia errado por engano..." rows="3"></textarea>
       </div>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
         <button type="button" class="btn" data-close>Cancelar</button>
-        <button type="submit" class="btn-laranja" style="width:auto;">Salvar Ajuste ADM</button>
+        <button type="submit" class="btn-laranja" style="width:auto; background:var(--neg);">Enviar Solicitação</button>
       </div>
     </form>
   </dialog>
@@ -924,7 +941,7 @@
   <dialog id="modalFalta">
     <form id="formFalta">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-        <h3 style="font-size: 16px; font-weight: 800; color: var(--neg);">Registrar Ausência / Folga</h3>
+        <h3 style="font-size: 16px; font-weight: 800; color: var(--neg);">Registrar Ausência / Falta</h3>
         <button type="button" class="btn" data-close style="border: 0; padding: 4px 8px;">✕</button>
       </div>
 
@@ -936,18 +953,18 @@
         <div class="form-group">
           <label>Tipo de Ausência</label>
           <select id="faltaTipo">
-            <option value="injustificada">Ausência a Compensar (Desconta Meta Diária)</option>
-            <option value="atestado">Ausência Abonada / Justificada (0h)</option>
+            <option value="injustificada">Ausência a Compensar (Desconta Jornada)</option>
+            <option value="atestado">Atestado Médico (Abonada / Sem Desconto)</option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Descrição / Motivo</label>
-        <input type="text" id="faltaMotivo" placeholder="Ex: Consulta médica ou folga combinada" required>
+        <label>Descrição / Justificativa</label>
+        <input type="text" id="faltaMotivo" placeholder="Ex: Consulta médica ou compromisso acordado" required>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top:16px;">
         <button type="button" class="btn" data-close>Cancelar</button>
         <button type="submit" class="btn-laranja" style="width: auto; background: var(--neg);">Registrar Ausência</button>
       </div>
@@ -989,12 +1006,77 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label>Modalidade de Trabalho</label>
+        <select id="perfilModalidade">
+          <option value="pj8">Prestador PJ (8h/dia • 40h semanais)</option>
+          <option value="estagio6">Estágio (6h/dia • 30h semanais)</option>
+          <option value="estagio4">Estágio Meio Período (4h/dia • 20h semanais)</option>
+          <option value="custom">Personalizado (Horário livre)</option>
+        </select>
+      </div>
+
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
         <button type="button" class="btn" id="btnLogoutSession" style="color:var(--neg);">Sair da Conta</button>
         <div style="display:flex; gap:8px;">
           <button type="button" class="btn" data-close>Cancelar</button>
           <button type="submit" class="btn-laranja" style="width: auto;">Salvar Perfil</button>
         </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- MODAL: REGISTRAR DIA / PONTO MANUAL -->
+  <dialog id="modalPonto">
+    <form id="formPonto">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);" id="modalPontoTitle">Lançamento de Horas</h3>
+        <button type="button" class="btn" data-close style="border: 0; padding: 4px 8px;">✕</button>
+      </div>
+
+      <input type="hidden" id="entryEditId">
+
+      <div class="form-group">
+        <label for="pontoData">Data do Trabalho</label>
+        <input type="date" id="pontoData" required>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Horário de Entrada</label>
+          <input type="time" id="pontoEntrada" required>
+        </div>
+        <div class="form-group">
+          <label>Horário de Saída</label>
+          <input type="time" id="pontoSaida" required>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Intervalo de Almoço (minutos)</label>
+          <input type="number" id="pontoIntervalo" value="60" min="0" max="300" step="5">
+        </div>
+        <div class="form-group" style="justify-content: flex-end; padding-bottom: 6px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+            <input type="checkbox" id="pontoNextDay" style="width: auto;">
+            Virada de dia (+1d)
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Observação / Justificativa</label>
+        <input type="text" id="pontoObs" placeholder="Ex: Lançamento ajustado">
+      </div>
+
+      <div style="background: var(--card-sub); padding: 12px; border-radius: 8px; font-size: 13px; margin: 16px 0; border: 1px solid var(--border-color);" id="pontoCalculoPreview">
+        Calculando...
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn-laranja" style="width: auto;">Salvar Lançamento</button>
       </div>
     </form>
   </dialog>
@@ -1023,7 +1105,7 @@
 
       <div class="form-group">
         <label>Motivo</label>
-        <input type="text" id="usoMotivo" placeholder="Ex: Saída antecipada para compromisso" required>
+        <input type="text" id="usoMotivo" placeholder="Ex: Folga combinada ou saída antecipada" required>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
@@ -1033,11 +1115,21 @@
     </form>
   </dialog>
 
-  <!-- MODAL: CONFIGURAÇÕES -->
+  <!-- MODAL: CONFIGURAÇÕES GERAIS -->
   <dialog id="modalSettings">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-      <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Configurações de Jornada (PJ)</h3>
+      <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Configurações de Jornada</h3>
       <button type="button" class="btn" data-close style="border: 0;">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label>Modalidade de Contrato Padrão</label>
+      <select id="cfgModalidade">
+        <option value="pj8">Prestador PJ (8h/dia • 40h semanais)</option>
+        <option value="estagio6">Estágio (6h/dia • 30h semanais)</option>
+        <option value="estagio4">Estágio Meio Período (4h/dia • 20h semanais)</option>
+        <option value="custom">Personalizado (Horas Livres)</option>
+      </select>
     </div>
 
     <div class="form-group">
@@ -1049,9 +1141,9 @@
     </div>
 
     <div class="form-group">
-      <label>Duração do Almoço (minutos deduzidos automaticamente)</label>
+      <label>Duração do Almoço (minutos)</label>
       <input type="number" id="cfgIntervalo" value="60" min="0" max="180">
-      <small class="muted" style="font-size:11px" id="cfgCalculoMetaTexto">Meta líquida: 06:00 por dia</small>
+      <small class="muted" style="font-size:11px" id="cfgCalculoMetaTexto">Meta líquida calculada: 06:00 por dia útil</small>
     </div>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
@@ -1080,9 +1172,11 @@
       { d: '25/12', name: 'Natal' }
     ];
 
-    // Banco de aniversariantes da equipe (adicionados dinamicamente pelos perfis)
-    let teamBirthdays = [
-      { name: 'Danielle Silva', d: '12/05' }
+    // Lista da equipe (Danielle + membros sincronizados)
+    let teamMembers = [
+      { id: 'danielle_admin', name: 'Danielle Silva', email: 'marketing@realestatesp.com.br', role: 'Marketing / Gestão', birthDate: '1995-11-08', modality: 'pj8', balance: 0 },
+      { id: 'alex_consultor', name: 'Alex Santos', email: 'alex@realestatesp.com.br', role: 'Consultor Imobiliário', birthDate: '1998-05-15', modality: 'pj8', balance: 0 },
+      { id: 'estagiario_1', name: 'Lucas Gabriel', email: 'lucas@realestatesp.com.br', role: 'Estagiário de Marketing', birthDate: '2004-03-22', modality: 'estagio6', balance: 0 }
     ];
 
     function renderHolidaysList() {
@@ -1092,17 +1186,14 @@
       BRAZIL_HOLIDAYS.forEach(h => {
         const item = document.createElement('div');
         item.className = 'holiday-item';
-        item.innerHTML = `
-          <span class="holiday-name">${h.name}</span>
-          <span class="holiday-date">${h.d}</span>
-        `;
+        item.innerHTML = `<span class="holiday-name">${h.name}</span><span class="holiday-date">${h.d}</span>`;
         box.appendChild(item);
       });
       document.getElementById('holidayCountBadge').textContent = `${BRAZIL_HOLIDAYS.length}`;
     }
 
     /* =====================================================================
-       MINI CALENDÁRIO COM ANIVERSÁRIOS
+       MINI CALENDÁRIO COM ANIVERSARIANTES E FERIADOS
        ===================================================================== */
     let calCurrentDate = new Date();
 
@@ -1141,11 +1232,12 @@
         const dateKey = `${year}-${monthFmt}-${dayFmt}`;
         const dayMonthKey = `${dayFmt}/${monthFmt}`;
 
+        // Verifica se é feriado
         const isHoliday = BRAZIL_HOLIDAYS.some(h => h.d === dayMonthKey);
         if (isHoliday) cell.classList.add('holiday');
 
-        // Checa aniversariantes
-        const bdayMember = teamBirthdays.find(b => b.d === dayMonthKey);
+        // Verifica aniversariantes da equipe
+        const bdayMember = teamMembers.find(m => m.birthDate && m.birthDate.endsWith(`-${monthFmt}-${dayFmt}`));
         if (bdayMember) {
           cell.classList.add('birthday');
           cell.title = `🎂 Aniversário de ${bdayMember.name}`;
@@ -1171,28 +1263,51 @@
       }
     }
 
-    // Checa notificação de aniversário para amanhã
-    function checkTomorrowBirthdays() {
+    // Checagem de aniversários: hoje e amanhã
+    function checkBirthdaysNotification() {
+      const now = new Date();
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const dayFmt = String(tomorrow.getDate()).padStart(2, '0');
-      const monthFmt = String(tomorrow.getMonth() + 1).padStart(2, '0');
-      const tomorrowKey = `${dayFmt}/${monthFmt}`;
 
-      const bday = teamBirthdays.find(b => b.d === tomorrowKey);
+      const formatMD = (d) => `-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const todayKey = formatMD(now);
+      const tomorrowKey = formatMD(tomorrow);
+
+      const bdayToday = teamMembers.find(m => m.birthDate && m.birthDate.endsWith(todayKey));
+      const bdayTomorrow = teamMembers.find(m => m.birthDate && m.birthDate.endsWith(tomorrowKey));
+
       const alertBox = document.getElementById('birthdayAlertBox');
       const alertText = document.getElementById('birthdayAlertText');
+      const bellBadge = document.getElementById('bellCountBadge');
 
-      if (bday && alertBox && alertText) {
-        alertText.textContent = `🎉 Lembrete RealTime: Amanhã (${tomorrowKey}) é aniversário de ${bday.name}!`;
+      let notificationsCount = 0;
+
+      if (bdayToday) {
+        alertText.innerHTML = `🎉 <strong>Hoje é aniversário de ${bdayToday.name}!</strong> Não esqueça de parabenizar! 🎂`;
         alertBox.style.display = 'flex';
+        notificationsCount++;
+      } else if (bdayTomorrow) {
+        alertText.innerHTML = `🎂 <strong>Lembrete RealTime:</strong> Amanhã é aniversário de <strong>${bdayTomorrow.name}</strong>!`;
+        alertBox.style.display = 'flex';
+        notificationsCount++;
+      }
+
+      // Conta solicitações de exclusão pendentes para a ADM
+      const pendingExclusions = appState.entries.filter(e => e.status === 'pendente_exclusao').length;
+      if (isAdminUser) notificationsCount += pendingExclusions;
+
+      if (notificationsCount > 0) {
+        bellBadge.textContent = notificationsCount;
+        bellBadge.style.display = 'inline-block';
+      } else {
+        bellBadge.style.display = 'none';
       }
     }
 
     /* =====================================================================
-       CAPTURA AUTOMÁTICA DE IP E DISPOSITIVO
+       CAPTURA AUTOMÁTICA SILENCIOSA (IP & DISPOSITIVO)
        ===================================================================== */
-    let detectedIP = '191.185.24.112'; // Fallback simulado
+    let detectedIP = '191.185.24.112';
     let detectedDevice = 'Windows / Chrome';
 
     async function fetchClientMetadata() {
@@ -1209,21 +1324,16 @@
         else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
 
         detectedDevice = `${os} / ${browser}`;
-        document.getElementById('metaDispositivoDisplay').textContent = detectedDevice;
-
         const res = await fetch('https://api.ipify.org?format=json');
         if (res.ok) {
           const data = await res.json();
           detectedIP = data.ip;
         }
-      } catch (e) {
-        console.warn('IP local');
-      }
-      document.getElementById('metaIPDisplay').textContent = detectedIP;
+      } catch (e) {}
     }
 
     /* =====================================================================
-       MOTOR CORE DE CÁLCULO
+       MOTOR CORE DE CÁLCULO & REGRAS DE FINAIS DE SEMANA / FERIADOS
        ===================================================================== */
     const Core = {
       toMinutes(timeStr) {
@@ -1241,7 +1351,16 @@
         return `${sign}${h}:${m}`;
       },
 
-      calcPJ(entrada, saida, intervaloMin = 60, nextDay = false, expectedMinutes = 360) {
+      isWeekendOrHoliday(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dayOfWeek = new Date(y, m - 1, d).getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // Domingo ou Sábado
+        const dayMonth = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
+        const isHoliday = BRAZIL_HOLIDAYS.some(h => h.d === dayMonth);
+        return isWeekend || isHoliday;
+      },
+
+      calcPJ(entrada, saida, intervaloMin = 60, nextDay = false, expectedMinutes = 360, dateStr = '') {
         let mEntrada = Core.toMinutes(entrada);
         let mSaida = Core.toMinutes(saida);
         if (nextDay) mSaida += 1440;
@@ -1250,9 +1369,15 @@
         if (totalBruto < 0) totalBruto += 1440;
         
         let totalLiquido = Math.max(0, totalBruto - intervaloMin);
-        let saldo = totalLiquido - expectedMinutes;
 
-        return { totalBruto, totalLiquido, saldo };
+        // FINAIS DE SEMANA E FERIADOS: Meta zero (não gera débito; tudo que trabalhar é crédito positivo)
+        let metaDoDia = expectedMinutes;
+        if (dateStr && Core.isWeekendOrHoliday(dateStr)) {
+          metaDoDia = 0;
+        }
+
+        let saldo = totalLiquido - metaDoDia;
+        return { totalBruto, totalLiquido, saldo, metaDoDia };
       }
     };
 
@@ -1269,21 +1394,19 @@
       const intervalo = typeof e.intervalo === 'number' ? e.intervalo : 60;
       const nextDay = !!(e.nextDay || e.next);
       const obs = e.obs || e.n || '';
-      const ip = e.ip || detectedIP;
-      const device = e.device || detectedDevice;
-      const origin = e.origin || 'Home office';
-      const protocol = e.protocol || '#' + Math.floor(100000 + Math.random() * 900000);
+      const status = e.status || 'ativo'; // ativo ou pendente_exclusao
       const id = e.id || 'id_' + Math.random().toString(36).slice(2);
 
       let variation = 0;
       if (type === 'trabalhado') {
-        const calc = Core.calcPJ(entrada, saida, intervalo, nextDay, expectedMins);
+        const calc = Core.calcPJ(entrada, saida, intervalo, nextDay, expectedMins, date);
         variation = calc.saldo;
       } else {
-        variation = typeof e.variation === 'number' ? e.variation : (typeof e.m === 'number' ? e.m : -expectedMins);
+        const isFimDeSemana = Core.isWeekendOrHoliday(date);
+        variation = typeof e.variation === 'number' ? e.variation : (isFimDeSemana ? 0 : -expectedMins);
       }
       
-      return { id, date, variation, type, entrada, saida, intervalo, obs, nextDay, ip, device, origin, protocol };
+      return { id, date, variation, type, entrada, saida, intervalo, obs, nextDay, status };
     }
 
     /* =====================================================================
@@ -1297,13 +1420,14 @@
     }
 
     let appState = {
-      config: { entrada: '09:00', saida: '16:00', intervalo: 60, expected: 360 },
+      config: { modalidade: 'pj8', entrada: '09:00', saida: '16:00', intervalo: 60, expected: 360 },
       profile: {
         name: 'Danielle Silva',
         email: 'marketing@realestatesp.com.br',
-        role: 'Marketing',
+        role: 'Marketing / Gestão',
         company: 'Real Estate São Paulo',
-        birthDate: '1995-05-12',
+        birthDate: '1995-11-08',
+        modalidade: 'pj8',
         photo: ''
       },
       entries: [],
@@ -1311,8 +1435,17 @@
     };
 
     function recalculateExpected() {
-      const span = Core.toMinutes(appState.config.saida) - Core.toMinutes(appState.config.entrada);
-      appState.config.expected = Math.max(0, span - (appState.config.intervalo !== undefined ? appState.config.intervalo : 60));
+      const mod = appState.config.modalidade || 'pj8';
+      if (mod === 'estagio6') {
+        appState.config.expected = 360; // 6h líquidas
+      } else if (mod === 'estagio4') {
+        appState.config.expected = 240; // 4h líquidas
+      } else if (mod === 'pj8') {
+        appState.config.expected = 480; // 8h líquidas
+      } else {
+        const span = Core.toMinutes(appState.config.saida) - Core.toMinutes(appState.config.entrada);
+        appState.config.expected = Math.max(0, span - (appState.config.intervalo !== undefined ? appState.config.intervalo : 60));
+      }
     }
 
     function recalculateAllEntries() {
@@ -1347,6 +1480,7 @@
         renderDashboard();
         renderMiniCalendar();
         renderMonthlyChart();
+        checkBirthdaysNotification();
         syncWithCloud();
       } catch (e) {
         showToast('Erro ao salvar');
@@ -1362,20 +1496,21 @@
     }
 
     /* =====================================================================
-       SOLUÇÃO 2: PRIMEIRO ACESSO SILENCIOSO AUTOMÁTICO
+       SOLUÇÃO 2: PRIMEIRO ACESSO SILENCIOSO AUTOMÁTICO (EM DIAS ÚTEIS)
        ===================================================================== */
     function checkDailySilentArrival() {
       const todayStr = new Date().toISOString().slice(0, 10);
-      let entry = appState.entries.find(e => e.date === todayStr);
+      
+      // NÃO COMPUTA AUTOMATICAMENTE EM FINAIS DE SEMANA E FERIADOS
+      if (Core.isWeekendOrHoliday(todayStr)) {
+        return;
+      }
 
+      let entry = appState.entries.find(e => e.date === todayStr);
       const now = new Date();
       const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      // Se não existe registro de hoje, grava silenciosamente o primeiro acesso
       if (!entry) {
-        const defaultSaida = appState.config.saida || '16:00';
-        const calc = Core.calcPJ(timeNow, defaultSaida, appState.config.intervalo || 60, false, appState.config.expected || 360);
-
         appState.entries.push({
           id: 'id_' + Date.now(),
           date: todayStr,
@@ -1385,20 +1520,17 @@
           intervalo: appState.config.intervalo || 60,
           nextDay: false,
           variation: 0,
-          obs: 'Presença iniciada pelo primeiro acesso',
-          ip: detectedIP,
-          device: detectedDevice,
-          origin: document.getElementById('selectOrigemTrabalho').value,
-          protocol: '#' + Math.floor(100000 + Math.random() * 900000)
+          obs: 'Presença iniciada pelo 1º acesso',
+          status: 'ativo'
         });
 
         saveLocal();
-        showToast(`Presença digital registrada às ${timeNow} • IP: ${detectedIP}`);
+        showToast(`Presença digital confirmada às ${timeNow} • Bom trabalho!`);
       }
     }
 
     /* =====================================================================
-       FINALIZAR EXPEDIENTE COM AUDITORIA (SEM DIGITAR)
+       1-TOQUE: FINALIZAR EXPEDIENTE
        ===================================================================== */
     function finalizarDiaInstantaneo() {
       const now = new Date();
@@ -1409,9 +1541,8 @@
       let entrada = entry ? entry.entrada : (appState.config.entrada || '09:00');
       let saida = timeNow;
       let intervalo = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
-      let origin = document.getElementById('selectOrigemTrabalho').value;
 
-      const calc = Core.calcPJ(entrada, saida, intervalo, false, appState.config.expected || 360);
+      const calc = Core.calcPJ(entrada, saida, intervalo, false, appState.config.expected || 360, todayStr);
 
       appState.entries = appState.entries.filter(e => e.date !== todayStr);
       const newEntry = {
@@ -1424,39 +1555,12 @@
         nextDay: false,
         variation: calc.saldo,
         obs: calc.saldo < 0 ? 'Atraso não compensado' : (calc.saldo > 0 ? 'Hora extra realizada' : 'Jornada cumprida'),
-        ip: detectedIP,
-        device: detectedDevice,
-        origin: origin,
-        protocol: '#' + Math.floor(100000 + Math.random() * 900000)
+        status: 'ativo'
       };
 
       appState.entries.push(newEntry);
       saveLocal();
-
-      // Exibe modal comprovante igual Imagem 2
-      openReceiptModal(newEntry);
-    }
-
-    function openReceiptModal(entry) {
-      const box = document.getElementById('receiptContentBox');
-      const [y, m, d] = entry.date.split('-');
-      box.innerHTML = `
-        <h4>Registro de Expediente e Banco de Horas</h4>
-        <ul>
-          <li><strong>Colaborador:</strong> ${appState.profile.name}</li>
-          <li><strong>Data:</strong> ${d}/${m}/${y}</li>
-          <li><strong>1º Acesso (Entrada):</strong> ${entry.entrada}</li>
-          <li><strong>Horário Registrado (Saída):</strong> ${entry.saida}</li>
-          <li><strong>Horário Padrão de Saída:</strong> ${appState.config.saida}</li>
-          <li><strong>Saldo / Tempo Calculado:</strong> <span class="${entry.variation >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(entry.variation, true)}</span></li>
-          <li><strong>Origem do Trabalho:</strong> ${entry.origin || 'Home office'}</li>
-          <li><strong>IP da Conexão:</strong> ${entry.ip || detectedIP}</li>
-          <li><strong>Dispositivo / Navegador:</strong> ${entry.device || detectedDevice}</li>
-          <li><strong>Protocolo de Auditoria:</strong> ${entry.protocol || '#000184'}</li>
-          <li><strong>Status:</strong> Validado e Gravado</li>
-        </ul>
-      `;
-      document.getElementById('modalComprovante').showModal();
+      showToast(`Expediente finalizado às ${saida}! Saldo: ${Core.fromMinutes(calc.saldo, true)}`);
     }
 
     /* =====================================================================
@@ -1466,7 +1570,16 @@
       const p = appState.profile;
       document.getElementById('topProfileName').textContent = p.name;
       document.getElementById('heroUserGreeting').textContent = `${getGreeting()}, ${p.name}`;
-      document.getElementById('heroRoleCompanyBadge').textContent = `${p.role} • ${p.company}`;
+      
+      const modLabels = {
+        pj8: 'Prestador PJ (8h/dia)',
+        estagio6: 'Estágio (6h/dia)',
+        estagio4: 'Estágio Meio Período (4h/dia)',
+        custom: 'Personalizado'
+      };
+      const labelModalidade = modLabels[p.modalidade || 'pj8'] || 'PJ';
+      document.getElementById('heroRoleCompanyBadge').textContent = `${p.role || 'Consultoria'} • ${labelModalidade} • ${p.company}`;
+      document.getElementById('tagContratoHoje').textContent = labelModalidade;
 
       const initials = (p.name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
       const setAvatar = (el) => {
@@ -1483,15 +1596,20 @@
       document.getElementById('perfilEmail').value = p.email;
       document.getElementById('perfilCargo').value = p.role;
       document.getElementById('perfilBirthDate').value = p.birthDate || '';
+      document.getElementById('perfilModalidade').value = p.modalidade || 'pj8';
 
-      // Verifica se é a Danielle (Super Admin)
-      isAdminUser = p.email.toLowerCase().includes('marketing') || p.email.toLowerCase().includes('danielle') || p.role.toLowerCase().includes('admin');
+      // Danielle como ADM
+      isAdminUser = p.email.toLowerCase().includes('marketing') || p.email.toLowerCase().includes('danielle') || p.role.toLowerCase().includes('gestão');
       
-      const adminSelector = document.getElementById('adminTeamSelectorWrap');
-      const btnAdminAjuste = document.getElementById('btnAdminAjusteManual');
+      const tabEquipe = document.getElementById('tabTeamAdmin');
+      const tabAprovacoes = document.getElementById('tabApprovals');
+
       if (isAdminUser) {
-        if (adminSelector) adminSelector.style.display = 'flex';
-        if (btnAdminAjuste) btnAdminAjuste.style.display = 'inline-flex';
+        if (tabEquipe) tabEquipe.style.display = 'inline-flex';
+        if (tabAprovacoes) tabAprovacoes.style.display = 'inline-flex';
+      } else {
+        if (tabEquipe) tabEquipe.style.display = 'none';
+        if (tabAprovacoes) tabAprovacoes.style.display = 'none';
       }
     }
 
@@ -1547,7 +1665,7 @@
     }
 
     /* =====================================================================
-       DASHBOARD
+       DASHBOARD & TABELA COM STATUS DE EXCLUSÃO
        ===================================================================== */
     function renderDashboard() {
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -1559,22 +1677,21 @@
       document.getElementById('heroGreetingDate').textContent = `${diasSemanaExt[dObj.getDay()]}, ${diaT} de ${mesesExt[dObj.getMonth()]}`;
 
       renderProfile();
-      checkTomorrowBirthdays();
+      checkBirthdaysNotification();
 
       const expHours = Core.fromMinutes(appState.config.expected || 360);
-      document.getElementById('labelSaldoDiaMeta').textContent = `Saldo do Dia (vs ${expHours})`;
+      document.getElementById('labelSaldoDiaMeta').textContent = `Saldo do Dia (Meta: ${expHours})`;
 
       const todayEntry = appState.entries.find(e => e.date === todayStr);
       const liveDot = document.getElementById('liveStatusDot');
       const liveText = document.getElementById('liveStatusText');
 
       if (todayEntry) {
-        document.getElementById('metaPrimeiroAcesso').textContent = todayEntry.entrada;
-        document.getElementById('metaSaidaDisplay').textContent = todayEntry.saida || 'Em andamento';
-        document.getElementById('tagOrigemHoje').textContent = todayEntry.origin || 'Home office';
+        document.getElementById('timeEntradaDisplay').textContent = todayEntry.entrada || '--:--';
+        document.getElementById('timeSaidaDisplay').textContent = todayEntry.saida || '--:--';
 
         if (todayEntry.saida) {
-          const calc = Core.calcPJ(todayEntry.entrada, todayEntry.saida, todayEntry.intervalo, todayEntry.nextDay, appState.config.expected || 360);
+          const calc = Core.calcPJ(todayEntry.entrada, todayEntry.saida, todayEntry.intervalo, todayEntry.nextDay, appState.config.expected || 360, todayStr);
           document.getElementById('statHorasHoje').textContent = Core.fromMinutes(calc.totalLiquido);
           document.getElementById('statSaldoHoje').textContent = Core.fromMinutes(todayEntry.variation, true);
           document.getElementById('statSaldoHoje').className = `metric-value ${todayEntry.variation >= 0 ? 'pos' : 'neg'}`;
@@ -1583,9 +1700,16 @@
         } else {
           document.getElementById('statHorasHoje').textContent = 'Em curso';
           document.getElementById('statSaldoHoje').textContent = '+00:00';
-          liveText.textContent = `Em andamento (iniciado às ${todayEntry.entrada})`;
+          liveText.textContent = `Em atividade (iniciado às ${todayEntry.entrada})`;
           liveDot.className = 'live-dot';
         }
+      } else {
+        document.getElementById('timeEntradaDisplay').textContent = '--:--';
+        document.getElementById('timeSaidaDisplay').textContent = '--:--';
+        document.getElementById('statHorasHoje').textContent = '00:00';
+        document.getElementById('statSaldoHoje').textContent = '+00:00';
+        liveText.textContent = 'Expediente Não Iniciado';
+        liveDot.className = 'live-dot idle';
       }
 
       let totalSaldo = 0;
@@ -1613,7 +1737,7 @@
       const filtered = appState.entries.filter(e => {
         if (!e || !e.date) return false;
         const matchMonth = !filterMonth || e.date.startsWith(filterMonth);
-        const matchSearch = !searchQuery || (e.obs && e.obs.toLowerCase().includes(searchQuery)) || (e.ip && e.ip.includes(searchQuery));
+        const matchSearch = !searchQuery || (e.obs && e.obs.toLowerCase().includes(searchQuery));
         return matchMonth && matchSearch;
       });
 
@@ -1622,6 +1746,8 @@
         const tr = document.createElement('tr');
         const [y, m, d] = entry.date.split('-');
 
+        const isPendingDeletion = entry.status === 'pendente_exclusao';
+
         tr.innerHTML = `
           <td><strong>${d}/${m}/${y}</strong></td>
           <td>
@@ -1629,7 +1755,9 @@
             ${entry.obs ? `<div class="muted" style="font-size:11px;">${entry.obs}</div>` : ''}
           </td>
           <td>
-            <span class="tag neutral">${entry.origin || 'Home office'}</span>
+            ${isPendingDeletion 
+              ? `<span class="tag pending">⏳ Exclusão Solicitada</span>` 
+              : `<span class="tag neutral">${entry.type === 'uso' ? 'Compensação' : 'Trabalhado'}</span>`}
           </td>
           <td style="text-align: right;" class="mono ${entry.variation >= 0 ? 'pos' : 'neg'}">
             <strong>${Core.fromMinutes(entry.variation, true)}</strong>
@@ -1638,8 +1766,10 @@
             <strong>${Core.fromMinutes(totalSaldo)}</strong>
           </td>
           <td style="text-align: center;">
-            <button class="btn" style="padding: 4px 8px;" onclick="viewEntryReceipt('${entry.id}')">📋 Ver</button>
-            ${isAdminUser ? `<button class="btn" style="padding: 4px 8px; color:var(--c-laranja);" onclick="adminEditEntry('${entry.id}')">✏️ Ajustar</button>` : ''}
+            <button class="btn" style="padding: 4px 8px;" onclick="editEntry('${entry.id}')">Editar</button>
+            <button class="btn" style="padding: 4px 8px; color: var(--neg);" onclick="handleDeleteEntry('${entry.id}')">
+              ${isAdminUser ? '✕ Excluir' : '🗑️ Pedir Exclusão'}
+            </button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1648,22 +1778,124 @@
       const statBalanceEl = document.getElementById('statBalance');
       statBalanceEl.textContent = Core.fromMinutes(totalSaldo);
       statBalanceEl.className = `metric-value ${totalSaldo >= 0 ? 'pos' : 'neg'}`;
+
+      // Renderiza telas de ADM se for Danielle
+      if (isAdminUser) {
+        renderTeamManagement();
+        renderPendingApprovals();
+      }
     }
 
-    function viewEntryReceipt(id) {
-      const entry = appState.entries.find(e => e.id === id);
-      if (entry) openReceiptModal(entry);
-    }
-
-    function adminEditEntry(id) {
+    /* =====================================================================
+       FLUXO DE EXCLUSÃO INTELIGENTE COM APROVAÇÃO ADM
+       ===================================================================== */
+    function handleDeleteEntry(id) {
       const entry = appState.entries.find(e => e.id === id);
       if (!entry) return;
-      document.getElementById('ajusteEntryId').value = entry.id;
-      document.getElementById('ajusteData').value = entry.date;
-      document.getElementById('ajusteEntrada').value = entry.entrada;
-      document.getElementById('ajusteSaida').value = entry.saida || '16:00';
-      document.getElementById('ajusteMotivo').value = entry.obs || '';
-      document.getElementById('modalAdminAjuste').showModal();
+
+      if (isAdminUser) {
+        // Danielle exclui na hora com confirmação
+        if (confirm(`Como Administradora, deseja excluir definitivamente o registro de ${entry.date}?`)) {
+          appState.entries = appState.entries.filter(e => e.id !== id);
+          saveLocal();
+          showToast('Registro excluído pela Administradora.');
+        }
+      } else {
+        // Colaborador comum envia pedido de aprovação
+        document.getElementById('exclusaoEntryId').value = id;
+        document.getElementById('exclusaoMotivo').value = '';
+        document.getElementById('modalSolicitarExclusao').showModal();
+      }
+    }
+
+    document.getElementById('formSolicitarExclusao').onsubmit = (e) => {
+      e.preventDefault();
+      const id = document.getElementById('exclusaoEntryId').value;
+      const motivo = document.getElementById('exclusaoMotivo').value;
+
+      const entry = appState.entries.find(x => x.id === id);
+      if (entry) {
+        entry.status = 'pendente_exclusao';
+        entry.obs = `[Solicitada Exclusão: ${motivo}] ${entry.obs || ''}`;
+        saveLocal();
+        document.getElementById('modalSolicitarExclusao').close();
+        showToast('Solicitação de exclusão enviada para a aprovação da Danielle!');
+      }
+    };
+
+    /* =====================================================================
+       PAINEL GESTÃO DA EQUIPE (EXCLUSIVO ADM)
+       ===================================================================== */
+    function renderTeamManagement() {
+      const tbody = document.getElementById('teamMembersTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      teamMembers.forEach(m => {
+        const tr = document.createElement('tr');
+        const modLabels = { pj8: 'Prestador PJ', estagio6: 'Estágio 6h', estagio4: 'Estágio 4h', custom: 'Personalizado' };
+        
+        tr.innerHTML = `
+          <td><strong>${m.name}</strong><br><small class="muted">${m.email}</small></td>
+          <td>${m.role}</td>
+          <td><span class="tag neutral">${modLabels[m.modality] || 'PJ'}</span></td>
+          <td>${m.modality === 'estagio6' ? '06:00 líquidas' : (m.modality === 'estagio4' ? '04:00 líquidas' : '08:00 líquidas')}</td>
+          <td>${m.birthDate ? m.birthDate.split('-').reverse().join('/') : '—'}</td>
+          <td class="mono"><strong>${Core.fromMinutes(m.balance || 0)}</strong></td>
+          <td style="text-align:center;">
+            <button class="btn btn-sm" onclick="adminEditMemberModal('${m.id}')">Editar Carga / Perfil</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderPendingApprovals() {
+      const tbody = document.getElementById('pendingApprovalsTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const pending = appState.entries.filter(e => e.status === 'pendente_exclusao');
+      document.getElementById('pendingCountTab').textContent = pending.length;
+      document.getElementById('badgePendingCount').textContent = `${pending.length} pendentes`;
+
+      if (pending.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;" class="muted">Nenhuma solicitação de exclusão pendente.</td></tr>';
+        return;
+      }
+
+      pending.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${e.date}</strong></td>
+          <td>${appState.profile.name}</td>
+          <td>${e.entrada} → ${e.saida}</td>
+          <td>${e.obs}</td>
+          <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
+            <button class="btn btn-sm" style="background:var(--pos); color:#fff; border:0;" onclick="adminApproveDeletion('${e.id}')">✓ Aprovar</button>
+            <button class="btn btn-sm" style="color:var(--neg);" onclick="adminRejectDeletion('${e.id}')">✕ Recusar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function adminApproveDeletion(id) {
+      if (confirm('Aprovar a exclusão deste ponto? Ele será apagado definitivamente.')) {
+        appState.entries = appState.entries.filter(e => e.id !== id);
+        saveLocal();
+        showToast('Exclusão aprovada com sucesso.');
+      }
+    }
+
+    function adminRejectDeletion(id) {
+      const entry = appState.entries.find(e => e.id === id);
+      if (entry) {
+        entry.status = 'ativo';
+        entry.obs = entry.obs.replace(/\[Solicitada Exclusão:.*?\]/g, '');
+        saveLocal();
+        showToast('Solicitação de exclusão recusada. O ponto foi mantido.');
+      }
     }
 
     /* =====================================================================
@@ -1684,58 +1916,84 @@
 
       safeAddListener('btnFinalizarDiaInstantaneo', 'click', finalizarDiaInstantaneo);
       safeAddListener('btnFinalizarDiaHero', 'click', finalizarDiaInstantaneo);
-      safeAddListener('btnVerComprovanteHoje', 'click', () => {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const entry = appState.entries.find(e => e.date === todayStr);
-        if (entry) openReceiptModal(entry);
-        else showToast('Nenhum registro finalizado hoje ainda.');
-      });
 
-      safeAddListener('btnAdminAjusteManual', 'click', () => {
-        document.getElementById('formAdminAjuste').reset();
-        document.getElementById('ajusteEntryId').value = '';
-        document.getElementById('ajusteData').valueAsDate = new Date();
-        document.getElementById('ajusteEntrada').value = '09:00';
-        document.getElementById('ajusteSaida').value = '16:00';
-        document.getElementById('modalAdminAjuste').showModal();
-      });
-
-      safeAddListener('formAdminAjuste', 'submit', (e) => {
-        e.preventDefault();
-        const id = document.getElementById('ajusteEntryId').value || 'id_' + Date.now();
-        const data = document.getElementById('ajusteData').value;
-        const entrada = document.getElementById('ajusteEntrada').value;
-        const saida = document.getElementById('ajusteSaida').value;
-        const motivo = document.getElementById('ajusteMotivo').value;
-
-        const calc = Core.calcPJ(entrada, saida, appState.config.intervalo || 60, false, appState.config.expected || 360);
-
-        appState.entries = appState.entries.filter(x => x.id !== id);
-        appState.entries.push({
-          id,
-          date: data,
-          type: 'trabalhado',
-          entrada,
-          saida,
-          intervalo: appState.config.intervalo || 60,
-          nextDay: false,
-          variation: calc.saldo,
-          obs: `[Ajuste ADM Danielle] ${motivo}`,
-          ip: detectedIP,
-          device: detectedDevice,
-          origin: 'Ajuste Gestor',
-          protocol: '#' + Math.floor(100000 + Math.random() * 900000)
-        });
-
-        saveLocal();
-        document.getElementById('modalAdminAjuste').close();
-        showToast('Ajuste administrativo gravado com sucesso!');
+      // Lançamento manual
+      safeAddListener('btnBaterPontoAgora', 'click', () => {
+        document.getElementById('formPonto').reset();
+        document.getElementById('entryEditId').value = '';
+        document.getElementById('pontoData').valueAsDate = new Date();
+        document.getElementById('pontoEntrada').value = appState.config.entrada || '09:00';
+        document.getElementById('pontoSaida').value = appState.config.saida || '16:00';
+        document.getElementById('pontoIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+        document.getElementById('modalPonto').showModal();
       });
 
       safeAddListener('btnRegistrarAusencia', 'click', () => {
         document.getElementById('formFalta').reset();
         document.getElementById('faltaData').valueAsDate = new Date();
         document.getElementById('modalFalta').showModal();
+      });
+
+      safeAddListener('btnOpenProfile', 'click', () => document.getElementById('modalPerfil').showModal());
+      safeAddListener('heroAvatarLarge', 'click', () => document.getElementById('modalPerfil').showModal());
+
+      safeAddListener('btnSettings', 'click', () => {
+        document.getElementById('cfgModalidade').value = appState.config.modalidade || 'pj8';
+        document.getElementById('cfgEntrada').value = appState.config.entrada || '09:00';
+        document.getElementById('cfgSaida').value = appState.config.saida || '16:00';
+        document.getElementById('cfgIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+        document.getElementById('modalSettings').showModal();
+      });
+
+      // Mudança de modalidade de contrato nas configurações
+      safeAddListener('cfgModalidade', 'change', (e) => {
+        const val = e.target.value;
+        const inEntrada = document.getElementById('cfgEntrada');
+        const inSaida = document.getElementById('cfgSaida');
+        const inInt = document.getElementById('cfgIntervalo');
+        const txt = document.getElementById('cfgCalculoMetaTexto');
+
+        if (val === 'estagio6') {
+          inEntrada.value = '10:00';
+          inSaida.value = '17:00';
+          inInt.value = '60';
+          txt.textContent = 'Meta líquida calculada: 06:00 por dia útil (Estágio 30h semanais)';
+        } else if (val === 'estagio4') {
+          inEntrada.value = '08:00';
+          inSaida.value = '12:00';
+          inInt.value = '0';
+          txt.textContent = 'Meta líquida calculada: 04:00 por dia útil (Estágio Meio Período)';
+        } else if (val === 'pj8') {
+          inEntrada.value = '08:00';
+          inSaida.value = '17:00';
+          inInt.value = '60';
+          txt.textContent = 'Meta líquida calculada: 08:00 por dia útil (Padrão PJ 40h semanais)';
+        }
+      });
+
+      safeAddListener('formPerfil', 'submit', (e) => {
+        e.preventDefault();
+        appState.profile.name = document.getElementById('perfilNome').value;
+        appState.profile.role = document.getElementById('perfilCargo').value;
+        appState.profile.birthDate = document.getElementById('perfilBirthDate').value;
+        appState.profile.modalidade = document.getElementById('perfilModalidade').value;
+        appState.config.modalidade = appState.profile.modalidade;
+        recalculateAllEntries();
+        saveLocal();
+        document.getElementById('modalPerfil').close();
+        showToast('Perfil salvo com sucesso!');
+      });
+
+      safeAddListener('btnSaveConfigs', 'click', () => {
+        appState.config.modalidade = document.getElementById('cfgModalidade').value;
+        appState.config.entrada = document.getElementById('cfgEntrada').value;
+        appState.config.saida = document.getElementById('cfgSaida').value;
+        appState.config.intervalo = Number(document.getElementById('cfgIntervalo').value);
+        appState.profile.modalidade = appState.config.modalidade;
+        recalculateAllEntries();
+        saveLocal();
+        document.getElementById('modalSettings').close();
+        showToast('Preferências e carga horária atualizadas!');
       });
 
       safeAddListener('formFalta', 'submit', (e) => {
@@ -1745,7 +2003,8 @@
         const motivo = document.getElementById('faltaMotivo').value;
 
         const isAbonada = tipo === 'atestado';
-        const varMin = isAbonada ? 0 : -(appState.config.expected || 360);
+        const isFimDeSemana = Core.isWeekendOrHoliday(data);
+        const varMin = (isAbonada || isFimDeSemana) ? 0 : -(appState.config.expected || 360);
 
         appState.entries.push({
           id: 'falta_' + Date.now(),
@@ -1756,75 +2015,33 @@
           intervalo: 0,
           variation: varMin,
           obs: `${isAbonada ? '[Atestado] ' : '[Ausência] '} ${motivo}`,
-          origin: 'Ausência'
+          status: 'ativo'
         });
 
         saveLocal();
         document.getElementById('modalFalta').close();
-        showToast('Ausência registrada!');
+        showToast('Ausência registrada com sucesso.');
       });
 
-      safeAddListener('btnUseHours', 'click', () => {
-        document.getElementById('formUso').reset();
-        document.getElementById('usoData').valueAsDate = new Date();
-        document.getElementById('modalUso').showModal();
-      });
-
-      safeAddListener('formUso', 'submit', (e) => {
+      safeAddListener('formPonto', 'submit', (e) => {
         e.preventDefault();
-        const data = document.getElementById('usoData').value;
-        const horas = Number(document.getElementById('usoHoras').value) || 0;
-        const minutos = Number(document.getElementById('usoMinutos').value) || 0;
-        const totalMins = (horas * 60) + minutos;
+        const id = document.getElementById('entryEditId').value || 'id_' + Date.now();
+        const data = document.getElementById('pontoData').value;
+        const entrada = document.getElementById('pontoEntrada').value;
+        const saida = document.getElementById('pontoSaida').value;
+        const intervalo = Number(document.getElementById('pontoIntervalo').value) || 0;
+        const nextDay = document.getElementById('pontoNextDay').checked;
+        const obs = document.getElementById('pontoObs').value;
 
-        if (totalMins <= 0) return alert('Informe um tempo válido.');
+        const calc = Core.calcPJ(entrada, saida, intervalo, nextDay, appState.config.expected || 360, data);
 
+        appState.entries = appState.entries.filter(x => x.id !== id);
         appState.entries.push({
-          id: 'uso_' + Date.now(),
-          date: data,
-          type: 'uso',
-          entrada: '00:00',
-          saida: '00:00',
-          intervalo: 0,
-          variation: -totalMins,
-          obs: `[Compensação] ${document.getElementById('usoMotivo').value}`,
-          origin: 'Banco'
+          id, date: data, type: 'trabalhado', entrada, saida, intervalo, nextDay, variation: calc.saldo, obs, status: 'ativo'
         });
 
         saveLocal();
-        document.getElementById('modalUso').close();
-      });
-
-      safeAddListener('btnOpenProfile', 'click', () => document.getElementById('modalPerfil').showModal());
-      safeAddListener('heroAvatarClick', 'click', () => document.getElementById('modalPerfil').showModal());
-      safeAddListener('btnSettings', 'click', () => {
-        document.getElementById('cfgEntrada').value = appState.config.entrada || '09:00';
-        document.getElementById('cfgSaida').value = appState.config.saida || '16:00';
-        document.getElementById('cfgIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
-        document.getElementById('modalSettings').showModal();
-      });
-
-      safeAddListener('btnTrocarFoto', 'click', () => document.getElementById('profilePhotoInput').click());
-      safeAddListener('profilePhotoInput', 'change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          appState.profile.photo = ev.target.result;
-          renderProfile();
-        };
-        reader.readAsDataURL(file);
-      });
-
-      safeAddListener('formPerfil', 'submit', (e) => {
-        e.preventDefault();
-        appState.profile.name = document.getElementById('perfilNome').value;
-        appState.profile.role = document.getElementById('perfilCargo').value;
-        appState.profile.birthDate = document.getElementById('perfilBirthDate').value;
-        saveLocal();
-        renderProfile();
-        document.getElementById('modalPerfil').close();
-        showToast('Perfil salvo!');
+        document.getElementById('modalPonto').close();
       });
 
       safeAddListener('btnThemeToggle', 'click', () => {
@@ -1835,29 +2052,6 @@
         saveLocal();
       });
 
-      safeAddListener('btnSaveConfigs', 'click', () => {
-        appState.config.entrada = document.getElementById('cfgEntrada').value;
-        appState.config.saida = document.getElementById('cfgSaida').value;
-        appState.config.intervalo = Number(document.getElementById('cfgIntervalo').value);
-        recalculateAllEntries();
-        saveLocal();
-        document.getElementById('modalSettings').close();
-        showToast('Configurações salvas e histórico recalculado!');
-      });
-
-      safeAddListener('btnExportCSV', 'click', () => {
-        let csv = 'Data,Entrada,Saida,Intervalo,Variação(Min),Saldo(Formatado),Origem,IP,Dispositivo,Protocolo\n';
-        appState.entries.forEach(e => {
-          const parts = e.date.split('-');
-          csv += `"${parts[2]}/${parts[1]}/${parts[0]}","${e.entrada || ''}","${e.saida || ''}","${e.intervalo || 60}","${e.variation}","${Core.fromMinutes(e.variation, true)}","${e.origin || ''}","${e.ip || ''}","${e.device || ''}","${e.protocol || ''}"\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `extrato_realtime_${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
-      });
-
       safeAddListener('btnTopLogout', 'click', async () => {
         if (confirm('Deseja sair da sua conta?')) {
           if (sbClient) await sbClient.auth.signOut();
@@ -1866,16 +2060,53 @@
       });
       safeAddListener('btnLogoutSession', 'click', () => document.getElementById('btnTopLogout').click());
 
+      // Navegação por abas principais
+      document.querySelectorAll('.main-nav-tabs button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.main-nav-tabs button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const viewId = btn.getAttribute('data-view');
+          document.getElementById('v-banco').style.display = viewId === 'v-banco' ? 'block' : 'none';
+          document.getElementById('v-equipe').style.display = viewId === 'v-equipe' ? 'block' : 'none';
+          document.getElementById('v-aprovacoes').style.display = viewId === 'v-aprovacoes' ? 'block' : 'none';
+        });
+      });
+
       safeAddListener('searchTableInput', 'input', renderDashboard);
       safeAddListener('filterMonth', 'change', renderDashboard);
-      safeAddListener('btnCalPrev', 'click', () => {
-        calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
-        renderMiniCalendar();
+      safeAddListener('btnCalPrev', 'click', () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); renderMiniCalendar(); });
+      safeAddListener('btnCalNext', 'click', () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); renderMiniCalendar(); });
+
+      safeAddListener('btnExportCSV', 'click', () => {
+        let csv = 'Data,Entrada,Saida,Intervalo,Variacao(Min),Saldo(Formatado),Status,Observacao\n';
+        appState.entries.forEach(e => {
+          const parts = e.date.split('-');
+          csv += `"${parts[2]}/${parts[1]}/${parts[0]}","${e.entrada || ''}","${e.saida || ''}","${e.intervalo || 60}","${e.variation}","${Core.fromMinutes(e.variation, true)}","${e.status || 'ativo'}","${e.obs || ''}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `extrato_realtime_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
       });
-      safeAddListener('btnCalNext', 'click', () => {
-        calCurrentDate.setMonth(calCurrentDate.getMonth() + 1);
-        renderMiniCalendar();
+
+      safeAddListener('btnNotificationBell', 'click', () => {
+        showToast('Notificações checadas! Verifique aniversários e solicitações.');
       });
+    }
+
+    function editEntry(id) {
+      const item = appState.entries.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById('entryEditId').value = item.id;
+      document.getElementById('pontoData').value = item.date;
+      document.getElementById('pontoEntrada').value = item.entrada || '09:00';
+      document.getElementById('pontoSaida').value = item.saida || '16:00';
+      document.getElementById('pontoIntervalo').value = item.intervalo !== undefined ? item.intervalo : 60;
+      document.getElementById('pontoNextDay').checked = !!item.nextDay;
+      document.getElementById('pontoObs').value = item.obs || '';
+      document.getElementById('modalPonto').showModal();
     }
 
     /* =====================================================================
@@ -1919,6 +2150,10 @@
       if (meta.name) appState.profile.name = meta.name;
       if (meta.role) appState.profile.role = meta.role;
       if (meta.birthDate) appState.profile.birthDate = meta.birthDate;
+      if (meta.modalidade) {
+        appState.profile.modalidade = meta.modalidade;
+        appState.config.modalidade = meta.modalidade;
+      }
 
       loadLocal();
       renderDashboard();
@@ -2024,6 +2259,7 @@
         const name = document.getElementById('authName').value.trim();
         const role = document.getElementById('authRole').value.trim();
         const birthDate = document.getElementById('authBirthDate').value;
+        const modalidade = document.getElementById('authModalidade').value;
 
         msgBox.textContent = '';
         btnSubmit.disabled = true;
@@ -2040,7 +2276,7 @@
             const { data, error } = await sbClient.auth.signUp({
               email,
               password,
-              options: { data: { name: name || 'Colaborador', role: role || 'Consultor Imobiliário', birthDate: birthDate || '' } }
+              options: { data: { name: name || 'Colaborador', role: role || 'Consultor Imobiliário', birthDate, modalidade } }
             });
             if (error) throw error;
             if (data.user) onUserSignedIn(data.user);
