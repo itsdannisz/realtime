@@ -621,6 +621,11 @@
         </div>
       </div>
       <div class="form-group">
+        <label>Intervalo de almoço (minutos)</label>
+        <input type="number" id="ajusteIntervalo" min="0" max="480" step="5" value="60" required>
+        <small class="muted" style="font-size:11px;">Ex.: 60 = 1h, 120 = 2h. É descontado do total do dia.</small>
+      </div>
+      <div class="form-group">
         <label>Local do dia</label>
         <select id="ajusteLocal">
           <option value="home">🏠 Home Office</option>
@@ -2058,7 +2063,10 @@
       document.getElementById('filterMonth').addEventListener('change', renderDashboard);
 
       document.getElementById('btnRegistrarAusencia').addEventListener('click', () => document.getElementById('modalFalta').showModal());
-      document.getElementById('btnSolicitarAjuste').addEventListener('click', () => document.getElementById('modalSolicitarAjuste').showModal());
+      document.getElementById('btnSolicitarAjuste').addEventListener('click', () => {
+        document.getElementById('ajusteIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+        document.getElementById('modalSolicitarAjuste').showModal();
+      });
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
       document.getElementById('btnNotificationBell').addEventListener('click', () => {
         loadAnnouncements();
@@ -2202,19 +2210,23 @@
         const entrada = document.getElementById('ajusteEntrada').value;
         const saida = document.getElementById('ajusteSaida').value;
         const motivo = document.getElementById('ajusteMotivo').value.trim();
-        const calc = Core.calcPJ(entrada, saida, appState.config.intervalo || 60, false, appState.config.expected || 360, data);
+        let intervalo = parseInt(document.getElementById('ajusteIntervalo').value, 10);
+        if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { showToast('Informe um intervalo de almoço entre 0 e 480 minutos.'); return; }
+        const calc = Core.calcPJ(entrada, saida, intervalo, false, appState.config.expected || 360, data);
+        const padrao = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+        const notaAlmoco = intervalo !== padrao ? ` (almoço de ${intervalo} min)` : '';
 
         appState.entries.push({
           id: 'ajuste_' + Date.now(),
           date: data,
           type: 'trabalhado',
           entrada, saida,
-          intervalo: appState.config.intervalo || 60,
+          intervalo: intervalo,
           location: document.getElementById('ajusteLocal').value || 'home',
           locManual: true,
           variation: calc.saldo,
           meta: appState.config.expected || 360,
-          obs: `[Solicitação] ${motivo}`,
+          obs: `[Solicitação] ${motivo}${notaAlmoco}`,
           status: 'pendente_aprovacao',
           updatedAt: Date.now()
         });
