@@ -182,6 +182,11 @@
     .search-input-wrap { position: relative; flex: 1; min-width: 170px; }
     .search-input-wrap input { padding-left: 14px; font-size: 12px; }
 
+    .chk { width: 16px; height: 16px; accent-color: var(--c-laranja); cursor: pointer; }
+    th.col-chk, td.col-chk { width: 44px; padding-left: 14px; padding-right: 4px; text-align: center; }
+    tbody tr.row-selected { background: rgba(236, 137, 77, 0.10); }
+    .bulk-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; background: rgba(236, 137, 77, 0.12); border: 1px solid var(--c-laranja); border-radius: var(--radius-md); font-size: 12px; }
+    .bulk-bar[hidden] { display: none; }
     .table-container { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
     th { background: var(--card-sub); color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
@@ -486,10 +491,20 @@
                 </div>
               </div>
 
+              <div id="bulkBar" class="bulk-bar" hidden>
+                <strong><span id="bulkCount">0</span> selecionado(s)</strong>
+                <button type="button" class="btn" id="btnBulkHome">🏠 Marcar Home</button>
+                <button type="button" class="btn" id="btnBulkEscritorio">🏢 Marcar Escritório</button>
+                <button type="button" class="btn" id="btnBulkEditar" style="border-color:var(--c-laranja); color:var(--c-laranja);">✏️ Editar horários</button>
+                <button type="button" class="btn" id="btnBulkExcluir" style="color:var(--neg);">🗑️ Excluir</button>
+                <button type="button" class="btn" id="btnBulkLimpar" style="margin-left:auto;">Limpar seleção</button>
+              </div>
+
               <div class="table-container">
                 <table>
                   <thead>
                     <tr>
+                      <th class="col-chk"><input type="checkbox" class="chk" id="chkSelectAll" title="Selecionar todos (do filtro atual)"></th>
                       <th>Data</th>
                       <th>Horários</th>
                       <th>Local / IP</th>
@@ -644,6 +659,47 @@
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
         <button type="button" class="btn" data-close>Cancelar</button>
         <button type="submit" class="btn-laranja" style="width:auto;">Enviar para Aprovação</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- MODAL: EDITAR HORÁRIOS (GESTÃO) -->
+  <dialog id="modalEditarPontos">
+    <form id="formEditarPontos">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);" id="editarPontosTitulo">Editar horários</h3>
+        <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+      </div>
+      <p class="muted" style="font-size:12px; margin-bottom:14px;" id="editarPontosInfo"></p>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Entrada</label>
+          <input type="time" id="editEntrada">
+        </div>
+        <div class="form-group">
+          <label>Saída</label>
+          <input type="time" id="editSaida">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Intervalo de almoço (minutos)</label>
+        <input type="number" id="editIntervalo" min="0" max="480" step="5" placeholder="Manter">
+      </div>
+      <div class="form-group">
+        <label>Local</label>
+        <select id="editLocal">
+          <option value="">Manter como está</option>
+          <option value="home">🏠 Home Office</option>
+          <option value="escritorio">🏢 Escritório (presencial)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Motivo da edição (opcional)</label>
+        <input type="text" id="editMotivo" placeholder="Ex: corrigido conforme combinado">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn-laranja" style="width:auto;">Salvar alterações</button>
       </div>
     </form>
   </dialog>
@@ -1797,15 +1853,19 @@
           : `<span class="tag home" style="cursor:pointer" title="Clique para alternar" data-id="${esc(entry.id)}" onclick="alternarLocal(this.dataset.id)">🏠 Home</span>`;
 
         tr.innerHTML = `
+          <td class="col-chk"><input type="checkbox" class="chk row-chk" data-id="${esc(entry.id)}"></td>
           <td><strong>${esc(entry.date)}</strong></td>
           <td><span class="mono">${esc(entry.entrada)} → ${esc(entry.saida || 'Em andamento')}</span><br><small class="muted">${esc(entry.obs)}</small></td>
           <td>${locBadge} <br><small class="mono muted">${esc(entry.ip || '—')}</small></td>
           <td style="text-align: right;" class="mono ${entry.variation >= 0 ? 'pos' : 'neg'}"><strong>${isPending ? '—' : Core.fromMinutes(entry.variation, true)}</strong></td>
           <td style="text-align: right;" class="mono ${saldoPonto >= 0 ? 'pos' : 'neg'}"><strong>${isPending ? '—' : Core.fromMinutes(saldoPonto)}</strong></td>
-          <td style="text-align: center;"><button class="btn" style="padding: 4px 8px;" data-id="${esc(entry.id)}" onclick="excluirLinha(this.dataset.id)">✕</button></td>
+          <td style="text-align: center; white-space: nowrap;">${(isAdminUser && entry.type === 'trabalhado' && !isPending) ? `<button class="btn" style="padding: 4px 8px; margin-right:4px;" title="Editar horários" data-id="${esc(entry.id)}" onclick="abrirEdicaoPontos([this.dataset.id])">✏️</button>` : ''}<button class="btn" style="padding: 4px 8px;" title="Excluir" data-id="${esc(entry.id)}" onclick="excluirLinha(this.dataset.id)">✕</button></td>
         `;
         tbody.appendChild(tr);
       });
+
+      idsVisiveis = filtered.map(e => e.id);
+      sincronizarSelecao();
 
       const statBalanceEl = document.getElementById('statBalance');
       statBalanceEl.textContent = Core.fromMinutes(runningSum);
@@ -1813,6 +1873,140 @@
 
       // Solicitações (gestão): atualiza lista e contador junto, sem precisar de F5
       if (isAdminUser) { try { renderPendingApprovals(); } catch (e) { console.warn(e); } }
+    }
+
+    // ===== SELEÇÃO EM MASSA / EDIÇÃO (GESTÃO) =====
+    let selectedEntryIds = new Set();
+    let idsVisiveis = [];
+    let ultimoIdMarcado = null;
+    let editarPontosIds = [];
+
+    function sincronizarSelecao() {
+      // remove da seleção o que não existe mais
+      const existentes = new Set(appState.entries.map(e => e.id));
+      selectedEntryIds.forEach(id => { if (!existentes.has(id)) selectedEntryIds.delete(id); });
+
+      document.querySelectorAll('#entriesTableBody .row-chk').forEach(chk => {
+        const marcado = selectedEntryIds.has(chk.dataset.id);
+        chk.checked = marcado;
+        const tr = chk.closest('tr');
+        if (tr) tr.classList.toggle('row-selected', marcado);
+      });
+
+      const total = idsVisiveis.length;
+      const marcadosVisiveis = idsVisiveis.filter(id => selectedEntryIds.has(id)).length;
+      const chkAll = document.getElementById('chkSelectAll');
+      if (chkAll) {
+        chkAll.checked = total > 0 && marcadosVisiveis === total;
+        chkAll.indeterminate = marcadosVisiveis > 0 && marcadosVisiveis < total;
+      }
+
+      const bar = document.getElementById('bulkBar');
+      if (bar) {
+        bar.hidden = selectedEntryIds.size === 0;
+        document.getElementById('bulkCount').textContent = selectedEntryIds.size;
+        document.getElementById('btnBulkEditar').style.display = isAdminUser ? '' : 'none';
+      }
+    }
+
+    function abrirEdicaoPontos(ids) {
+      if (!isAdminUser) { showToast('Só a gestão pode editar horários diretamente.'); return; }
+      const alvos = ids.map(id => appState.entries.find(e => e.id === id)).filter(e => e && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
+      if (alvos.length === 0) { showToast('Nenhum dos selecionados tem horário editável (compensações, faltas e solicitações pendentes ficam de fora).'); return; }
+      editarPontosIds = alvos.map(e => e.id);
+
+      const unico = alvos.length === 1 ? alvos[0] : null;
+      document.getElementById('editarPontosTitulo').textContent = unico ? `Editar ponto de ${unico.date}` : `Editar ${alvos.length} pontos`;
+      document.getElementById('editarPontosInfo').textContent = unico
+        ? 'Altere o que precisar. O saldo do dia é recalculado automaticamente.'
+        : `Campos em branco continuam como estão em cada ponto. O que você preencher vale para os ${alvos.length} pontos e o saldo de cada dia é recalculado.` + (alvos.length < ids.length ? ` (${ids.length - alvos.length} ignorado(s): compensação, falta ou solicitação pendente.)` : '');
+      document.getElementById('editEntrada').value = unico && /^\d{2}:\d{2}$/.test(unico.entrada || '') ? unico.entrada : '';
+      document.getElementById('editSaida').value = unico && /^\d{2}:\d{2}$/.test(unico.saida || '') ? unico.saida : '';
+      document.getElementById('editIntervalo').value = unico && unico.intervalo !== undefined ? unico.intervalo : '';
+      document.getElementById('editLocal').value = unico ? (unico.location || '') : '';
+      document.getElementById('editMotivo').value = '';
+      document.getElementById('modalEditarPontos').showModal();
+    }
+
+    function aplicarEdicaoPontos(e) {
+      e.preventDefault();
+      if (!isAdminUser) return;
+      const entrada = document.getElementById('editEntrada').value;
+      const saida = document.getElementById('editSaida').value;
+      const intervaloStr = document.getElementById('editIntervalo').value.trim();
+      const local = document.getElementById('editLocal').value;
+      const motivo = document.getElementById('editMotivo').value.trim();
+
+      let intervalo = null;
+      if (intervaloStr !== '') {
+        intervalo = parseInt(intervaloStr, 10);
+        if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { showToast('Informe um intervalo entre 0 e 480 minutos.'); return; }
+      }
+      if (!entrada && !saida && intervalo === null && !local) { showToast('Preencha pelo menos um campo para alterar.'); return; }
+
+      let alterados = 0;
+      editarPontosIds.forEach(id => {
+        const p = appState.entries.find(x => x.id === id);
+        if (!p || p.type !== 'trabalhado' || p.status === 'pendente_aprovacao') return;
+
+        if (entrada) p.entrada = entrada;
+        if (saida) p.saida = saida;
+        if (intervalo !== null) p.intervalo = intervalo;
+        if (local) { p.location = local; p.locManual = true; }
+
+        // Recalcula o saldo do dia quando há entrada e saída
+        if (/^\d{2}:\d{2}$/.test(p.entrada || '') && /^\d{2}:\d{2}$/.test(p.saida || '')) {
+          const meta = typeof p.meta === 'number' ? p.meta : (appState.config.expected || 360);
+          const calc = Core.calcPJ(p.entrada, p.saida, p.intervalo !== undefined ? p.intervalo : 60, !!p.nextDay, meta, p.date);
+          const abonoAtual = (typeof p.abono === 'number' && p.abono > 0) ? p.abono : 0;
+          const abono = Math.min(abonoAtual, Math.max(0, calc.saldo));
+          if (abonoAtual > 0) { if (abono > 0) p.abono = abono; else delete p.abono; }
+          p.meta = meta;
+          p.variation = calc.saldo - abono;
+        }
+
+        const marca = '[Editado pela Gestão]';
+        let obs = p.obs || '';
+        if (!obs.startsWith(marca)) obs = `${marca} ${obs}`.trim();
+        if (motivo) obs += ` • ${motivo}`;
+        p.obs = obs;
+        p.updatedAt = Date.now();
+        if (p.date === getLocalDateStr() && local) atualizarBadgeLocal(local, '', true);
+        alterados++;
+      });
+
+      selectedEntryIds.clear();
+      saveLocal();
+      document.getElementById('modalEditarPontos').close();
+      showToast(`${alterados} ponto(s) atualizado(s).`);
+    }
+
+    function definirLocalSelecionados(local) {
+      let n = 0;
+      selectedEntryIds.forEach(id => {
+        const p = appState.entries.find(x => x.id === id);
+        if (!p) return;
+        p.location = local;
+        p.locManual = true;
+        p.updatedAt = Date.now();
+        if (p.date === getLocalDateStr()) atualizarBadgeLocal(local, '', true);
+        n++;
+      });
+      selectedEntryIds.clear();
+      saveLocal();
+      showToast(`${n} ponto(s) marcados como ${local === 'escritorio' ? 'Escritório' : 'Home Office'}.`);
+    }
+
+    function excluirSelecionados() {
+      const n = selectedEntryIds.size;
+      if (n === 0) return;
+      if (!confirm(`Excluir ${n} lançamento(s) do banco de horas? Essa ação não pode ser desfeita.`)) return;
+      const ids = new Set(selectedEntryIds);
+      ids.forEach(id => marcarRemovido(id));
+      appState.entries = appState.entries.filter(x => !ids.has(x.id));
+      selectedEntryIds.clear();
+      saveLocal();
+      showToast(`${n} lançamento(s) removido(s).`);
     }
 
     function excluirLinha(id) {
@@ -2082,6 +2276,32 @@
 
       document.getElementById('searchTableInput').addEventListener('input', renderDashboard);
       document.getElementById('filterMonth').addEventListener('change', renderDashboard);
+
+      // Seleção em massa: clique numa linha; Shift+clique seleciona o intervalo
+      document.getElementById('entriesTableBody').addEventListener('click', (ev) => {
+        const chk = ev.target.closest('.row-chk');
+        if (!chk) return;
+        const id = chk.dataset.id;
+        const marcar = chk.checked;
+        if (ev.shiftKey && ultimoIdMarcado && idsVisiveis.includes(ultimoIdMarcado) && idsVisiveis.includes(id)) {
+          const a = idsVisiveis.indexOf(ultimoIdMarcado), b = idsVisiveis.indexOf(id);
+          idsVisiveis.slice(Math.min(a, b), Math.max(a, b) + 1).forEach(x => marcar ? selectedEntryIds.add(x) : selectedEntryIds.delete(x));
+        } else {
+          marcar ? selectedEntryIds.add(id) : selectedEntryIds.delete(id);
+        }
+        ultimoIdMarcado = id;
+        sincronizarSelecao();
+      });
+      document.getElementById('chkSelectAll').addEventListener('change', (ev) => {
+        idsVisiveis.forEach(id => ev.target.checked ? selectedEntryIds.add(id) : selectedEntryIds.delete(id));
+        sincronizarSelecao();
+      });
+      document.getElementById('btnBulkLimpar').addEventListener('click', () => { selectedEntryIds.clear(); sincronizarSelecao(); });
+      document.getElementById('btnBulkExcluir').addEventListener('click', excluirSelecionados);
+      document.getElementById('btnBulkHome').addEventListener('click', () => definirLocalSelecionados('home'));
+      document.getElementById('btnBulkEscritorio').addEventListener('click', () => definirLocalSelecionados('escritorio'));
+      document.getElementById('btnBulkEditar').addEventListener('click', () => abrirEdicaoPontos([...selectedEntryIds]));
+      document.getElementById('formEditarPontos').addEventListener('submit', aplicarEdicaoPontos);
 
       document.getElementById('btnRegistrarAusencia').addEventListener('click', () => document.getElementById('modalFalta').showModal());
       document.getElementById('btnSolicitarAjuste').addEventListener('click', () => {
