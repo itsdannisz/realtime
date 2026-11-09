@@ -213,18 +213,9 @@
 
     @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
   </style>
-</head>  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#090d16">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="RealTime">
-
+</head>
 <body>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
+
   <!-- LOGIN / CADASTRO -->
   <section id="authScreen">
     <div class="auth-container">
@@ -961,6 +952,7 @@
       },
       announcements: [],
       entries: [],
+      removed: [],
       theme: 'dark'
     };
 
@@ -1128,6 +1120,7 @@
           if (parsed.config) appState.config = { ...appState.config, ...parsed.config };
           if (parsed.profile) appState.profile = { ...appState.profile, ...parsed.profile };
           if (parsed.announcements) appState.announcements = parsed.announcements;
+          if (Array.isArray(parsed.removed)) appState.removed = parsed.removed;
           recalculateExpected();
           appState.entries = Array.isArray(parsed.entries)
             ? parsed.entries.map(e => normalizeEntry(e, appState.config.expected)).filter(Boolean)
@@ -1179,7 +1172,7 @@
       const locBadge = document.getElementById('heroLocationBadge');
       if (!locBadge) return;
       locBadge.className = `tag ${locType === 'escritorio' ? 'office' : 'home'}`;
-      const sufixo = manual ? ' • manual' : (ip ? ` (${ip})` : '');
+      const sufixo = manual ? ' • manual' : (ip ? ` (${esc(ip)})` : '');
       locBadge.innerHTML = (locType === 'escritorio' ? '🏢 Escritório' : '🏠 Home Office') + sufixo;
       locBadge.style.cursor = 'pointer';
       locBadge.title = 'Clique para alternar entre Escritório e Home Office';
@@ -1196,6 +1189,72 @@
       if (entry.date === getLocalDateStr()) atualizarBadgeLocal(novo, '', true);
       saveLocal();
       showToast(`Local de ${entry.date} alterado para ${novo === 'escritorio' ? 'Escritório' : 'Home Office'}.`);
+    }
+
+    // ===== MESCLAGEM COM A NUVEM =====
+    // Lê o estado salvo no Supabase (pode vir como texto ou objeto)
+    function stateFromRow(raw) {
+      if (!raw) return null;
+      try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { return null; }
+    }
+
+    // "Lápide": registra que um ponto foi apagado/recusado, para ele não voltar da nuvem
+    function marcarRemovido(id) {
+      if (!id) return;
+      if (!Array.isArray(appState.removed)) appState.removed = [];
+      appState.removed = appState.removed.filter(r => r.id !== id);
+      appState.removed.push({ id: id, at: Date.now() });
+      if (appState.removed.length > 300) appState.removed = appState.removed.slice(-300);
+    }
+
+    function removerEntradasDoDia(dateStr) {
+      appState.entries.filter(e => e.date === dateStr).forEach(e => marcarRemovido(e.id));
+      appState.entries = appState.entries.filter(e => e.date !== dateStr);
+    }
+
+    // Traz para este aparelho o que estiver mais novo na nuvem. Devolve true se algo mudou.
+    function mesclarEstadoDaNuvem(cloudState) {
+      if (!cloudState || typeof cloudState !== 'object') return false;
+      const snap = () => JSON.stringify([appState.config, appState.profile, appState.entries, appState.removed]);
+      const antes = snap();
+
+      // Só substitui a configuração / o perfil se a nuvem for MAIS RECENTE
+      const cloudCfgTime = cloudState.config?.updatedAt || 0;
+      const localCfgTime = appState.config?.updatedAt || 0;
+      if (cloudCfgTime > localCfgTime) {
+        appState.config = { ...appState.config, ...cloudState.config };
+        recalculateExpected();
+      }
+      const cloudProfTime = cloudState.profile?.updatedAt || 0;
+      const localProfTime = appState.profile?.updatedAt || 0;
+      if (cloudProfTime > localProfTime) {
+        appState.profile = { ...appState.profile, ...cloudState.profile };
+      }
+
+      // Lápides (pontos apagados/recusados) de qualquer lado
+      const removidos = new Map();
+      [...(appState.removed || []), ...(Array.isArray(cloudState.removed) ? cloudState.removed : [])].forEach(r => {
+        if (!r || !r.id) return;
+        const prev = removidos.get(r.id);
+        if (!prev || (r.at || 0) > (prev.at || 0)) removidos.set(r.id, { id: r.id, at: r.at || 0 });
+      });
+
+      // Pontos: vale o mais recente de cada id
+      const mapa = new Map((appState.entries || []).map(e => [e.id, e]));
+      (Array.isArray(cloudState.entries) ? cloudState.entries : []).forEach(ce => {
+        if (!ce || !ce.id) return;
+        const le = mapa.get(ce.id);
+        if (!le || (ce.updatedAt || 0) >= (le.updatedAt || 0)) mapa.set(ce.id, ce);
+      });
+      // Aplica as lápides (só apaga se o ponto não foi editado depois da remoção)
+      removidos.forEach((r, id) => {
+        const e = mapa.get(id);
+        if (e && (e.updatedAt || 0) <= r.at) mapa.delete(id);
+      });
+
+      appState.entries = [...mapa.values()];
+      appState.removed = [...removidos.values()].sort((a, b) => a.at - b.at).slice(-300);
+      return snap() !== antes;
     }
 
     async function executarCheckIn(forcarInicio = false) {
@@ -1221,7 +1280,7 @@
           ? `Início com atraso de ${delayMin} min (${locType === 'escritorio' ? 'Presencial' : 'Home Office'})` 
           : `Início regular (${locType === 'escritorio' ? 'Presencial' : 'Home Office'})`;
 
-        if (entry) appState.entries = appState.entries.filter(e => e.date !== todayStr);
+        if (entry) removerEntradasDoDia(todayStr);
 
         appState.entries.push({
           id: 'id_' + Date.now(),
@@ -1293,7 +1352,7 @@
 
     function simularAtrasoParaTeste() {
       const todayStr = getLocalDateStr();
-      appState.entries = appState.entries.filter(e => e.date !== todayStr);
+      removerEntradasDoDia(todayStr);
       appState.entries.push({
         id: 'id_' + Date.now(),
         date: todayStr,
@@ -1371,23 +1430,23 @@
         let locHtml = '<span class="muted">—</span>';
 
         if (todayEntry) {
-          if (todayEntry.saida) statusHtml = `<span class="tag neutral">Encerrado (${todayEntry.entrada} → ${todayEntry.saida})</span>`;
-          else statusHtml = `<span class="tag pos">Em Curso (${todayEntry.entrada})</span>`;
+          if (todayEntry.saida) statusHtml = `<span class="tag neutral">Encerrado (${esc(todayEntry.entrada)} → ${esc(todayEntry.saida)})</span>`;
+          else statusHtml = `<span class="tag pos">Em Curso (${esc(todayEntry.entrada)})</span>`;
           
           locHtml = todayEntry.location === 'escritorio' 
-            ? `<span class="tag office">🏢 Escritório</span><br><small class="mono">${todayEntry.ip || ''}</small>`
-            : `<span class="tag home">🏠 Home</span><br><small class="mono">${todayEntry.ip || ''}</small>`;
+            ? `<span class="tag office">🏢 Escritório</span><br><small class="mono">${esc(todayEntry.ip)}</small>`
+            : `<span class="tag home">🏠 Home</span><br><small class="mono">${esc(todayEntry.ip)}</small>`;
         }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><strong>${member.profile.name || 'Colaborador'}</strong><br><small class="muted">${member.profile.email || ''}</small></td>
-          <td>${member.profile.role || '—'}<br><small class="muted">${Core.fromMinutes(member.expectedMins)}/dia</small></td>
+          <td><strong>${esc(member.profile.name || 'Colaborador')}</strong><br><small class="muted">${esc(member.profile.email)}</small></td>
+          <td>${esc(member.profile.role || '—')}<br><small class="muted">${Core.fromMinutes(member.expectedMins)}/dia</small></td>
           <td>${statusHtml}</td>
           <td>${locHtml}</td>
           <td style="text-align:right;" class="mono ${balance >= 0 ? 'pos' : 'neg'}"><strong>${Core.fromMinutes(balance, true)}</strong></td>
           <td style="text-align:center;">
-            <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="openColaboradorDossie('${member.userId}')">👁️ Extrato</button>
+            <button class="btn" style="padding:4px 8px; font-size:11px;" data-uid="${esc(member.userId)}" onclick="openColaboradorDossie(this.dataset.uid)">👁️ Extrato</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1416,10 +1475,10 @@
         const locBadge = e.location === 'escritorio' ? '<span class="tag office">🏢 Escritório</span>' : '<span class="tag home">🏠 Home</span>';
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><strong>${e.date}</strong></td>
-          <td><span class="mono">${e.entrada || '--:--'} → ${e.saida || 'Em andamento'}</span></td>
-          <td>${locBadge} <br><small class="mono muted">${e.ip || '—'}</small></td>
-          <td><small>${e.obs || '—'}</small></td>
+          <td><strong>${esc(e.date)}</strong></td>
+          <td><span class="mono">${esc(e.entrada || '--:--')} → ${esc(e.saida || 'Em andamento')}</span></td>
+          <td>${locBadge} <br><small class="mono muted">${esc(e.ip || '—')}</small></td>
+          <td><small>${esc(e.obs || '—')}</small></td>
           <td style="text-align:right;" class="mono ${e.variation >= 0 ? 'pos' : 'neg'}"><strong>${Core.fromMinutes(e.variation, true)}</strong></td>
         `;
         tbody.appendChild(tr);
@@ -1451,71 +1510,92 @@
       allPending.forEach(e => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><strong>${e.date}</strong></td>
-          <td>${e.userName}</td>
-          <td><span class="mono">${e.entrada} → ${e.saida}</span></td>
-          <td><small>${e.obs}</small></td>
+          <td><strong>${esc(e.date)}</strong></td>
+          <td>${esc(e.userName)}</td>
+          <td><span class="mono">${esc(e.entrada)} → ${esc(e.saida)}</span></td>
+          <td><small>${esc(e.obs)}</small></td>
           <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
-            <button class="btn" style="background:var(--pos); color:#fff; border:0; padding:4px 8px;" onclick="aprovarSolicitacaoReal('${e.userId}', '${e.id}')">✓ Aprovar</button>
-            <button class="btn" style="color:var(--neg); padding:4px 8px;" onclick="recusarSolicitacaoReal('${e.userId}', '${e.id}')">✕ Recusar</button>
+            <button class="btn" style="background:var(--pos); color:#fff; border:0; padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="aprovarSolicitacaoReal(this.dataset.uid, this.dataset.eid)">✓ Aprovar</button>
+            <button class="btn" style="color:var(--neg); padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="recusarSolicitacaoReal(this.dataset.uid, this.dataset.eid)">✕ Recusar</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
+    // Aplica a aprovação num estado (do colega ou o próprio). Devolve false se a solicitação não existe mais.
+    function aplicarAprovacao(state, entryId) {
+      const entries = Array.isArray(state.entries) ? state.entries : [];
+      const entry = entries.find(e => e.id === entryId);
+      if (!entry || entry.status !== 'pendente_aprovacao') return false;
+      const agora = Date.now();
+      entry.status = 'ativo';
+      entry.obs = '[Aprovado pela Gestão] ' + (entry.obs || '');
+      entry.updatedAt = agora;
+      // O ajuste aprovado substitui o ponto original do mesmo dia (senão o dia contaria duas vezes)
+      if (entry.type === 'trabalhado') {
+        const removed = state.removed = Array.isArray(state.removed) ? state.removed : [];
+        state.entries = entries.filter(e => {
+          if (e === entry) return true;
+          const substituido = e.date === entry.date && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao';
+          if (substituido) removed.push({ id: e.id, at: agora });
+          return !substituido;
+        });
+      }
+      return true;
+    }
+
+    function aplicarRecusa(state, entryId) {
+      const entries = Array.isArray(state.entries) ? state.entries : [];
+      const entry = entries.find(e => e.id === entryId);
+      if (!entry || entry.status !== 'pendente_aprovacao') return false;
+      state.entries = entries.filter(e => e.id !== entryId);
+      state.removed = (Array.isArray(state.removed) ? state.removed : []).concat({ id: entryId, at: Date.now() });
+      return true;
+    }
+
+    // Lê o estado ATUAL do colega, aplica a mudança só nele e grava (evita sobrescrever com cópia velha)
+    async function alterarEstadoDoColega(targetUserId, aplicar) {
+      const { data: row, error: errLer } = await sbClient.from('bh_state').select('state').eq('user_id', targetUserId).maybeSingle();
+      if (errLer || !row) { showToast('Não consegui ler o registro do colega: ' + ((errLer && errLer.message) || 'não encontrado')); return false; }
+      const fresco = stateFromRow(row.state);
+      if (!fresco || !aplicar(fresco)) {
+        showToast('Essa solicitação não existe mais (o colaborador pode ter alterado). Atualizando a lista.');
+        loadTeamMembersFromCloud();
+        return false;
+      }
+      const { error: errGravar } = await sbClient.from('bh_state').upsert({
+        user_id: targetUserId,
+        state: JSON.stringify(fresco),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+      if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return false; }
+      return true;
+    }
+
     async function aprovarSolicitacaoReal(targetUserId, entryId) {
-      const member = allTeamLoadedData.find(m => m.userId === targetUserId);
-      if (!member) return;
-
-      const entry = (member.entries || []).find(e => e.id === entryId);
-      if (entry) {
-        entry.status = 'ativo';
-        entry.obs = '[Aprovado pela Gestão] ' + entry.obs;
-        entry.updatedAt = Date.now();
-        // O ajuste aprovado substitui o ponto original do mesmo dia (senão o dia contaria duas vezes)
-        if (entry.type === 'trabalhado') {
-          member.entries = (member.entries || []).filter(e => e === entry || !(e.date === entry.date && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao'));
-          if (member.state) member.state.entries = member.entries;
-          if (targetUserId === currentUserId) appState.entries = member.entries;
-        }
-      }
-
       if (targetUserId === currentUserId) {
+        if (!aplicarAprovacao(appState, entryId)) { showToast('Essa solicitação não existe mais.'); loadTeamMembersFromCloud(); return; }
         saveLocal();
-      } else if (sbClient && member.state) {
-        const { error: errGravar } = await sbClient.from('bh_state').upsert({
-          user_id: targetUserId,
-          state: member.state,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
-        if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return; }
+      } else {
+        if (!sbClient) return;
+        const ok = await alterarEstadoDoColega(targetUserId, (s) => aplicarAprovacao(s, entryId));
+        if (!ok) return;
       }
-
       showToast('Solicitação aprovada!');
       loadTeamMembersFromCloud();
     }
 
     async function recusarSolicitacaoReal(targetUserId, entryId) {
       if (!confirm('Recusar esta solicitação e descartar o registro?')) return;
-      const member = allTeamLoadedData.find(m => m.userId === targetUserId);
-      if (!member) return;
-
-      member.entries = (member.entries || []).filter(e => e.id !== entryId);
-
       if (targetUserId === currentUserId) {
-        appState.entries = member.entries;
+        if (!aplicarRecusa(appState, entryId)) { showToast('Essa solicitação não existe mais.'); loadTeamMembersFromCloud(); return; }
         saveLocal();
-      } else if (sbClient && member.state) {
-        member.state.entries = member.entries;
-        const { error: errGravar } = await sbClient.from('bh_state').upsert({
-          user_id: targetUserId,
-          state: member.state,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
-        if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return; }
+      } else {
+        if (!sbClient) return;
+        const ok = await alterarEstadoDoColega(targetUserId, (s) => aplicarRecusa(s, entryId));
+        if (!ok) return;
       }
-
       showToast('Solicitação recusada.');
       loadTeamMembersFromCloud();
     }
@@ -1690,16 +1770,16 @@
         const saldoPonto = balanceMap.get(entry.id) || 0;
         const tr = document.createElement('tr');
         const locBadge = entry.location === 'escritorio'
-          ? `<span class="tag office" style="cursor:pointer" title="Clique para alternar" onclick="alternarLocal('${entry.id}')">🏢 Escritório</span>`
-          : `<span class="tag home" style="cursor:pointer" title="Clique para alternar" onclick="alternarLocal('${entry.id}')">🏠 Home</span>`;
+          ? `<span class="tag office" style="cursor:pointer" title="Clique para alternar" data-id="${esc(entry.id)}" onclick="alternarLocal(this.dataset.id)">🏢 Escritório</span>`
+          : `<span class="tag home" style="cursor:pointer" title="Clique para alternar" data-id="${esc(entry.id)}" onclick="alternarLocal(this.dataset.id)">🏠 Home</span>`;
 
         tr.innerHTML = `
-          <td><strong>${entry.date}</strong></td>
-          <td><span class="mono">${entry.entrada} → ${entry.saida || 'Em andamento'}</span><br><small class="muted">${entry.obs || ''}</small></td>
-          <td>${locBadge} <br><small class="mono muted">${entry.ip || '—'}</small></td>
+          <td><strong>${esc(entry.date)}</strong></td>
+          <td><span class="mono">${esc(entry.entrada)} → ${esc(entry.saida || 'Em andamento')}</span><br><small class="muted">${esc(entry.obs)}</small></td>
+          <td>${locBadge} <br><small class="mono muted">${esc(entry.ip || '—')}</small></td>
           <td style="text-align: right;" class="mono ${entry.variation >= 0 ? 'pos' : 'neg'}"><strong>${isPending ? '—' : Core.fromMinutes(entry.variation, true)}</strong></td>
           <td style="text-align: right;" class="mono ${saldoPonto >= 0 ? 'pos' : 'neg'}"><strong>${isPending ? '—' : Core.fromMinutes(saldoPonto)}</strong></td>
-          <td style="text-align: center;"><button class="btn" style="padding: 4px 8px;" onclick="excluirLinha('${entry.id}')">✕</button></td>
+          <td style="text-align: center;"><button class="btn" style="padding: 4px 8px;" data-id="${esc(entry.id)}" onclick="excluirLinha(this.dataset.id)">✕</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -1711,6 +1791,7 @@
 
     function excluirLinha(id) {
       if (confirm('Excluir este lançamento do banco de horas?')) {
+        marcarRemovido(id);
         appState.entries = appState.entries.filter(e => e.id !== id);
         saveLocal();
         showToast('Lançamento removido.');
@@ -1733,8 +1814,8 @@
 
       const setAvatar = (el) => {
         if (!el) return;
-        if (p.photo) {
-          el.innerHTML = `<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        if (p.photo && /^(data:image\/|https:\/\/)/.test(p.photo)) {
+          el.innerHTML = `<img src="${esc(p.photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
         } else {
           el.textContent = (p.name || 'C')[0].toUpperCase();
         }
@@ -1864,7 +1945,7 @@
                 <strong style="color:var(--c-laranja);">${esc(a.title)}</strong>
                 <div style="font-size:11px; margin-top:2px;">${esc(a.message)}</div>
               </div>
-              ${isAdminUser ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" onclick="deleteAnnouncement('${esc(a.id)}')">✕</button>` : ''}
+              ${isAdminUser ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" data-id="${esc(a.id)}" onclick="deleteAnnouncement(this.dataset.id)">✕</button>` : ''}
             `;
             noticeBox.appendChild(item);
           });
@@ -1876,7 +1957,7 @@
       if (bdayBox) {
         if (appState.profile.birthDate) {
           const [y, mm, dd] = appState.profile.birthDate.split('-');
-          bdayBox.innerHTML = `<div class="holiday-item"><span>🎂 ${appState.profile.name || 'Colaborador'}</span> <span class="mono" style="color:var(--c-laranja); font-weight:700;">${dd}/${mm}</span></div>`;
+          bdayBox.innerHTML = `<div class="holiday-item"><span>🎂 ${esc(appState.profile.name || 'Colaborador')}</span> <span class="mono" style="color:var(--c-laranja); font-weight:700;">${dd}/${mm}</span></div>`;
         } else {
           bdayBox.innerHTML = '<span class="muted" style="font-size:12px;">Preencha sua data no perfil para aparecer aqui.</span>';
         }
@@ -2264,6 +2345,7 @@
           localStorage.removeItem('realtime_current_uid');
           appState.profile = { name: '', email: '', role: '', company: 'Real Estate São Paulo', birthDate: '', modalidade: 'custom', photo: '', updatedAt: 0 };
           appState.entries = [];
+          appState.removed = [];
           updateAdminStatus();
           document.getElementById('appScreen').hidden = true;
           document.getElementById('authScreen').hidden = false;
@@ -2305,29 +2387,7 @@
           if (cloudRow && cloudRow.state) {
             const cloudState = typeof cloudRow.state === 'string' ? JSON.parse(cloudRow.state) : cloudRow.state;
             
-            // Só substitui a configuração se a nuvem for MAIS RECENTE que o que foi salvo no computador
-            const cloudCfgTime = cloudState.config?.updatedAt || 0;
-            const localCfgTime = appState.config?.updatedAt || 0;
-            if (cloudCfgTime > localCfgTime) {
-              appState.config = { ...appState.config, ...cloudState.config };
-              recalculateExpected();
-            }
-
-            // Só substitui o perfil se a nuvem for MAIS RECENTE que o que foi salvo no computador
-            const cloudProfTime = cloudState.profile?.updatedAt || 0;
-            const localProfTime = appState.profile?.updatedAt || 0;
-            if (cloudProfTime > localProfTime) {
-              appState.profile = { ...appState.profile, ...cloudState.profile };
-            }
-
-            if (Array.isArray(cloudState.entries)) {
-              const entryMap = new Map(appState.entries.map(e => [e.id, e]));
-              cloudState.entries.forEach(ce => {
-                const le = entryMap.get(ce.id);
-                if (!le || (ce.updatedAt || 0) >= (le.updatedAt || 0)) entryMap.set(ce.id, ce);
-              });
-              appState.entries = [...entryMap.values()];
-            }
+            mesclarEstadoDaNuvem(cloudState);
           }
         } catch (e) {}
       }
@@ -2365,9 +2425,34 @@
       b.style.display = 'block';
     }
 
-    async function syncWithCloud() {
+    let syncEmAndamento = false;
+    let syncRepetir = false;
+
+    function renderTudoAposMescla() {
+      try { localStorage.setItem(getStorageKey(), JSON.stringify(appState)); } catch (e) {}
+      renderProfile();
+      renderDashboard();
+      renderMiniCalendar();
+    }
+
+    // soPuxar: só traz as novidades da nuvem (aprovações, outro aparelho), sem gravar
+    async function syncWithCloud(opcoes = {}) {
       if (!sbClient || currentUserId === 'guest') return;
+      if (syncEmAndamento) { if (!opcoes.soPuxar) syncRepetir = true; return; }
+      syncEmAndamento = true;
       try {
+        // 1) Antes de gravar, traz o que mudou na nuvem (assim nada da gestão é sobrescrito)
+        try {
+          const { data: row, error: errLer } = await sbClient.from('bh_state').select('state').eq('user_id', currentUserId).maybeSingle();
+          if (errLer) throw errLer;
+          if (row && row.state && mesclarEstadoDaNuvem(stateFromRow(row.state))) renderTudoAposMescla();
+        } catch (e) {
+          console.warn('Não consegui ler a nuvem antes de gravar:', e);
+          if (opcoes.soPuxar) return;
+        }
+        if (opcoes.soPuxar && !syncPendente) return;
+
+        // 2) Grava
         const { error } = await sbClient.from('bh_state').upsert({
           user_id: currentUserId,
           state: JSON.stringify(appState),
@@ -2386,8 +2471,15 @@
         console.warn('Falha ao sincronizar com a nuvem:', e);
         syncPendente = true; syncFalhas++;
         if (syncFalhas >= 2) atualizarAlertaSync(false, (e && e.message) ? e.message : '');
+      } finally {
+        syncEmAndamento = false;
+        if (syncRepetir) { syncRepetir = false; syncWithCloud(); }
       }
     }
+
+    // Com o app aberto o dia todo: puxa as novidades (ex.: aprovação da gestão) a cada 5 min e ao voltar para a aba
+    setInterval(() => { if (!document.hidden) syncWithCloud({ soPuxar: true }); }, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWithCloud({ soPuxar: true }); });
 
     // Tenta de novo sozinho a cada 1 min e quando a internet volta
     setInterval(() => { if (syncPendente) syncWithCloud(); }, 60000);
