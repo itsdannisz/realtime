@@ -618,6 +618,13 @@
         </div>
       </div>
       <div class="form-group">
+        <label>Local do dia</label>
+        <select id="ajusteLocal">
+          <option value="home">🏠 Home Office</option>
+          <option value="escritorio">🏢 Escritório (presencial)</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Justificativa do Ajuste</label>
         <textarea id="ajusteMotivo" required placeholder="Ex: Falha na conexão ao iniciar ou esquecimento justificado..." rows="3"></textarea>
       </div>
@@ -988,6 +995,68 @@
       // sua própria época (campo "meta"), então mudar a configuração só vale daqui pra frente.
     }
 
+    // ===== IMPORTAÇÃO DE JSON (aceita formatos de versões antigas) =====
+    function extrairRegistrosDoJSON(p, nivel = 0) {
+      if (Array.isArray(p)) return p;
+      if (!p || typeof p !== 'object' || nivel > 3) return [];
+      const nomes = ['entries', 'registros', 'records', 'historico', 'histórico', 'history', 'pontos', 'lancamentos', 'lançamentos', 'logs', 'items'];
+      for (const k of nomes) if (Array.isArray(p[k])) return p[k];
+      for (const k of ['state', 'data', 'backup']) {
+        if (p[k] && typeof p[k] === 'object') {
+          const r = extrairRegistrosDoJSON(typeof p[k] === 'string' ? JSON.parse(p[k]) : p[k], nivel + 1);
+          if (r.length) return r;
+        }
+      }
+      for (const v of Object.values(p)) {
+        if (Array.isArray(v) && v.length && typeof v[0] === 'object') return v;
+      }
+      return [];
+    }
+
+    function paraMinutosSinal(v) {
+      if (typeof v === 'number' && isFinite(v)) return Math.round(v);
+      if (typeof v === 'string') {
+        const m = v.trim().match(/^([+-]?)(\d{1,3}):(\d{2})$/);
+        if (m) return (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+      }
+      return null;
+    }
+
+    function mapearRegistroImportado(r) {
+      if (!r || typeof r !== 'object') return null;
+      let date = r.date || r.data || r.dia || '';
+      if (typeof date === 'string') {
+        const br = date.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+        if (br) date = `${br[3]}-${br[2]}-${br[1]}`;
+        date = date.slice(0, 10);
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+
+      const hora = (v) => (typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)) ? v.trim().slice(0, 5).padStart(5, '0') : '';
+      const entrada = hora(r.entrada || r.inicio || r.início || r.start || r.checkin || '');
+      const saida = hora(r.saida || r.saída || r.fim || r.end || r.checkout || '');
+      const type = ['trabalhado', 'uso', 'falta', 'atestado'].includes(r.type) ? r.type : 'trabalhado';
+      if (type === 'trabalhado' && !entrada) return null;
+
+      const loc = String(r.location || r.local || '').toLowerCase();
+      const location = /escrit|office|presen/.test(loc) ? 'escritorio' : 'home';
+      const intervalo = typeof r.intervalo === 'number' ? r.intervalo : (typeof r.almoco === 'number' ? r.almoco : undefined);
+      const variation = [r.variation, r.saldo, r.variacao, r.delta].map(paraMinutosSinal).find(v => v !== null);
+
+      const bruto = {
+        id: r.id || `imp_${date}_${entrada || type}`,
+        date, type, entrada: entrada || '--:--', saida, location,
+        obs: r.obs || r.observacao || r.observação || '',
+        status: r.status === 'pendente_aprovacao' ? 'pendente_aprovacao' : 'ativo',
+        updatedAt: r.updatedAt || Date.now()
+      };
+      if (intervalo !== undefined) bruto.intervalo = intervalo;
+      if (variation !== undefined) bruto.variation = variation;
+      if (typeof r.meta === 'number') bruto.meta = r.meta;
+      bruto.ip = r.ip || '—';
+      return normalizeEntry(bruto, appState.config.expected || 360);
+    }
+
     function normalizeEntry(e, expectedMins) {
       if (!e) return null;
       const date = e.date || getLocalDateStr();
@@ -1022,6 +1091,7 @@
       const out = { id, date, type, entrada, saida, intervalo, ip, location, variation, obs, status, updatedAt };
       if (meta !== null) out.meta = meta;
       if (e.nextDay) out.nextDay = true;
+      if (e.locManual) out.locManual = true;
       return out;
     }
 
@@ -1080,6 +1150,29 @@
       return cachedDetectedIP;
     }
 
+    function atualizarBadgeLocal(locType, ip, manual) {
+      const locBadge = document.getElementById('heroLocationBadge');
+      if (!locBadge) return;
+      locBadge.className = `tag ${locType === 'escritorio' ? 'office' : 'home'}`;
+      const sufixo = manual ? ' • manual' : (ip ? ` (${ip})` : '');
+      locBadge.innerHTML = (locType === 'escritorio' ? '🏢 Escritório' : '🏠 Home Office') + sufixo;
+      locBadge.style.cursor = 'pointer';
+      locBadge.title = 'Clique para alternar entre Escritório e Home Office';
+    }
+
+    // Alterna o local (Escritório <-> Home) de um lançamento e trava contra a detecção automática por IP
+    function alternarLocal(id) {
+      const entry = appState.entries.find(e => e.id === id);
+      if (!entry) return;
+      const novo = entry.location === 'escritorio' ? 'home' : 'escritorio';
+      entry.location = novo;
+      entry.locManual = true;
+      entry.updatedAt = Date.now();
+      if (entry.date === getLocalDateStr()) atualizarBadgeLocal(novo, '', true);
+      saveLocal();
+      showToast(`Local de ${entry.date} alterado para ${novo === 'escritorio' ? 'Escritório' : 'Home Office'}.`);
+    }
+
     async function executarCheckIn(forcarInicio = false) {
       const todayStr = getLocalDateStr();
       let entry = appState.entries.find(e => e.date === todayStr);
@@ -1087,13 +1180,11 @@
       const ip = await detectUserIP();
       const officeIps = (appState.config.officeIp || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
       const isOffice = officeIps.length > 0 && officeIps.some(oIp => ip === oIp || ip.startsWith(oIp));
-      const locType = isOffice ? 'escritorio' : 'home';
+      let locType = isOffice ? 'escritorio' : 'home';
+      // Se a pessoa já escolheu o local do dia manualmente, a detecção por IP não sobrescreve
+      if (entry && entry.locManual && entry.location) locType = entry.location;
 
-      const locBadge = document.getElementById('heroLocationBadge');
-      if (locBadge) {
-        locBadge.className = `tag ${locType === 'escritorio' ? 'office' : 'home'}`;
-        locBadge.innerHTML = locType === 'escritorio' ? `🏢 Escritório (${ip})` : `🏠 Home Office (${ip})`;
-      }
+      atualizarBadgeLocal(locType, ip, !!(entry && entry.locManual));
 
       if (!entry || forcarInicio) {
         const now = new Date();
@@ -1216,6 +1307,12 @@
       if (sbClient) {
         try {
           const { data, error } = await sbClient.from('bh_state').select('user_id, state, updated_at');
+          if (error) {
+            console.warn('Erro ao buscar equipe:', error);
+            showToast('Não consegui buscar a equipe: ' + (error.message || 'erro de permissão'));
+          } else if (data && data.length <= 1) {
+            showToast('Só aparece o seu registro. Se a equipe já usa o sistema, falta liberar a leitura para a gestão no Supabase (RLS).');
+          }
           if (!error && data && data.length > 0) {
             data.forEach(row => {
               if (row.user_id !== currentUserId) {
@@ -1351,6 +1448,12 @@
         entry.status = 'ativo';
         entry.obs = '[Aprovado pela Gestão] ' + entry.obs;
         entry.updatedAt = Date.now();
+        // O ajuste aprovado substitui o ponto original do mesmo dia (senão o dia contaria duas vezes)
+        if (entry.type === 'trabalhado') {
+          member.entries = (member.entries || []).filter(e => e === entry || !(e.date === entry.date && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao'));
+          if (member.state) member.state.entries = member.entries;
+          if (targetUserId === currentUserId) appState.entries = member.entries;
+        }
       }
 
       if (targetUserId === currentUserId) {
@@ -1559,7 +1662,9 @@
         const isPending = entry.status === 'pendente_aprovacao';
         const saldoPonto = balanceMap.get(entry.id) || 0;
         const tr = document.createElement('tr');
-        const locBadge = entry.location === 'escritorio' ? '<span class="tag office">🏢 Escritório</span>' : '<span class="tag home">🏠 Home</span>';
+        const locBadge = entry.location === 'escritorio'
+          ? `<span class="tag office" style="cursor:pointer" title="Clique para alternar" onclick="alternarLocal('${entry.id}')">🏢 Escritório</span>`
+          : `<span class="tag home" style="cursor:pointer" title="Clique para alternar" onclick="alternarLocal('${entry.id}')">🏠 Home</span>`;
 
         tr.innerHTML = `
           <td><strong>${entry.date}</strong></td>
@@ -1725,6 +1830,11 @@
           const dialog = e.target.closest('dialog');
           if (dialog) dialog.close();
         });
+      });
+
+      document.getElementById('heroLocationBadge').addEventListener('click', () => {
+        const hoje = appState.entries.find(e => e.date === getLocalDateStr());
+        if (hoje) alternarLocal(hoje.id); else showToast('Ainda não há ponto registrado hoje.');
       });
 
       document.getElementById('btnFinalizarDiaInstantaneo').addEventListener('click', finalizarDiaInstantaneo);
@@ -1950,7 +2060,8 @@
           type: 'trabalhado',
           entrada, saida,
           intervalo: appState.config.intervalo || 60,
-          location: 'home',
+          location: document.getElementById('ajusteLocal').value || 'home',
+          locManual: true,
           variation: calc.saldo,
           meta: appState.config.expected || 360,
           obs: `[Solicitação] ${motivo}`,
@@ -2004,13 +2115,31 @@
         reader.onload = (ev) => {
           try {
             const parsed = JSON.parse(ev.target.result);
-            if (parsed.entries) appState.entries = parsed.entries;
-            else if (Array.isArray(parsed)) appState.entries = parsed;
+            const brutos = extrairRegistrosDoJSON(parsed);
+            const convertidos = brutos.map(mapearRegistroImportado).filter(Boolean);
+
+            if (convertidos.length === 0) {
+              const chaves = parsed && typeof parsed === 'object' ? Object.keys(parsed).slice(0, 12).join(', ') : typeof parsed;
+              alert('Não consegui reconhecer os registros deste arquivo.\n\nChaves encontradas: ' + (chaves || '(nenhuma)') + '\n\nEnvie um trecho do arquivo para ajustarmos a importação.');
+              return;
+            }
+
+            // Mescla com o que já existe (não apaga nada): ignora o que já está lançado
+            const chave = (x) => `${x.date}|${x.type}|${x.entrada}`;
+            const existentes = new Set(appState.entries.map(chave));
+            const ids = new Set(appState.entries.map(x => x.id));
+            let novos = 0, repetidos = 0;
+            convertidos.forEach(c => {
+              if (ids.has(c.id) || existentes.has(chave(c))) { repetidos++; return; }
+              appState.entries.push(c); ids.add(c.id); existentes.add(chave(c)); novos++;
+            });
+
             saveLocal();
-            showToast('Backup JSON restaurado com sucesso!');
+            showToast(`Importação concluída: ${novos} novo(s), ${repetidos} já existia(m).`);
           } catch (err) {
             alert('Arquivo JSON inválido.');
           }
+          e.target.value = '';
         };
         reader.readAsText(file);
       });
