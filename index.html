@@ -1000,7 +1000,17 @@
       if (Array.isArray(p)) return p;
       if (!p || typeof p !== 'object' || nivel > 3) return [];
       const nomes = ['entries', 'registros', 'records', 'historico', 'histórico', 'history', 'pontos', 'lancamentos', 'lançamentos', 'logs', 'items'];
-      for (const k of nomes) if (Array.isArray(p[k])) return p[k];
+      for (const k of [...nomes, 'e']) {
+        const v = p[k];
+        if (Array.isArray(v) && v.length) return v;
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          // mapa { "2026-11-03": {...}, ... } ou { id: {...} }
+          const lista = Object.entries(v)
+            .filter(([, r]) => r && typeof r === 'object' && !Array.isArray(r))
+            .map(([chave, r]) => ({ ...r, __chave: chave }));
+          if (lista.length) return lista;
+        }
+      }
       for (const k of ['state', 'data', 'backup']) {
         if (p[k] && typeof p[k] === 'object') {
           const r = extrairRegistrosDoJSON(typeof p[k] === 'string' ? JSON.parse(p[k]) : p[k], nivel + 1);
@@ -1024,7 +1034,8 @@
 
     function mapearRegistroImportado(r) {
       if (!r || typeof r !== 'object') return null;
-      let date = r.date || r.data || r.dia || '';
+      if (r.deleted === true || r.apagado === true || r.excluido === true) return null;
+      let date = r.date || r.data || r.dia || r.d || r.__chave || '';
       if (typeof date === 'string') {
         const br = date.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
         if (br) date = `${br[3]}-${br[2]}-${br[1]}`;
@@ -1033,8 +1044,8 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
 
       const hora = (v) => (typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)) ? v.trim().slice(0, 5).padStart(5, '0') : '';
-      const entrada = hora(r.entrada || r.inicio || r.início || r.start || r.checkin || '');
-      const saida = hora(r.saida || r.saída || r.fim || r.end || r.checkout || '');
+      const entrada = hora(r.entrada || r.inicio || r.início || r.start || r.checkin || r.in || r.ent || r.i || r.e || '');
+      const saida = hora(r.saida || r.saída || r.fim || r.end || r.checkout || r.out || r.sai || r.s || r.o || '');
       const type = ['trabalhado', 'uso', 'falta', 'atestado'].includes(r.type) ? r.type : 'trabalhado';
       if (type === 'trabalhado' && !entrada) return null;
 
@@ -2116,11 +2127,23 @@
           try {
             const parsed = JSON.parse(ev.target.result);
             const brutos = extrairRegistrosDoJSON(parsed);
-            const convertidos = brutos.map(mapearRegistroImportado).filter(Boolean);
+            const apagados = new Set(
+              Array.isArray(parsed && parsed.deleted) ? parsed.deleted.map(String)
+              : (parsed && parsed.deleted && typeof parsed.deleted === 'object') ? Object.keys(parsed.deleted) : []
+            );
+            const convertidos = brutos.map(mapearRegistroImportado).filter(c => c && !apagados.has(String(c.id)));
 
             if (convertidos.length === 0) {
-              const chaves = parsed && typeof parsed === 'object' ? Object.keys(parsed).slice(0, 12).join(', ') : typeof parsed;
-              alert('Não consegui reconhecer os registros deste arquivo.\n\nChaves encontradas: ' + (chaves || '(nenhuma)') + '\n\nEnvie um trecho do arquivo para ajustarmos a importação.');
+              const resumo = (parsed && typeof parsed === 'object')
+                ? Object.entries(parsed).slice(0, 12).map(([k, v]) => {
+                    const tipo = Array.isArray(v) ? `lista(${v.length})` : (v && typeof v === 'object') ? `objeto(${Object.keys(v).length})` : typeof v;
+                    let extra = '';
+                    const ex = Array.isArray(v) ? v[0] : (v && typeof v === 'object' ? Object.values(v)[0] : null);
+                    if (ex && typeof ex === 'object') extra = ' → campos: ' + Object.keys(ex).slice(0, 10).join(', ');
+                    return `${k}: ${tipo}${extra}`;
+                  }).join('\n')
+                : typeof parsed;
+              alert('Não consegui reconhecer os registros deste arquivo.\n\nEstrutura encontrada:\n' + resumo + '\n\nMande esse texto (ou um trecho do arquivo) para ajustarmos a importação.');
               return;
             }
 
