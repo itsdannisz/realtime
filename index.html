@@ -316,6 +316,9 @@
           <button class="btn" id="btnImportJSONQuick" title="Restaurar backup JSON" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">
             📥 Importar JSON
           </button>
+          <button class="btn" id="btnExportJSONQuick" title="Baixar backup completo (JSON)" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">
+            📤 Exportar JSON
+          </button>
           <input type="file" id="jsonQuickInput" accept=".json" style="display:none">
 
           <button class="btn" id="btnThemeToggle" title="Alternar tema">
@@ -354,7 +357,7 @@
           <button class="btn-laranja" id="btnFinalizarDiaHero" style="width:auto; padding:9px 18px;">
             ⏹️ Encerrar Expediente
           </button>
-          <button class="btn" id="btnSimularAtraso" title="Ferramenta de Teste da Gestão" style="border-color:var(--c-laranja); color:var(--c-laranja);">
+          <button class="btn" id="btnSimularAtraso" title="Ferramenta de Teste da Gestão" style="display:none; border-color:var(--c-laranja); color:var(--c-laranja);">
             🧪 Simular Atraso (30m)
           </button>
           <button class="btn" id="btnRegistrarAusencia" style="border-color:rgba(239, 68, 68, 0.4); color:var(--neg);">
@@ -982,6 +985,8 @@
                     role.includes('gestao') || 
                     role.includes('admin') || 
                     currentUserId === 'guest';
+      const btnSim = document.getElementById('btnSimularAtraso');
+      if (btnSim) btnSim.style.display = isAdminUser ? '' : 'none';
     }
 
     function recalculateExpected() {
@@ -1749,6 +1754,47 @@
       if (txt) txt.textContent = `Meta líquida calculada: ${Core.fromMinutes(liq)} por dia útil`;
     }
 
+    // ===== COMUNICADOS DA GESTÃO (tabela compartilhada bh_announcements) =====
+    let sharedAnnouncements = [];
+
+    function esc(t) {
+      return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    async function buscarComunicados() {
+      const { data, error } = await sbClient.from('bh_announcements')
+        .select('id, title, message, created_at').order('created_at', { ascending: false }).limit(20);
+      if (error) throw error;
+      return data || [];
+    }
+
+    async function loadAnnouncements() {
+      if (!sbClient || currentUserId === 'guest') return;
+      try {
+        sharedAnnouncements = await buscarComunicados();
+
+        // Migração única (só gestão): comunicados antigos que estavam apenas neste aparelho
+        if (isAdminUser && Array.isArray(appState.announcements) && appState.announcements.length) {
+          const rows = appState.announcements.map(a => ({
+            title: String(a.title || '').slice(0, 120),
+            message: String(a.message || '').slice(0, 1000),
+            created_at: a.date || new Date().toISOString()
+          })).filter(r => r.title && r.message);
+          const { error } = await sbClient.from('bh_announcements').insert(rows);
+          if (!error) {
+            appState.announcements = [];
+            saveLocal();
+            sharedAnnouncements = await buscarComunicados();
+          }
+        }
+      } catch (err) {
+        console.warn('Não consegui carregar os comunicados:', err);
+      }
+      checkBirthdaysNotification();
+    }
+
+    setInterval(() => { if (currentUserId !== 'guest') loadAnnouncements(); }, 5 * 60 * 1000);
+
     function checkBirthdaysNotification() {
       const now = new Date();
       const formatMD = (d) => `-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1766,7 +1812,7 @@
         alertBox.style.display = 'none';
       }
 
-      const announcements = appState.announcements || [];
+      const announcements = sharedAnnouncements;
       if (announcements.length > 0) {
         count += announcements.length;
         const bannerBox = document.getElementById('companyAnnouncementBanner');
@@ -1797,7 +1843,7 @@
         adminNoticeForm.style.display = isAdminUser ? 'block' : 'none';
       }
 
-      const announcements = appState.announcements || [];
+      const announcements = sharedAnnouncements;
       if (noticeBox) {
         if (announcements.length > 0) {
           noticeBox.innerHTML = '';
@@ -1806,10 +1852,10 @@
             item.className = 'holiday-item';
             item.innerHTML = `
               <div>
-                <strong style="color:var(--c-laranja);">${a.title}</strong>
-                <div style="font-size:11px; margin-top:2px;">${a.message}</div>
+                <strong style="color:var(--c-laranja);">${esc(a.title)}</strong>
+                <div style="font-size:11px; margin-top:2px;">${esc(a.message)}</div>
               </div>
-              ${isAdminUser ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" onclick="deleteAnnouncement(${idx})">✕</button>` : ''}
+              ${isAdminUser ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" onclick="deleteAnnouncement('${esc(a.id)}')">✕</button>` : ''}
             `;
             noticeBox.appendChild(item);
           });
@@ -1828,11 +1874,11 @@
       }
     }
 
-    function deleteAnnouncement(index) {
+    async function deleteAnnouncement(id) {
       if (!confirm('Remover este comunicado da equipe?')) return;
-      appState.announcements.splice(index, 1);
-      saveLocal();
-      checkBirthdaysNotification();
+      const { error } = await sbClient.from('bh_announcements').delete().eq('id', id);
+      if (error) { showToast('Não consegui remover: ' + (error.message || 'sem permissão')); return; }
+      await loadAnnouncements();
       showToast('Comunicado removido.');
     }
 
@@ -1925,6 +1971,7 @@
       document.getElementById('btnSolicitarAjuste').addEventListener('click', () => document.getElementById('modalSolicitarAjuste').showModal());
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
       document.getElementById('btnNotificationBell').addEventListener('click', () => {
+        loadAnnouncements();
         renderNotificationsModalContent();
         document.getElementById('modalNotificacoes').showModal();
       });
@@ -1943,19 +1990,19 @@
         reader.readAsDataURL(file);
       });
 
-      document.getElementById('formAdminNotice').addEventListener('submit', (e) => {
+      document.getElementById('formAdminNotice').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const title = document.getElementById('noticeTitleInput').value.trim();
-        const message = document.getElementById('noticeMsgInput').value.trim();
+        const title = document.getElementById('noticeTitleInput').value.trim().slice(0, 120);
+        const message = document.getElementById('noticeMsgInput').value.trim().slice(0, 1000);
         if (!title || !message) return;
+        if (!sbClient || currentUserId === 'guest') { showToast('Entre com a sua conta para publicar comunicados.'); return; }
 
-        appState.announcements = appState.announcements || [];
-        appState.announcements.unshift({ title, message, date: new Date().toISOString() });
-        saveLocal();
+        const { error } = await sbClient.from('bh_announcements').insert({ title, message });
+        if (error) { showToast('Não consegui publicar: ' + (error.message || 'sem permissão')); return; }
 
         document.getElementById('noticeTitleInput').value = '';
         document.getElementById('noticeMsgInput').value = '';
-        checkBirthdaysNotification();
+        await loadAnnouncements();
         showToast('Comunicado publicado para toda a equipe!');
       });
 
@@ -2120,6 +2167,18 @@
         link.click();
       });
 
+      document.getElementById('btnExportJSONQuick').addEventListener('click', () => {
+        const copia = { ...appState, profile: { ...appState.profile, photo: '' } };
+        const blob = new Blob([JSON.stringify(copia, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_banco_de_horas_${getLocalDateStr()}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('Backup baixado.');
+      });
+
       document.getElementById('btnImportJSONQuick').addEventListener('click', () => document.getElementById('jsonQuickInput').click());
       document.getElementById('jsonQuickInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -2276,7 +2335,25 @@
       renderMiniCalendar();
       renderMonthlyChart();
       await executarCheckIn();
+      loadAnnouncements();
       syncWithCloud(); // garante que pontos e solicitações já feitos neste aparelho subam para a nuvem
+    }
+
+    let syncPendente = false;
+    let syncFalhas = 0;
+
+    function atualizarAlertaSync(ok, detalhe) {
+      let b = document.getElementById('syncAlertBanner');
+      if (ok) { if (b) b.style.display = 'none'; return; }
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'syncAlertBanner';
+        b.style.cssText = 'position:sticky;top:0;z-index:9999;background:#c62828;color:#fff;padding:8px 14px;font-weight:700;font-size:13px;text-align:center;';
+        const app = document.getElementById('appScreen');
+        (app || document.body).prepend(b);
+      }
+      b.textContent = `⚠️ Suas alterações estão salvas só neste computador e NÃO estão indo para a nuvem${detalhe ? ' (' + detalhe + ')' : ''}. Tentando de novo automaticamente. Não limpe os dados do navegador.`;
+      b.style.display = 'block';
     }
 
     async function syncWithCloud() {
@@ -2292,11 +2369,20 @@
 
         document.getElementById('syncDot').className = 'sync-dot';
         document.getElementById('syncText').textContent = 'Nuvem OK';
+        syncPendente = false; syncFalhas = 0;
+        atualizarAlertaSync(true);
       } catch (e) {
         document.getElementById('syncDot').className = 'sync-dot offline';
         document.getElementById('syncText').textContent = 'Salvo no PC';
+        console.warn('Falha ao sincronizar com a nuvem:', e);
+        syncPendente = true; syncFalhas++;
+        if (syncFalhas >= 2) atualizarAlertaSync(false, (e && e.message) ? e.message : '');
       }
     }
+
+    // Tenta de novo sozinho a cada 1 min e quando a internet volta
+    setInterval(() => { if (syncPendente) syncWithCloud(); }, 60000);
+    window.addEventListener('online', () => { if (syncPendente) syncWithCloud(); });
 
     function setupAuthForm() {
       const tabLogin = document.getElementById('tabAuthLogin');
