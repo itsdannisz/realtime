@@ -1470,11 +1470,12 @@
       if (targetUserId === currentUserId) {
         saveLocal();
       } else if (sbClient && member.state) {
-        await sbClient.from('bh_state').upsert({
+        const { error: errGravar } = await sbClient.from('bh_state').upsert({
           user_id: targetUserId,
           state: member.state,
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
+        if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return; }
       }
 
       showToast('Solicitação aprovada!');
@@ -1493,11 +1494,12 @@
         saveLocal();
       } else if (sbClient && member.state) {
         member.state.entries = member.entries;
-        await sbClient.from('bh_state').upsert({
+        const { error: errGravar } = await sbClient.from('bh_state').upsert({
           user_id: targetUserId,
           state: member.state,
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
+        if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return; }
       }
 
       showToast('Solicitação recusada.');
@@ -2274,6 +2276,7 @@
       renderMiniCalendar();
       renderMonthlyChart();
       await executarCheckIn();
+      syncWithCloud(); // garante que pontos e solicitações já feitos neste aparelho subam para a nuvem
     }
 
     async function syncWithCloud() {
@@ -2283,7 +2286,7 @@
           user_id: currentUserId,
           state: JSON.stringify(appState),
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
 
         if (error) throw error;
 
