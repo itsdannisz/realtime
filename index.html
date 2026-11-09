@@ -1504,6 +1504,17 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
+      // Mantém o próprio usuário sempre atualizado (o estado local muda a cada envio/mescla)
+      const dadosProprios = {
+        userId: currentUserId,
+        profile: appState.profile,
+        entries: appState.entries,
+        expectedMins: appState.config.expected || 360,
+        state: appState
+      };
+      const idxProprio = allTeamLoadedData.findIndex(m => m.userId === currentUserId);
+      if (idxProprio >= 0) allTeamLoadedData[idxProprio] = dadosProprios; else allTeamLoadedData.unshift(dadosProprios);
+
       let allPending = [];
       allTeamLoadedData.forEach(member => {
         (member.entries || []).filter(e => e.status === 'pendente_aprovacao').forEach(e => {
@@ -1799,6 +1810,9 @@
       const statBalanceEl = document.getElementById('statBalance');
       statBalanceEl.textContent = Core.fromMinutes(runningSum);
       statBalanceEl.className = `metric-value ${runningSum >= 0 ? 'pos' : 'neg'}`;
+
+      // Solicitações (gestão): atualiza lista e contador junto, sem precisar de F5
+      if (isAdminUser) { try { renderPendingApprovals(); } catch (e) { console.warn(e); } }
     }
 
     function excluirLinha(id) {
@@ -2431,6 +2445,7 @@
       await executarCheckIn();
       loadAnnouncements();
       syncWithCloud(); // garante que pontos e solicitações já feitos neste aparelho subam para a nuvem
+      atualizarSolicitacoesEmSegundoPlano(); // gestão: já abre mostrando as solicitações pendentes da equipe
     }
 
     let syncPendente = false;
@@ -2509,6 +2524,41 @@
     // Tenta de novo sozinho a cada 1 min e quando a internet volta
     setInterval(() => { if (syncPendente) syncWithCloud(); }, 60000);
     window.addEventListener('online', () => { if (syncPendente) syncWithCloud(); });
+
+    // Gestão: traz as solicitações novas da equipe sem F5 (silencioso, sem mexer na tela)
+    async function atualizarSolicitacoesEmSegundoPlano() {
+      if (!isAdminUser || !sbClient || currentUserId === 'guest') return;
+      try {
+        const { data, error } = await sbClient.from('bh_state').select('user_id, state, updated_at');
+        if (error || !data) return;
+        const outros = [];
+        data.forEach(row => {
+          if (row.user_id === currentUserId) return;
+          const parsed = stateFromRow(row.state);
+          if (parsed && parsed.profile) {
+            outros.push({
+              userId: row.user_id,
+              profile: parsed.profile,
+              entries: parsed.entries || [],
+              expectedMins: parsed.config?.expected || 360,
+              state: parsed
+            });
+          }
+        });
+        allTeamLoadedData = [{
+          userId: currentUserId,
+          profile: appState.profile,
+          entries: appState.entries,
+          expectedMins: appState.config.expected || 360,
+          state: appState
+        }, ...outros];
+        renderPendingApprovals();
+      } catch (e) {
+        console.warn('Não consegui atualizar as solicitações em segundo plano:', e);
+      }
+    }
+    setInterval(() => { if (!document.hidden) atualizarSolicitacoesEmSegundoPlano(); }, 2 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarSolicitacoesEmSegundoPlano(); });
 
     function setupAuthForm() {
       const tabLogin = document.getElementById('tabAuthLogin');
