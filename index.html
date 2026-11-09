@@ -157,6 +157,8 @@
 
     .btn-laranja { background: var(--c-laranja); color: #ffffff; border: 0; font-family: inherit; font-size: 14px; font-weight: 700; padding: 13px 20px; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: background 0.15s, transform 0.15s; }
     .btn-laranja:hover { background: var(--c-laranja-hover); transform: translateY(-1px); }
+    .btn-verde { background: var(--pos); color: #ffffff; border: 0; font-family: inherit; font-size: 14px; font-weight: 700; padding: 13px 20px; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: opacity 0.15s, transform 0.15s; }
+    .btn-verde:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--card-sub); color: var(--text-main); cursor: pointer; }
     .btn:hover { border-color: var(--c-laranja); }
 
@@ -243,11 +245,11 @@
         <div id="boxSignupFields" style="display:none;">
           <div class="form-group">
             <label>Nome Completo</label>
-            <input type="text" id="authName" placeholder="Ex: Lucas Henrique">
+            <input type="text" id="authName" placeholder="Ex: Danielle Silva">
           </div>
           <div class="form-group">
             <label>Cargo / Função</label>
-            <input type="text" id="authRole" placeholder="Ex: Consultor Imobiliário">
+            <input type="text" id="authRole" placeholder="Ex: Marketing / Gestão">
           </div>
           <div class="form-group">
             <label>Data de Nascimento</label>
@@ -370,7 +372,7 @@
               <div class="hero-greeting" id="heroGreetingDate">Hoje</div>
               <div class="hero-username" id="heroUserGreeting">Olá, Colaborador</div>
               <div class="hero-badges-row">
-                <span class="hero-role-company" id="heroRoleCompanyBadge">Real Estate São Paulo</span>
+                <span class="hero-role-company" id="heroRoleCompanyBadge">Consultoria • Real Estate São Paulo</span>
                 <span class="tag neutral" id="heroLocationBadge">🏠 Home Office (Detectado)</span>
                 <div class="live-status-badge" id="liveStatusContainer">
                   <span class="live-dot" id="liveStatusDot"></span>
@@ -405,7 +407,6 @@
                 <span class="tag neutral" id="tagContratoHoje">Meta Líquida: 06:00</span>
               </div>
 
-              <!-- TIMELINE LIMPA: SEM BOTÃO MANUAL DE ENTRADA -->
               <div class="punches-timeline" id="todayTimelineBox">
                 <div class="punch-item">
                   <div>
@@ -426,7 +427,6 @@
                 </div>
               </div>
 
-              <!-- BOTÃO ÚNICO DE FINALIZAÇÃO -->
               <div class="punch-actions-wrap" style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
                 <button class="btn-laranja" id="btnFinalizarDiaInstantaneo">
                   ⏹️ Encerrar Expediente Agora
@@ -732,7 +732,7 @@
       </div>
 
       <div class="form-group">
-        <label>Modalidade de Contrato</label>
+        <label>Modalidade de Contrato (Ajusta a Jornada)</label>
         <select id="perfilModalidade">
           <option value="custom">Personalizado (Conforme Configurações)</option>
           <option value="pj8">Prestador PJ (Jornada 8h/dia líquida)</option>
@@ -792,7 +792,7 @@
     </div>
   </dialog>
 
-  <!-- CENTRAL DE NOTIFICAÇÕES (COM FORMULÁRIO DE GESTÃO) -->
+  <!-- CENTRAL DE NOTIFICAÇÕES -->
   <dialog id="modalNotificacoes">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
       <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
@@ -945,6 +945,29 @@
       theme: 'dark'
     };
 
+    // SISTEMA UNIFICADO DE PRESETS DE MODALIDADE
+    function aplicarPresetModalidade(val) {
+      appState.config.modalidade = val;
+      appState.profile.modalidade = val;
+      if (val === 'pj8') {
+        appState.config.entrada = '08:00';
+        appState.config.saida = '17:00';
+        appState.config.intervalo = 60;
+        appState.config.expected = 480; // 8h
+      } else if (val === 'estagio6') {
+        appState.config.entrada = '10:00';
+        appState.config.saida = '17:00';
+        appState.config.intervalo = 60;
+        appState.config.expected = 360; // 6h
+      } else if (val === 'estagio4') {
+        appState.config.entrada = '08:00';
+        appState.config.saida = '12:00';
+        appState.config.intervalo = 0;
+        appState.config.expected = 240; // 4h
+      }
+      recalculateExpected();
+    }
+
     function updateAdminStatus() {
       const p = appState.profile;
       const email = (p.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -964,6 +987,9 @@
       let span = Core.toMinutes(sai) - Core.toMinutes(ent);
       if (span < 0) span += 1440;
       appState.config.expected = Math.max(0, span - int);
+      
+      // Recalcula o saldo diário de todas as entradas existentes com base na nova meta
+      appState.entries = appState.entries.map(e => normalizeEntry(e, appState.config.expected)).filter(Boolean);
     }
 
     function normalizeEntry(e, expectedMins) {
@@ -1046,7 +1072,6 @@
       return cachedDetectedIP;
     }
 
-    // ENTRADA SILENCIOSA E AUTOMÁTICA
     async function executarCheckIn(forcarInicio = false) {
       const todayStr = getLocalDateStr();
       let entry = appState.entries.find(e => e.date === todayStr);
@@ -1556,6 +1581,15 @@
       document.getElementById('topProfileName').textContent = p.name || 'Colaborador';
       document.getElementById('heroUserGreeting').textContent = `Olá, ${p.name || 'Colaborador'}`;
 
+      const modLabels = {
+        pj8: 'Prestador PJ (8h)',
+        estagio6: 'Estágio (6h)',
+        estagio4: 'Estágio Meio Período (4h)',
+        custom: 'Personalizado'
+      };
+      const labelModalidade = modLabels[p.modalidade || appState.config.modalidade || 'custom'] || 'PJ';
+      document.getElementById('heroRoleCompanyBadge').textContent = `${p.role || 'Consultoria'} • ${labelModalidade} • ${p.company}`;
+
       const setAvatar = (el) => {
         if (!el) return;
         if (p.photo) {
@@ -1568,12 +1602,6 @@
       setAvatar(document.getElementById('topAvatarMini'));
       setAvatar(document.getElementById('heroAvatarLarge'));
       setAvatar(document.getElementById('modalProfileAvatar'));
-
-      document.getElementById('perfilNome').value = p.name || '';
-      document.getElementById('perfilEmail').value = p.email || '';
-      document.getElementById('perfilCargo').value = p.role || '';
-      document.getElementById('perfilBirthDate').value = p.birthDate || '';
-      document.getElementById('perfilModalidade').value = p.modalidade || 'custom';
 
       updateAdminStatus();
       
@@ -1681,6 +1709,7 @@
       showToast('Comunicado removido.');
     }
 
+    /* TODOS OS LISTENERS 100% REGISTRADOS E CONECTADOS */
     function setupEventListeners() {
       document.querySelectorAll('dialog [data-close]').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1694,10 +1723,23 @@
       document.getElementById('btnSimularAtraso').addEventListener('click', simularAtrasoParaTeste);
       document.getElementById('btnRefreshTeam').addEventListener('click', loadTeamMembersFromCloud);
 
-      document.getElementById('btnOpenProfile').addEventListener('click', () => document.getElementById('modalPerfil').showModal());
-      document.getElementById('heroAvatarLarge').addEventListener('click', () => document.getElementById('modalPerfil').showModal());
+      // ABRIR PERFIL (CARREGA OS DADOS SALVOS)
+      document.getElementById('btnOpenProfile').addEventListener('click', () => {
+        document.getElementById('perfilNome').value = appState.profile.name || '';
+        document.getElementById('perfilEmail').value = appState.profile.email || '';
+        document.getElementById('perfilCargo').value = appState.profile.role || '';
+        document.getElementById('perfilBirthDate').value = appState.profile.birthDate || '';
+        document.getElementById('perfilModalidade').value = appState.profile.modalidade || appState.config.modalidade || 'custom';
+        document.getElementById('modalPerfil').showModal();
+      });
+
+      document.getElementById('heroAvatarLarge').addEventListener('click', () => {
+        document.getElementById('btnOpenProfile').click();
+      });
+
+      // ABRIR CONFIGURAÇÕES (CARREGA OS DADOS SALVOS)
       document.getElementById('btnSettings').addEventListener('click', () => {
-        document.getElementById('cfgModalidade').value = appState.config.modalidade || 'custom';
+        document.getElementById('cfgModalidade').value = appState.config.modalidade || appState.profile.modalidade || 'custom';
         document.getElementById('cfgEntrada').value = appState.config.entrada || '09:00';
         document.getElementById('cfgSaida').value = appState.config.saida || '16:00';
         document.getElementById('cfgIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
@@ -1710,17 +1752,14 @@
       document.getElementById('cfgSaida').addEventListener('input', atualizarTextoCalculoMeta);
       document.getElementById('cfgIntervalo').addEventListener('input', atualizarTextoCalculoMeta);
 
+      // Mudança na modalidade das Configurações
       document.getElementById('cfgModalidade').addEventListener('change', (e) => {
         const val = e.target.value;
-        const inEntrada = document.getElementById('cfgEntrada');
-        const inSaida = document.getElementById('cfgSaida');
-        const inInt = document.getElementById('cfgIntervalo');
-        if (val === 'estagio6') {
-          inEntrada.value = '10:00'; inSaida.value = '17:00'; inInt.value = '60';
-        } else if (val === 'estagio4') {
-          inEntrada.value = '08:00'; inSaida.value = '12:00'; inInt.value = '0';
-        } else if (val === 'pj8') {
-          inEntrada.value = '08:00'; inSaida.value = '17:00'; inInt.value = '60';
+        if (val !== 'custom') {
+          aplicarPresetModalidade(val);
+          document.getElementById('cfgEntrada').value = appState.config.entrada;
+          document.getElementById('cfgSaida').value = appState.config.saida;
+          document.getElementById('cfgIntervalo').value = appState.config.intervalo;
         }
         atualizarTextoCalculoMeta();
       });
@@ -1752,6 +1791,7 @@
         const reader = new FileReader();
         reader.onload = (ev) => {
           appState.profile.photo = ev.target.result;
+          appState.profile.updatedAt = Date.now();
           saveLocal();
           renderProfile();
         };
@@ -1774,6 +1814,7 @@
         showToast('Comunicado publicado para toda a equipe!');
       });
 
+      // SALVAR PERFIL (SINCRONIZA MODALIDADE E JORNADA)
       document.getElementById('formPerfil').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('perfilNome').value.trim();
@@ -1784,8 +1825,17 @@
         appState.profile.name = name;
         appState.profile.role = role;
         appState.profile.birthDate = birthDate;
-        appState.profile.modalidade = modalidade;
         appState.profile.updatedAt = Date.now();
+
+        // Se escolheu um preset de modalidade, aplica a jornada imediatamente
+        if (modalidade !== 'custom') {
+          aplicarPresetModalidade(modalidade);
+        } else {
+          appState.profile.modalidade = 'custom';
+          appState.config.modalidade = 'custom';
+        }
+
+        appState.config.updatedAt = Date.now();
 
         if (sbClient && currentUserId !== 'guest') {
           try {
@@ -1795,7 +1845,31 @@
 
         saveLocal();
         document.getElementById('modalPerfil').close();
-        showToast('Perfil salvo com sucesso!');
+        showToast('Perfil e jornada salvos com sucesso!');
+      });
+
+      // SALVAR CONFIGURAÇÕES (SINCRONIZA COM PERFIL)
+      document.getElementById('btnSaveConfigs').addEventListener('click', () => {
+        const modalidade = document.getElementById('cfgModalidade').value;
+        
+        if (modalidade !== 'custom') {
+          aplicarPresetModalidade(modalidade);
+        } else {
+          appState.config.modalidade = 'custom';
+          appState.profile.modalidade = 'custom';
+          appState.config.entrada = document.getElementById('cfgEntrada').value;
+          appState.config.saida = document.getElementById('cfgSaida').value;
+          appState.config.intervalo = Number(document.getElementById('cfgIntervalo').value) || 0;
+          recalculateExpected();
+        }
+
+        appState.config.officeIp = document.getElementById('cfgOfficeIp').value.trim();
+        appState.config.updatedAt = Date.now();
+        appState.profile.updatedAt = Date.now();
+
+        saveLocal();
+        document.getElementById('modalSettings').close();
+        showToast('Configurações de jornada salvas!');
       });
 
       document.getElementById('formFalta').addEventListener('submit', (e) => {
@@ -1871,19 +1945,6 @@
         saveLocal();
         document.getElementById('modalUso').close();
         showToast('Compensação registrada!');
-      });
-
-      document.getElementById('btnSaveConfigs').addEventListener('click', () => {
-        appState.config.modalidade = document.getElementById('cfgModalidade').value;
-        appState.config.entrada = document.getElementById('cfgEntrada').value;
-        appState.config.saida = document.getElementById('cfgSaida').value;
-        appState.config.intervalo = Number(document.getElementById('cfgIntervalo').value) || 0;
-        appState.config.officeIp = document.getElementById('cfgOfficeIp').value.trim();
-        appState.config.updatedAt = Date.now();
-        recalculateExpected();
-        saveLocal();
-        document.getElementById('modalSettings').close();
-        showToast('Configurações salvas!');
       });
 
       document.getElementById('btnExportCSV').addEventListener('click', () => {
@@ -1970,6 +2031,7 @@
       } catch (e) {}
     }
 
+    // SINCRONIZAÇÃO BLINDADA COM TIMESTAMP (O MAIS NOVO SEMPRE VENCE)
     async function onUserSignedIn(user) {
       currentUserId = user.id;
       localStorage.setItem('realtime_current_uid', currentUserId);
@@ -1983,9 +2045,30 @@
           const { data: cloudRow } = await sbClient.from('bh_state').select('state').eq('user_id', user.id).maybeSingle();
           if (cloudRow && cloudRow.state) {
             const cloudState = typeof cloudRow.state === 'string' ? JSON.parse(cloudRow.state) : cloudRow.state;
-            if (cloudState.config) appState.config = { ...appState.config, ...cloudState.config };
-            if (cloudState.profile) appState.profile = { ...appState.profile, ...cloudState.profile };
-            if (Array.isArray(cloudState.entries)) appState.entries = cloudState.entries;
+            
+            // Só substitui a configuração se a nuvem for MAIS RECENTE que o que foi salvo no computador
+            const cloudCfgTime = cloudState.config?.updatedAt || 0;
+            const localCfgTime = appState.config?.updatedAt || 0;
+            if (cloudCfgTime > localCfgTime) {
+              appState.config = { ...appState.config, ...cloudState.config };
+              recalculateExpected();
+            }
+
+            // Só substitui o perfil se a nuvem for MAIS RECENTE que o que foi salvo no computador
+            const cloudProfTime = cloudState.profile?.updatedAt || 0;
+            const localProfTime = appState.profile?.updatedAt || 0;
+            if (cloudProfTime > localProfTime) {
+              appState.profile = { ...appState.profile, ...cloudState.profile };
+            }
+
+            if (Array.isArray(cloudState.entries)) {
+              const entryMap = new Map(appState.entries.map(e => [e.id, e]));
+              cloudState.entries.forEach(ce => {
+                const le = entryMap.get(ce.id);
+                if (!le || (ce.updatedAt || 0) >= (le.updatedAt || 0)) entryMap.set(ce.id, ce);
+              });
+              appState.entries = [...entryMap.values()];
+            }
           }
         } catch (e) {}
       }
@@ -2007,16 +2090,19 @@
     async function syncWithCloud() {
       if (!sbClient || currentUserId === 'guest') return;
       try {
-        await sbClient.from('bh_state').upsert({
+        const { error } = await sbClient.from('bh_state').upsert({
           user_id: currentUserId,
-          state: appState,
+          state: JSON.stringify(appState),
           updated_at: new Date().toISOString()
         });
+
+        if (error) throw error;
+
         document.getElementById('syncDot').className = 'sync-dot';
         document.getElementById('syncText').textContent = 'Nuvem OK';
       } catch (e) {
-        document.getElementById('syncDot').className = 'sync-dot error';
-        document.getElementById('syncText').textContent = 'Offline';
+        document.getElementById('syncDot').className = 'sync-dot offline';
+        document.getElementById('syncText').textContent = 'Salvo no PC';
       }
     }
 
@@ -2043,20 +2129,22 @@
 
       document.getElementById('btnContinueOffline').onclick = () => {
         currentUserId = 'guest';
-        appState.profile = {
-          name: 'Danielle Silva (Gestão)',
-          email: 'danielle@realestatesp.com.br',
-          role: 'Marketing / Gestão',
-          company: 'Real Estate São Paulo',
-          birthDate: '',
-          modalidade: 'custom',
-          photo: '',
-          updatedAt: 0
-        };
+        loadLocal();
+        if (!appState.profile.name) {
+          appState.profile = {
+            name: 'Danielle Silva (Gestão)',
+            email: 'danielle@realestatesp.com.br',
+            role: 'Marketing / Gestão',
+            company: 'Real Estate São Paulo',
+            birthDate: '',
+            modalidade: 'custom',
+            photo: '',
+            updatedAt: Date.now()
+          };
+        }
         updateAdminStatus();
         document.getElementById('authScreen').hidden = true;
         document.getElementById('appScreen').hidden = false;
-        loadLocal();
         executarCheckIn();
         renderDashboard();
         renderMiniCalendar();
