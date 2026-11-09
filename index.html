@@ -946,24 +946,21 @@
     };
 
     // SISTEMA UNIFICADO DE PRESETS DE MODALIDADE
+    const MODALIDADE_PRESETS = {
+      pj8:      { entrada: '08:00', saida: '17:00', intervalo: 60 }, // 8h líquidas
+      estagio6: { entrada: '10:00', saida: '17:00', intervalo: 60 }, // 6h líquidas
+      estagio4: { entrada: '08:00', saida: '12:00', intervalo: 0 }   // 4h líquidas
+    };
+
+    // Aplica um preset NO ESTADO (usado só quando a modalidade muda de fato ao salvar)
     function aplicarPresetModalidade(val) {
       appState.config.modalidade = val;
       appState.profile.modalidade = val;
-      if (val === 'pj8') {
-        appState.config.entrada = '08:00';
-        appState.config.saida = '17:00';
-        appState.config.intervalo = 60;
-        appState.config.expected = 480; // 8h
-      } else if (val === 'estagio6') {
-        appState.config.entrada = '10:00';
-        appState.config.saida = '17:00';
-        appState.config.intervalo = 60;
-        appState.config.expected = 360; // 6h
-      } else if (val === 'estagio4') {
-        appState.config.entrada = '08:00';
-        appState.config.saida = '12:00';
-        appState.config.intervalo = 0;
-        appState.config.expected = 240; // 4h
+      const p = MODALIDADE_PRESETS[val];
+      if (p) {
+        appState.config.entrada = p.entrada;
+        appState.config.saida = p.saida;
+        appState.config.intervalo = p.intervalo;
       }
       recalculateExpected();
     }
@@ -987,9 +984,8 @@
       let span = Core.toMinutes(sai) - Core.toMinutes(ent);
       if (span < 0) span += 1440;
       appState.config.expected = Math.max(0, span - int);
-      
-      // Recalcula o saldo diário de todas as entradas existentes com base na nova meta
-      appState.entries = appState.entries.map(e => normalizeEntry(e, appState.config.expected)).filter(Boolean);
+      // Obs.: os pontos já registrados NÃO são recalculados aqui. Cada ponto guarda a meta da
+      // sua própria época (campo "meta"), então mudar a configuração só vale daqui pra frente.
     }
 
     function normalizeEntry(e, expectedMins) {
@@ -1007,14 +1003,26 @@
       const updatedAt = e.updatedAt || Date.now();
 
       let variation = 0;
+      let meta = typeof e.meta === 'number' ? e.meta : null;
       if (type === 'trabalhado' && saida) {
-        const calc = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, expectedMins, date);
-        variation = calc.saldo;
+        if (meta !== null) {
+          // Ponto com meta congelada: recalcula com a meta DA ÉPOCA do ponto
+          variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo;
+        } else if (typeof e.variation === 'number') {
+          // Ponto antigo (sem meta guardada): preserva o saldo já gravado, sem recalcular
+          variation = e.variation;
+        } else {
+          meta = expectedMins;
+          variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo;
+        }
       } else if (type === 'uso' || type === 'falta' || type === 'atestado') {
         variation = typeof e.variation === 'number' ? e.variation : 0;
       }
 
-      return { id, date, type, entrada, saida, intervalo, ip, location, variation, obs, status, updatedAt };
+      const out = { id, date, type, entrada, saida, intervalo, ip, location, variation, obs, status, updatedAt };
+      if (meta !== null) out.meta = meta;
+      if (e.nextDay) out.nextDay = true;
+      return out;
     }
 
     function loadLocal() {
@@ -1148,6 +1156,7 @@
 
       entry.saida = timeNow;
       entry.variation = calc.saldo;
+      entry.meta = appState.config.expected || 360;
       entry.updatedAt = Date.now();
 
       if (calc.saldo < 0) {
@@ -1752,16 +1761,29 @@
       document.getElementById('cfgSaida').addEventListener('input', atualizarTextoCalculoMeta);
       document.getElementById('cfgIntervalo').addEventListener('input', atualizarTextoCalculoMeta);
 
-      // Mudança na modalidade das Configurações
+      // Mudança na modalidade das Configurações: só preenche os campos na tela.
+      // Nada é gravado até clicar em "Salvar Configurações" (Cancelar descarta tudo).
       document.getElementById('cfgModalidade').addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val !== 'custom') {
-          aplicarPresetModalidade(val);
-          document.getElementById('cfgEntrada').value = appState.config.entrada;
-          document.getElementById('cfgSaida').value = appState.config.saida;
-          document.getElementById('cfgIntervalo').value = appState.config.intervalo;
+        const p = MODALIDADE_PRESETS[e.target.value];
+        if (p) {
+          document.getElementById('cfgEntrada').value = p.entrada;
+          document.getElementById('cfgSaida').value = p.saida;
+          document.getElementById('cfgIntervalo').value = p.intervalo;
         }
         atualizarTextoCalculoMeta();
+      });
+
+      // Se mexer manualmente nos horários, a modalidade vira "Personalizado" na hora
+      ['cfgEntrada', 'cfgSaida', 'cfgIntervalo'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          const sel = document.getElementById('cfgModalidade');
+          const p = MODALIDADE_PRESETS[sel.value];
+          if (!p) return;
+          const igual = document.getElementById('cfgEntrada').value === p.entrada
+                     && document.getElementById('cfgSaida').value === p.saida
+                     && (Number(document.getElementById('cfgIntervalo').value) || 0) === p.intervalo;
+          if (!igual) sel.value = 'custom';
+        });
       });
 
       document.getElementById('btnCalPrev').addEventListener('click', () => {
@@ -1827,12 +1849,15 @@
         appState.profile.birthDate = birthDate;
         appState.profile.updatedAt = Date.now();
 
-        // Se escolheu um preset de modalidade, aplica a jornada imediatamente
-        if (modalidade !== 'custom') {
-          aplicarPresetModalidade(modalidade);
-        } else {
-          appState.profile.modalidade = 'custom';
-          appState.config.modalidade = 'custom';
+        // Só altera a jornada se a modalidade realmente mudou (não sobrescreve horários personalizados)
+        const modalidadeAnterior = appState.config.modalidade || appState.profile.modalidade || 'custom';
+        if (modalidade !== modalidadeAnterior) {
+          if (modalidade !== 'custom') {
+            aplicarPresetModalidade(modalidade);
+          } else {
+            appState.profile.modalidade = 'custom';
+            appState.config.modalidade = 'custom';
+          }
         }
 
         appState.config.updatedAt = Date.now();
@@ -1850,18 +1875,29 @@
 
       // SALVAR CONFIGURAÇÕES (SINCRONIZA COM PERFIL)
       document.getElementById('btnSaveConfigs').addEventListener('click', () => {
-        const modalidade = document.getElementById('cfgModalidade').value;
-        
-        if (modalidade !== 'custom') {
-          aplicarPresetModalidade(modalidade);
-        } else {
-          appState.config.modalidade = 'custom';
-          appState.profile.modalidade = 'custom';
-          appState.config.entrada = document.getElementById('cfgEntrada').value;
-          appState.config.saida = document.getElementById('cfgSaida').value;
-          appState.config.intervalo = Number(document.getElementById('cfgIntervalo').value) || 0;
-          recalculateExpected();
-        }
+        const selecionada = document.getElementById('cfgModalidade').value;
+        const entrada = document.getElementById('cfgEntrada').value;
+        const saida = document.getElementById('cfgSaida').value;
+        const intervalo = Number(document.getElementById('cfgIntervalo').value) || 0;
+
+        // Validação básica
+        if (!entrada || !saida) { showToast('Preencha o horário de entrada e de saída.'); return; }
+        if (entrada === saida) { showToast('Entrada e saída não podem ser iguais.'); return; }
+        let span = Core.toMinutes(saida) - Core.toMinutes(entrada);
+        if (span < 0) span += 1440;
+        if (intervalo < 0 || intervalo >= span) { showToast('O intervalo precisa ser menor que a jornada.'); return; }
+
+        // Só mantém a modalidade escolhida se os horários batem com o preset dela
+        const p = MODALIDADE_PRESETS[selecionada];
+        const bate = p && p.entrada === entrada && p.saida === saida && p.intervalo === intervalo;
+        const modalidade = bate ? selecionada : 'custom';
+
+        appState.config.modalidade = modalidade;
+        appState.profile.modalidade = modalidade;
+        appState.config.entrada = entrada;
+        appState.config.saida = saida;
+        appState.config.intervalo = intervalo;
+        recalculateExpected();
 
         appState.config.officeIp = document.getElementById('cfgOfficeIp').value.trim();
         appState.config.updatedAt = Date.now();
@@ -1916,6 +1952,7 @@
           intervalo: appState.config.intervalo || 60,
           location: 'home',
           variation: calc.saldo,
+          meta: appState.config.expected || 360,
           obs: `[Solicitação] ${motivo}`,
           status: 'pendente_aprovacao',
           updatedAt: Date.now()
