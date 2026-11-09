@@ -213,9 +213,18 @@
 
     @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
   </style>
-</head>
-<body>
+</head>  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#090d16">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RealTime">
 
+<body>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
   <!-- LOGIN / CADASTRO -->
   <section id="authScreen">
     <div class="auth-container">
