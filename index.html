@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark light">
-  <title>RealTime • Real Estate São Paulo</title>
+  <title>RealTime • Banco de Horas</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -157,8 +157,6 @@
 
     .btn-laranja { background: var(--c-laranja); color: #ffffff; border: 0; font-family: inherit; font-size: 14px; font-weight: 700; padding: 13px 20px; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: background 0.15s, transform 0.15s; }
     .btn-laranja:hover { background: var(--c-laranja-hover); transform: translateY(-1px); }
-    .btn-verde { background: var(--pos); color: #ffffff; border: 0; font-family: inherit; font-size: 14px; font-weight: 700; padding: 13px 20px; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: opacity 0.15s, transform 0.15s; }
-    .btn-verde:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--card-sub); color: var(--text-main); cursor: pointer; }
     .btn:hover { border-color: var(--c-laranja); }
 
@@ -403,15 +401,16 @@
           <div>
             <div class="content-card">
               <div class="card-title">
-                <span>Jornada de Hoje</span>
+                <span>Jornada de Hoje (Automática)</span>
                 <span class="tag neutral" id="tagContratoHoje">Meta Líquida: 06:00</span>
               </div>
 
+              <!-- TIMELINE LIMPA: SEM BOTÃO MANUAL DE ENTRADA -->
               <div class="punches-timeline" id="todayTimelineBox">
                 <div class="punch-item">
                   <div>
                     <span class="punch-time" id="timeEntradaDisplay">--:--</span>
-                    <div class="muted" style="font-size:11px;" id="entryDetectedLocation">Capturado silenciosamente ao abrir</div>
+                    <div class="muted" style="font-size:11px;" id="entryDetectedLocation">Registrado automaticamente ao ligar o PC</div>
                   </div>
                   <span class="punch-label">Entrada</span>
                 </div>
@@ -427,10 +426,8 @@
                 </div>
               </div>
 
+              <!-- BOTÃO ÚNICO DE FINALIZAÇÃO -->
               <div class="punch-actions-wrap" style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
-                <button class="btn-verde" id="btnIniciarDiaManual" style="display:none;">
-                  ▶️ Iniciar Expediente Agora
-                </button>
                 <button class="btn-laranja" id="btnFinalizarDiaInstantaneo">
                   ⏹️ Encerrar Expediente Agora
                 </button>
@@ -1049,6 +1046,7 @@
       return cachedDetectedIP;
     }
 
+    // ENTRADA SILENCIOSA E AUTOMÁTICA
     async function executarCheckIn(forcarInicio = false) {
       const todayStr = getLocalDateStr();
       let entry = appState.entries.find(e => e.date === todayStr);
@@ -1439,16 +1437,11 @@
       const todayEntry = appState.entries.find(e => e.date === todayStr);
       const liveDot = document.getElementById('liveStatusDot');
       const liveText = document.getElementById('liveStatusText');
-      const btnIniciarManual = document.getElementById('btnIniciarDiaManual');
-      const btnFinalizar = document.getElementById('btnFinalizarDiaInstantaneo');
 
       if (todayEntry) {
         document.getElementById('timeEntradaDisplay').textContent = todayEntry.entrada || '--:--';
         document.getElementById('timeSaidaDisplay').textContent = todayEntry.saida || '--:--';
         document.getElementById('entryDetectedLocation').textContent = todayEntry.location === 'escritorio' ? '🏢 Escritório • Conectado' : '🏠 Home Office • Conectado';
-
-        if (btnIniciarManual) btnIniciarManual.style.display = 'none';
-        if (btnFinalizar) btnFinalizar.style.display = 'block';
 
         if (todayEntry.saida) {
           const calc = Core.calcPJ(todayEntry.entrada, todayEntry.saida, todayEntry.intervalo, false, appState.config.expected || 360, todayStr);
@@ -1472,11 +1465,9 @@
         document.getElementById('timeSaidaDisplay').textContent = '--:--';
         document.getElementById('statHorasHoje').textContent = '00:00';
         document.getElementById('statSaldoHoje').textContent = '+00:00';
-        liveText.textContent = 'Expediente Não Iniciado';
+        liveText.textContent = 'Iniciando expediente...';
         liveDot.className = 'live-dot idle';
         document.getElementById('entrySaidaLocation').textContent = 'Aguardando início';
-        if (btnIniciarManual) btnIniciarManual.style.display = 'block';
-        if (btnFinalizar) btnFinalizar.style.display = 'none';
       }
 
       const sortedChronological = [...appState.entries].sort((a, b) => {
@@ -1638,6 +1629,8 @@
       } else {
         bellBadge.style.display = 'none';
       }
+
+      renderNotificationsModalContent();
     }
 
     function renderNotificationsModalContent() {
@@ -1696,7 +1689,6 @@
         });
       });
 
-      document.getElementById('btnIniciarDiaManual').addEventListener('click', () => executarCheckIn(true));
       document.getElementById('btnFinalizarDiaInstantaneo').addEventListener('click', finalizarDiaInstantaneo);
       document.getElementById('btnFinalizarDiaHero').addEventListener('click', finalizarDiaInstantaneo);
       document.getElementById('btnSimularAtraso').addEventListener('click', simularAtrasoParaTeste);
