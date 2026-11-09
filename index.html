@@ -626,6 +626,11 @@
         <small class="muted" style="font-size:11px;">Ex.: 60 = 1h, 120 = 2h. É descontado do total do dia.</small>
       </div>
       <div class="form-group">
+        <label>Abono da gestão (minutos) — opcional</label>
+        <input type="number" id="ajusteAbono" min="0" max="480" step="1" value="0">
+        <small class="muted" style="font-size:11px;">Minutos que a gestão decidiu NÃO contar como crédito no banco (ex.: 42). Os horários reais continuam registrados.</small>
+      </div>
+      <div class="form-group">
         <label>Local do dia</label>
         <select id="ajusteLocal">
           <option value="home">🏠 Home Office</option>
@@ -1095,16 +1100,17 @@
 
       let variation = 0;
       let meta = typeof e.meta === 'number' ? e.meta : null;
+      const abono = (typeof e.abono === 'number' && e.abono > 0) ? e.abono : 0;
       if (type === 'trabalhado' && saida) {
         if (meta !== null) {
           // Ponto com meta congelada: recalcula com a meta DA ÉPOCA do ponto
-          variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo;
+          variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo - abono;
         } else if (typeof e.variation === 'number') {
           // Ponto antigo (sem meta guardada): preserva o saldo já gravado, sem recalcular
           variation = e.variation;
         } else {
           meta = expectedMins;
-          variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo;
+          variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo - abono;
         }
       } else if (type === 'uso' || type === 'falta' || type === 'atestado') {
         variation = typeof e.variation === 'number' ? e.variation : 0;
@@ -1114,6 +1120,7 @@
       if (meta !== null) out.meta = meta;
       if (e.nextDay) out.nextDay = true;
       if (e.locManual) out.locManual = true;
+      if (abono) out.abono = abono;
       return out;
     }
 
@@ -2065,6 +2072,7 @@
       document.getElementById('btnRegistrarAusencia').addEventListener('click', () => document.getElementById('modalFalta').showModal());
       document.getElementById('btnSolicitarAjuste').addEventListener('click', () => {
         document.getElementById('ajusteIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+        document.getElementById('ajusteAbono').value = 0;
         document.getElementById('modalSolicitarAjuste').showModal();
       });
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
@@ -2215,6 +2223,10 @@
         const calc = Core.calcPJ(entrada, saida, intervalo, false, appState.config.expected || 360, data);
         const padrao = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
         const notaAlmoco = intervalo !== padrao ? ` (almoço de ${intervalo} min)` : '';
+        const abono = parseInt(document.getElementById('ajusteAbono').value, 10) || 0;
+        if (abono < 0) { showToast('O abono não pode ser negativo.'); return; }
+        if (abono > Math.max(0, calc.saldo)) { showToast(`O abono (${abono} min) não pode ser maior que o crédito do dia (${Math.max(0, calc.saldo)} min).`); return; }
+        const notaAbono = abono > 0 ? ` • abono de ${abono} min` : '';
 
         appState.entries.push({
           id: 'ajuste_' + Date.now(),
@@ -2224,9 +2236,10 @@
           intervalo: intervalo,
           location: document.getElementById('ajusteLocal').value || 'home',
           locManual: true,
-          variation: calc.saldo,
+          variation: calc.saldo - abono,
           meta: appState.config.expected || 360,
-          obs: `[Solicitação] ${motivo}${notaAlmoco}`,
+          ...(abono > 0 ? { abono: abono } : {}),
+          obs: `[Solicitação] ${motivo}${notaAlmoco}${notaAbono}`,
           status: 'pendente_aprovacao',
           updatedAt: Date.now()
         });
