@@ -131,17 +131,20 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .announcement-bar, .birthday-alert-bar {
-      border-radius: var(--radius-md);
-      padding: 14px 18px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-      animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    }
+    .announcement-bar {
+  background: rgba(236, 137, 77, 0.12);
+  border: 1px solid rgba(236, 137, 77, 0.35);
+  border-radius: 999px; /* Formato de pílula arredondada */
+  padding: 6px 16px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 12px;
+  color: var(--text-main);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
     .announcement-bar {
       background: linear-gradient(90deg, rgba(236, 137, 77, 0.18) 0%, rgba(236, 137, 77, 0.08) 100%);
       border: 1px solid var(--c-laranja);
@@ -514,15 +517,14 @@
     </header>
 
     <main class="container">
-      <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:20px;">📢</span>
-          <div>
-            <strong id="bannerAnnounceTitle" style="color:var(--c-laranja);">Aviso da Gestão</strong>: <span id="bannerAnnounceMsg"></span>
-          </div>
-        </div>
-        <button class="btn" style="padding:4px 10px; font-size:11px;" onclick="dispensarBannerAviso()" title="Dispensar aviso">✕ Fechar</button>
-      </div>
+     <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
+  <div style="display:flex; align-items:center; gap:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+    <span style="font-size:14px;">📢</span>
+    <strong id="bannerAnnounceTitle" style="color:var(--c-laranja); font-weight:700;">Aviso:</strong>
+    <span id="bannerAnnounceMsg" style="color:var(--text-main); font-weight:500;"></span>
+  </div>
+  <button class="btn" style="padding:2px 8px; font-size:10px; border-radius:999px; margin-left:12px; flex-shrink:0;" onclick="dispensarBannerAviso()" title="Dispensar aviso">✕</button>
+</div>
 
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
         <div style="display:flex; align-items:center; gap:12px;">
