@@ -1384,11 +1384,45 @@
       return snap() !== antes;
     }
 
+    // Remove pontos duplicados "em andamento" do mesmo dia (mantém o mais recente). Devolve true se removeu algo.
+    function deduplicarEntradasAbertas() {
+      const grupos = new Map();
+      (appState.entries || []).forEach(e => {
+        if (e && e.type === 'trabalhado' && !e.saida) {
+          if (!grupos.has(e.date)) grupos.set(e.date, []);
+          grupos.get(e.date).push(e);
+        }
+      });
+      let removeu = false;
+      grupos.forEach(lista => {
+        if (lista.length < 2) return;
+        lista.sort((a, b) => (b.locManual ? 1 : 0) - (a.locManual ? 1 : 0) || (b.updatedAt || 0) - (a.updatedAt || 0));
+        const descartar = new Set(lista.slice(1).map(e => e.id));
+        lista.slice(1).forEach(e => marcarRemovido(e.id));
+        appState.entries = appState.entries.filter(e => !descartar.has(e.id));
+        removeu = true;
+      });
+      return removeu;
+    }
+
+    let checkInEmAndamento = false;
     async function executarCheckIn(forcarInicio = false) {
+      // Trava: se já há um check-in rodando, não começa outro (evita registros duplicados)
+      if (checkInEmAndamento) return;
+      checkInEmAndamento = true;
+      try {
+        await executarCheckInInterno(forcarInicio);
+      } finally {
+        checkInEmAndamento = false;
+      }
+    }
+
+    async function executarCheckInInterno(forcarInicio = false) {
       const todayStr = getLocalDateStr();
-      let entry = appState.entries.find(e => e.date === todayStr);
 
       const ip = await detectUserIP();
+      // Procura o ponto do dia DEPOIS de esperar o IP (outro fluxo pode ter criado nesse meio tempo)
+      let entry = appState.entries.find(e => e.date === todayStr);
       const officeIps = (appState.config.officeIp || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
       const isOffice = officeIps.length > 0 && officeIps.some(oIp => ip === oIp || ip.startsWith(oIp));
       let locType = isOffice ? 'escritorio' : 'home';
@@ -1410,7 +1444,7 @@
         if (entry) removerEntradasDoDia(todayStr);
 
         appState.entries.push({
-          id: 'id_' + Date.now(),
+          id: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
           date: todayStr,
           type: 'trabalhado',
           entrada: timeNow,
@@ -1481,7 +1515,7 @@
       const todayStr = getLocalDateStr();
       removerEntradasDoDia(todayStr);
       appState.entries.push({
-        id: 'id_' + Date.now(),
+        id: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         date: todayStr,
         type: 'trabalhado',
         entrada: '09:30',
@@ -2876,6 +2910,7 @@
         } catch (e) {}
       }
 
+      if (deduplicarEntradasAbertas()) saveLocal(); // limpa duplicatas já gravadas
       appState.profile.email = user.email || '';
       const meta = user.user_metadata || {};
       if (!appState.profile.name && meta.name) appState.profile.name = meta.name;
