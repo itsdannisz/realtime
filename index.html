@@ -125,107 +125,9 @@
 
     .container { max-width: 1260px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
-    /* ANIMAÇÃO DO SINO DE NOTIFICAÇÕES */
-    @keyframes bellRing {
-      0%, 100% { transform: rotate(0); }
-      15% { transform: rotate(14deg); }
-      30% { transform: rotate(-12deg); }
-      45% { transform: rotate(10deg); }
-      60% { transform: rotate(-8deg); }
-      75% { transform: rotate(4deg); }
-    }
-    .bell-ring {
-      animation: bellRing 1.2s ease infinite;
-      display: inline-block;
-    }
-    .bell-pulse-badge {
-      box-shadow: 0 0 0 0 rgba(236, 137, 77, 0.7);
-      animation: bellPulse 1.8s infinite;
-    }
-    @keyframes bellPulse {
-      0% { box-shadow: 0 0 0 0 rgba(236, 137, 77, 0.7); }
-      70% { box-shadow: 0 0 0 8px rgba(236, 137, 77, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(236, 137, 77, 0); }
-    }
-
-    /* CARDS DA CENTRAL DE NOTIFICAÇÕES */
-    .notif-card {
-      background: var(--card-sub);
-      border: 1px solid var(--border-color);
-      border-left: 4px solid var(--c-laranja);
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-    .notif-card:hover {
-      background: rgba(236, 137, 77, 0.06);
-      border-color: var(--c-laranja);
-      transform: translateY(-1px);
-    }
-    .notif-card.bday {
-      border-left-color: #f43f5e;
-    }
-    .notif-card.lida {
-      opacity: 0.65;
-      border-left-color: var(--border-color);
-    }
-    .notif-card.lida:hover {
-      opacity: 1;
-      border-left-color: var(--text-muted);
-    }
-    .notif-icon-circle {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: rgba(236, 137, 77, 0.15);
-      color: var(--c-laranja);
-      display: grid;
-      place-items: center;
-      font-size: 15px;
-      flex-shrink: 0;
-    }
-    .notif-card.bday .notif-icon-circle {
-      background: rgba(244, 63, 94, 0.15);
-      color: #f43f5e;
-    }
-    .notif-body {
-      flex: 1;
-      min-width: 0;
-    }
-    .notif-title {
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .notif-text {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 3px;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-    .notif-time {
-      font-size: 10px;
-      color: var(--text-dim);
-      margin-top: 5px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .notif-actions {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      align-self: center;
-    }
+    .announcement-bar, .birthday-alert-bar { border-radius: var(--radius-md); padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+    .announcement-bar { background: rgba(236, 137, 77, 0.15); border: 1px solid var(--c-laranja); color: var(--text-main); }
+    .birthday-alert-bar { background: rgba(16, 185, 129, 0.12); border: 1px solid var(--pos); color: var(--text-main); }
 
     .hero-banner { background: var(--hero-bg); color: #ffffff; border-radius: var(--radius-lg); padding: 26px 30px; margin-bottom: 24px; border: 1px solid var(--border-color); border-top: 3px solid var(--hero-border); box-shadow: var(--shadow-card); }
     .hero-top-wrap { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
@@ -320,7 +222,7 @@
 
     @media (max-width: 900px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); } .dashboard-grid > * { min-width: 0; } }
 
-    /* AJUSTES PARA CELULAR */
+    /* ===== AJUSTES PARA CELULAR ===== */
     .metric-value { overflow-wrap: anywhere; line-height: 1.15; }
     .metric-value.metric-text { font-family: var(--font-main); font-size: 16px; letter-spacing: 0; font-weight: 700; }
 
@@ -328,6 +230,7 @@
       html, body { overflow-x: hidden; }
       .container { padding: 14px 12px; }
 
+      /* Cabecalho compacto: logo em cima, botoes rolando na horizontal embaixo */
       header { position: static; padding-top: env(safe-area-inset-top, 0px); }
       .header-inner { flex-direction: column; align-items: stretch; padding: 10px 12px; gap: 8px; }
       .brand-logo-svg { height: 28px; }
@@ -336,18 +239,22 @@
       .header-actions > * { flex: 0 0 auto; white-space: nowrap; }
       .header-actions .btn, .profile-chip-btn, .sync-badge { font-size: 11px; padding: 6px 10px; }
 
+      /* Abas rolando na horizontal, sem quebrar o texto */
       .main-nav-tabs { display: flex; width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
       .main-nav-tabs::-webkit-scrollbar { display: none; }
       .main-nav-tabs button { flex: 0 0 auto; white-space: nowrap; font-size: 12px; padding: 8px 12px; }
 
+      /* Botoes de acao */
       #btnFinalizarDiaHero { flex: 1 1 100%; }
       #btnRegistrarAusencia, #btnExportCSV { flex: 1 1 auto; }
 
+      /* Cartao principal */
       .hero-banner { padding: 18px 16px; margin-bottom: 18px; }
       .hero-username { font-size: 20px; }
       .avatar-large { flex: 0 0 auto; width: 46px; height: 46px; margin-left: 10px; }
       .hero-top-wrap { gap: 8px; }
 
+      /* Numeros: 2 colunas + saldo acumulado ocupando a linha de baixo */
       .hero-metrics-grid { grid-template-columns: 1fr 1fr; gap: 14px 10px; }
       .metric-block:not(:last-child) { border-right: 0; }
       .metric-block:nth-child(1) { border-right: 1px solid rgba(255, 255, 255, 0.1); }
@@ -450,8 +357,7 @@
 
         <div class="header-actions">
           <button class="btn" id="btnNotificationBell" title="Notificações e Comunicados" style="position:relative; padding:8px 12px;">
-            <span id="bellIconEmoji">🔔</span>
-            <span id="bellCountBadge" class="bell-pulse-badge" style="position:absolute; top:-4px; right:-4px; background:var(--c-laranja); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
+            🔔 <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--c-laranja); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
           </button>
 
           <button class="profile-chip-btn" id="btnOpenProfile" title="Meu Perfil">
@@ -486,6 +392,16 @@
     </header>
 
     <main class="container">
+      <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
+        <div><strong id="bannerAnnounceTitle">Aviso da Gestão</strong>: <span id="bannerAnnounceMsg"></span></div>
+        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="dispensarBannerAviso()">✕</button>
+      </div>
+
+      <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
+        <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
+        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="dispensarBannerNiver()">✕</button>
+      </div>
+
       <!-- BARRA DE NAVEGAÇÃO -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
         <div class="main-nav-tabs">
@@ -1018,7 +934,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL: EXCLUIR PERFIL -->
+  <!-- MODAL: PERFIL -->
   <dialog id="modalExcluirPerfil" style="max-width:460px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
       <h3 style="font-size:16px; font-weight:800; color:var(--neg);">Excluir perfil</h3>
@@ -1155,73 +1071,56 @@
   </dialog>
 
   <!-- CENTRAL DE NOTIFICAÇÕES -->
-  <dialog id="modalNotificacoes" style="max-width: 580px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:20px;">🔔</span>
-        <h3 style="font-size:17px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
-      </div>
+  <dialog id="modalNotificacoes">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
       <div style="display:flex; gap:6px; align-items:center;">
-        <button type="button" class="btn" id="btnSomNotif" style="padding:4px 10px; font-size:11px;">🔊 Som: ligado</button>
+        <button type="button" class="btn" id="btnSomNotif" style="padding:3px 8px; font-size:11px;">🔊 Som: ligado</button>
         <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
       </div>
     </div>
 
-    <div id="boxAdminCreateNotice" style="display:none; background:var(--card-sub); border:1px solid var(--border-color); border-top:3px solid var(--c-laranja); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
-      <h4 style="font-size:12px; font-weight:800; color:var(--c-laranja); text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-        📢 Publicar Comunicado Geral (Mural)
-      </h4>
+    <div id="boxAdminCreateNotice" style="display:none; background:var(--card-sub); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:14px; margin-bottom:18px;">
+      <h4 style="font-size:12px; font-weight:700; color:var(--c-laranja); text-transform:uppercase; margin-bottom:8px;">📢 Publicar Comunicado Geral</h4>
       <form id="formAdminNotice">
         <div class="form-group">
-          <input type="text" id="noticeTitleInput" placeholder="Título do Aviso (Ex: Reunião Geral de Alinhamento)" required>
+          <input type="text" id="noticeTitleInput" placeholder="Título do Aviso (Ex: Reunião Geral)" required>
         </div>
         <div class="form-group">
-          <textarea id="noticeMsgInput" placeholder="Mensagem para aparecer no painel de toda a equipe..." rows="2" required></textarea>
+          <textarea id="noticeMsgInput" placeholder="Mensagem para aparecer no painel de todos..." rows="2" required></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end;">
-          <button type="submit" class="btn-laranja" style="width:auto; padding:7px 16px; font-size:12px;">Publicar Comunicado</button>
+          <button type="submit" class="btn-laranja" style="width:auto; padding:6px 14px; font-size:12px;">Publicar Comunicado</button>
         </div>
       </form>
     </div>
 
-    <!-- SEÇÃO: NOVAS -->
-    <div style="margin-bottom:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <h4 style="font-size:12px; font-weight:800; color:var(--text-main); text-transform:uppercase; letter-spacing:0.5px;">Recentes & Não Lidas</h4>
-          <span id="badgeNovasCountModal" class="tag neutral" style="font-size:10px; padding:1px 6px;">0</span>
-        </div>
-        <button type="button" class="btn" id="btnMarcarTodasLidas" style="padding:4px 10px; font-size:11px; color:var(--c-laranja); border-color:var(--c-laranja);">
-          ✓ Marcar todas como lidas
-        </button>
+    <div style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Novas</h4>
+        <button type="button" class="btn" id="btnMarcarTodasLidas" style="padding:3px 8px; font-size:11px;">✓ Marcar todas como lidas</button>
       </div>
-      <div id="noticesListBox" style="display:flex; flex-direction:column; gap:10px;">
+      <div id="noticesListBox" style="display:flex; flex-direction:column; gap:8px;">
         <span class="muted" style="font-size:12px;">Nenhum comunicado ativo.</span>
       </div>
     </div>
 
-    <!-- SEÇÃO: HISTÓRICO -->
-    <div style="margin-bottom:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h4 style="font-size:12px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Histórico de Notificações</h4>
-        <button type="button" class="btn" id="btnLimparHistoricoNotif" style="padding:4px 10px; font-size:11px; color:var(--neg); border-color:rgba(239, 68, 68, 0.4);" title="Limpa todas as notificações da sua visualização">
-          🗑️ Limpar tudo
-        </button>
+    <div style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Histórico</h4>
+        <button type="button" class="btn" id="btnLimparHistoricoNotif" style="padding:3px 8px; font-size:11px; color:var(--neg);">🗑 Limpar histórico</button>
       </div>
       <div id="notifHistoryBox" style="display:flex; flex-direction:column; gap:8px;">
         <span class="muted" style="font-size:12px;">Nada no histórico.</span>
       </div>
     </div>
 
-    <!-- SEÇÃO: ANIVERSÁRIOS -->
-    <div style="border-top:1px solid var(--border-subtle); padding-top:16px;">
-      <h4 style="font-size:12px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-        🎂 Próximos Aniversários da Equipe
-      </h4>
-      <div id="birthdaysListBox" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div>
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">🎂 Próximos Aniversários na Equipe</h4>
+      <div id="birthdaysListBox" style="display:flex; flex-direction:column; gap:6px;"></div>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; margin-top:22px; border-top:1px solid var(--border-subtle); padding-top:14px;">
+    <div style="display:flex; justify-content:flex-end; margin-top:20px;">
       <button type="button" class="btn" data-close>Fechar</button>
     </div>
   </dialog>
@@ -1309,7 +1208,7 @@
 
     let currentUserId = localStorage.getItem('realtime_current_uid') || 'guest';
     let isAdminUser = false;
-    let isCloudAdmin = null;
+    let isCloudAdmin = null; // null = ainda não sabemos; true/false vem do Supabase (tabela bh_admins)
     let cachedDetectedIP = 'Offline/Local';
 
     function getStorageKey() {
@@ -1342,12 +1241,14 @@
       theme: 'dark'
     };
 
+    // SISTEMA UNIFICADO DE PRESETS DE MODALIDADE
     const MODALIDADE_PRESETS = {
-      pj8:      { entrada: '08:00', saida: '17:00', intervalo: 60 },
-      estagio6: { entrada: '10:00', saida: '17:00', intervalo: 60 },
-      estagio4: { entrada: '08:00', saida: '12:00', intervalo: 0 }
+      pj8:      { entrada: '08:00', saida: '17:00', intervalo: 60 }, // 8h líquidas
+      estagio6: { entrada: '10:00', saida: '17:00', intervalo: 60 }, // 6h líquidas
+      estagio4: { entrada: '08:00', saida: '12:00', intervalo: 0 }   // 4h líquidas
     };
 
+    // Aplica um preset NO ESTADO (usado só quando a modalidade muda de fato ao salvar)
     function aplicarPresetModalidade(val) {
       appState.config.modalidade = val;
       appState.profile.modalidade = val;
@@ -1360,12 +1261,16 @@
       recalculateExpected();
     }
 
+    // Gestão = quem está na tabela bh_admins do Supabase (checado pelo servidor).
+    // Convidado (sem nuvem) continua vendo as telas de gestão só no próprio aparelho.
     function updateAdminStatus() {
       isAdminUser = currentUserId === 'guest' || isCloudAdmin === true;
       const btnSim = document.getElementById('btnSimularAtraso');
       if (btnSim) btnSim.style.display = isAdminUser ? '' : 'none';
     }
 
+    // Pergunta ao Supabase se esta conta é de gestão. Guarda a última resposta só como dica de tela
+    // (quem manda de verdade é o RLS do banco, então mexer nesse valor não libera nenhum dado).
     async function carregarPapelDeGestao() {
       if (!sbClient || currentUserId === 'guest') return;
       const chave = 'realtime_is_admin_' + currentUserId;
@@ -1391,8 +1296,11 @@
       let span = Core.toMinutes(sai) - Core.toMinutes(ent);
       if (span < 0) span += 1440;
       appState.config.expected = Math.max(0, span - int);
+      // Obs.: os pontos já registrados NÃO são recalculados aqui. Cada ponto guarda a meta da
+      // sua própria época (campo "meta"), então mudar a configuração só vale daqui pra frente.
     }
 
+    // ===== IMPORTAÇÃO DE JSON (aceita formatos de versões antigas) =====
     function extrairRegistrosDoJSON(p, nivel = 0) {
       if (Array.isArray(p)) return p;
       if (!p || typeof p !== 'object' || nivel > 3) return [];
@@ -1401,6 +1309,7 @@
         const v = p[k];
         if (Array.isArray(v) && v.length) return v;
         if (v && typeof v === 'object' && !Array.isArray(v)) {
+          // mapa { "2026-11-03": {...}, ... } ou { id: {...} }
           const lista = Object.entries(v)
             .filter(([, r]) => r && typeof r === 'object' && !Array.isArray(r))
             .map(([chave, r]) => ({ ...r, __chave: chave }));
@@ -1483,8 +1392,10 @@
       const abono = (typeof e.abono === 'number' && e.abono > 0) ? e.abono : 0;
       if (type === 'trabalhado' && saida) {
         if (meta !== null) {
+          // Ponto com meta congelada: recalcula com a meta DA ÉPOCA do ponto
           variation = Core.calcPJ(entrada, saida, intervalo, !!e.nextDay, meta, date).saldo - abono;
         } else if (typeof e.variation === 'number') {
+          // Ponto antigo (sem meta guardada): preserva o saldo já gravado, sem recalcular
           variation = e.variation;
         } else {
           meta = expectedMins;
@@ -1569,6 +1480,7 @@
       locBadge.title = 'Clique para alternar entre Escritório e Home Office';
     }
 
+    // Alterna o local (Escritório <-> Home) de um lançamento e trava contra a detecção automática por IP
     function alternarLocal(id) {
       const entry = appState.entries.find(e => e.id === id);
       if (!entry) return;
@@ -1581,11 +1493,14 @@
       showToast(`Local de ${entry.date} alterado para ${novo === 'escritorio' ? 'Escritório' : 'Home Office'}.`);
     }
 
+    // ===== MESCLAGEM COM A NUVEM =====
+    // Lê o estado salvo no Supabase (pode vir como texto ou objeto)
     function stateFromRow(raw) {
       if (!raw) return null;
       try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { return null; }
     }
 
+    // "Lápide": registra que um ponto foi apagado/recusado, para ele não voltar da nuvem
     function marcarRemovido(id) {
       if (!id) return;
       if (!Array.isArray(appState.removed)) appState.removed = [];
@@ -1599,11 +1514,13 @@
       appState.entries = appState.entries.filter(e => e.date !== dateStr);
     }
 
+    // Traz para este aparelho o que estiver mais novo na nuvem. Devolve true se algo mudou.
     function mesclarEstadoDaNuvem(cloudState) {
       if (!cloudState || typeof cloudState !== 'object') return false;
       const snap = () => JSON.stringify([appState.config, appState.profile, appState.entries, appState.removed]);
       const antes = snap();
 
+      // Só substitui a configuração / o perfil se a nuvem for MAIS RECENTE
       const cloudCfgTime = cloudState.config?.updatedAt || 0;
       const localCfgTime = appState.config?.updatedAt || 0;
       if (cloudCfgTime > localCfgTime) {
@@ -1616,6 +1533,7 @@
         appState.profile = { ...appState.profile, ...cloudState.profile };
       }
 
+      // Lápides (pontos apagados/recusados) de qualquer lado
       const removidos = new Map();
       [...(appState.removed || []), ...(Array.isArray(cloudState.removed) ? cloudState.removed : [])].forEach(r => {
         if (!r || !r.id) return;
@@ -1623,12 +1541,14 @@
         if (!prev || (r.at || 0) > (prev.at || 0)) removidos.set(r.id, { id: r.id, at: r.at || 0 });
       });
 
+      // Pontos: vale o mais recente de cada id
       const mapa = new Map((appState.entries || []).map(e => [e.id, e]));
       (Array.isArray(cloudState.entries) ? cloudState.entries : []).forEach(ce => {
         if (!ce || !ce.id) return;
         const le = mapa.get(ce.id);
         if (!le || (ce.updatedAt || 0) >= (le.updatedAt || 0)) mapa.set(ce.id, ce);
       });
+      // Aplica as lápides (só apaga se o ponto não foi editado depois da remoção)
       removidos.forEach((r, id) => {
         const e = mapa.get(id);
         if (e && (e.updatedAt || 0) <= r.at) mapa.delete(id);
@@ -1639,6 +1559,7 @@
       return snap() !== antes;
     }
 
+    // Remove pontos duplicados "em andamento" do mesmo dia (mantém o mais recente). Devolve true se removeu algo.
     function deduplicarEntradasAbertas() {
       const grupos = new Map();
       (appState.entries || []).forEach(e => {
@@ -1661,6 +1582,7 @@
 
     let checkInEmAndamento = false;
     async function executarCheckIn(forcarInicio = false) {
+      // Trava: se já há um check-in rodando, não começa outro (evita registros duplicados)
       if (checkInEmAndamento) return;
       checkInEmAndamento = true;
       try {
@@ -1674,10 +1596,12 @@
       const todayStr = getLocalDateStr();
 
       const ip = await detectUserIP();
+      // Procura o ponto do dia DEPOIS de esperar o IP (outro fluxo pode ter criado nesse meio tempo)
       let entry = appState.entries.find(e => e.date === todayStr);
       const officeIps = (appState.config.officeIp || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
       const isOffice = officeIps.length > 0 && officeIps.some(oIp => ip === oIp || ip.startsWith(oIp));
       let locType = isOffice ? 'escritorio' : 'home';
+      // Se a pessoa já escolheu o local do dia manualmente, a detecção por IP não sobrescreve
       if (entry && entry.locManual && entry.location) locType = entry.location;
 
       atualizarBadgeLocal(locType, ip, !!(entry && entry.locManual));
@@ -1905,6 +1829,7 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
+      // Mantém o próprio usuário sempre atualizado (o estado local muda a cada envio/mescla)
       const dadosProprios = {
         userId: currentUserId,
         profile: appState.profile,
@@ -1972,6 +1897,7 @@
       });
     }
 
+    // Aplica a aprovação num estado (do colega ou o próprio). Devolve false se a solicitação não existe mais.
     function aplicarAprovacao(state, entryId) {
       const entries = Array.isArray(state.entries) ? state.entries : [];
       const entry = entries.find(e => e.id === entryId);
@@ -1980,6 +1906,7 @@
       entry.status = 'ativo';
       entry.obs = '[Aprovado pela Gestão] ' + (entry.obs || '');
       entry.updatedAt = agora;
+      // O ajuste aprovado substitui o ponto original do mesmo dia (senão o dia contaria duas vezes)
       if (entry.type === 'trabalhado') {
         const removed = state.removed = Array.isArray(state.removed) ? state.removed : [];
         state.entries = entries.filter(e => {
@@ -2001,6 +1928,7 @@
       return true;
     }
 
+    // Lê o estado ATUAL do colega, aplica a mudança só nele e grava (evita sobrescrever com cópia velha)
     async function alterarEstadoDoColega(targetUserId, aplicar) {
       const { data: row, error: errLer } = await sbClient.from('bh_state').select('state').eq('user_id', targetUserId).maybeSingle();
       if (errLer || !row) { showToast('Não consegui ler o registro do colega: ' + ((errLer && errLer.message) || 'não encontrado')); return false; }
@@ -2050,6 +1978,8 @@
       loadTeamMembersFromCloud();
     }
 
+
+    // ===== Auditoria, exportação da equipe e exclusão de perfil =====
     function baixarJSON(obj, nomeArquivo) {
       const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -2073,6 +2003,7 @@
       };
     }
 
+    // Registra no histórico (quem fez é preenchido pelo servidor). Nunca trava o app se falhar.
     async function registrarEvento(acao, alvoId, alvoNome, detalhes) {
       if (!sbClient || currentUserId === 'guest') return;
       try {
@@ -2086,6 +2017,7 @@
       } catch (e) { console.warn('Não consegui registrar no histórico:', e); }
     }
 
+    // ===== LANÇAR PERÍODO ANTERIOR (estágio, antes do sistema, outros) =====
     const eAnt = (id) => document.getElementById(id);
     const TIPOS_ANTIGOS = {
       estagio: { rotulo: 'Estágio', motivo: 'Horas feitas no período de estágio, lançadas após a contratação.' },
@@ -2131,6 +2063,7 @@
       if (isNaN(intervaloPadrao) || intervaloPadrao < 0 || intervaloPadrao > 480) intervaloPadrao = 0;
       const pular = eAnt('estagioPular').checked;
 
+      // Metas por época: "01/03/2026 6h" = a partir dessa data, meta de 6h
       const faixas = [];
       eAnt('estagioFaixas').value.split(/\r?\n/).forEach(l => {
         const d = parseDataBR(l, anoPadrao);
@@ -2355,6 +2288,7 @@
       if (eAnt('estagioTexto').value.trim()) conferirHorariosAntigos();
     }
 
+    // Aprova de uma vez todas as pendências de um colaborador (aba Solicitações)
     function renderBulkApproveBar(allPending) {
       const box = document.getElementById('bulkApproveBar');
       if (!box) return;
@@ -2494,11 +2428,12 @@
       if (!alvo || !sbClient) return;
       const btn = document.getElementById('btnConfirmarExclusao');
       btn.disabled = true;
+      // 1) backup automático antes de apagar
       try {
         const slug = String(alvo.rotulo).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'perfil';
         baixarJSON(estadoSemFoto(alvo.state || {}), `backup_${slug}_${getLocalDateStr()}.json`);
       } catch (e) { console.warn('Backup automático falhou:', e); }
-
+      // 2) o servidor confere quem pode e apaga de verdade
       const { error } = await sbClient.rpc('bh_excluir_perfil', { alvo: alvo.userId });
       if (error) {
         showToast('Não consegui excluir: ' + (error.message || 'erro'));
@@ -2715,15 +2650,18 @@
       statBalanceEl.textContent = Core.fromMinutes(runningSum);
       statBalanceEl.className = `metric-value ${runningSum >= 0 ? 'pos' : 'neg'}`;
 
+      // Solicitações (gestão): atualiza lista e contador junto, sem precisar de F5
       if (isAdminUser) { try { renderPendingApprovals(); } catch (e) { console.warn(e); } }
     }
 
+    // ===== SELEÇÃO EM MASSA / EDIÇÃO (GESTÃO) =====
     let selectedEntryIds = new Set();
     let idsVisiveis = [];
     let ultimoIdMarcado = null;
     let editarPontosIds = [];
 
     function sincronizarSelecao() {
+      // remove da seleção o que não existe mais
       const existentes = new Set(appState.entries.map(e => e.id));
       selectedEntryIds.forEach(id => { if (!existentes.has(id)) selectedEntryIds.delete(id); });
 
@@ -2753,14 +2691,14 @@
     function abrirEdicaoPontos(ids) {
       if (!isAdminUser) { showToast('Só a gestão pode editar horários diretamente.'); return; }
       const alvos = ids.map(id => appState.entries.find(e => e.id === id)).filter(e => e && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
-      if (alvos.length === 0) { showToast('Nenhum dos selecionados tem horário editável.'); return; }
+      if (alvos.length === 0) { showToast('Nenhum dos selecionados tem horário editável (compensações, faltas e solicitações pendentes ficam de fora).'); return; }
       editarPontosIds = alvos.map(e => e.id);
 
       const unico = alvos.length === 1 ? alvos[0] : null;
       document.getElementById('editarPontosTitulo').textContent = unico ? `Editar ponto de ${unico.date}` : `Editar ${alvos.length} pontos`;
       document.getElementById('editarPontosInfo').textContent = unico
         ? 'Altere o que precisar. O saldo do dia é recalculado automaticamente.'
-        : `Campos em branco continuam como estão em cada ponto. O que você preencher vale para os ${alvos.length} pontos.`;
+        : `Campos em branco continuam como estão em cada ponto. O que você preencher vale para os ${alvos.length} pontos e o saldo de cada dia é recalculado.` + (alvos.length < ids.length ? ` (${ids.length - alvos.length} ignorado(s): compensação, falta ou solicitação pendente.)` : '');
       document.getElementById('editEntrada').value = unico && /^\d{2}:\d{2}$/.test(unico.entrada || '') ? unico.entrada : '';
       document.getElementById('editSaida').value = unico && /^\d{2}:\d{2}$/.test(unico.saida || '') ? unico.saida : '';
       document.getElementById('editIntervalo').value = unico && unico.intervalo !== undefined ? unico.intervalo : '';
@@ -2795,6 +2733,7 @@
         if (intervalo !== null) p.intervalo = intervalo;
         if (local) { p.location = local; p.locManual = true; }
 
+        // Recalcula o saldo do dia quando há entrada e saída
         if (/^\d{2}:\d{2}$/.test(p.entrada || '') && /^\d{2}:\d{2}$/.test(p.saida || '')) {
           const meta = typeof p.meta === 'number' ? p.meta : (appState.config.expected || 360);
           const calc = Core.calcPJ(p.entrada, p.saida, p.intervalo !== undefined ? p.intervalo : 60, !!p.nextDay, meta, p.date);
@@ -2892,6 +2831,7 @@
       const tabAprovacoes = document.getElementById('tabApprovals');
       if (tabEquipe) tabEquipe.style.display = isAdminUser ? 'inline-flex' : 'none';
       if (tabAprovacoes) tabAprovacoes.style.display = isAdminUser ? 'inline-flex' : 'none';
+      // Excluir a própria conta: só quem está na nuvem e não é gestão (conta de gestão não sai por aqui)
       const zonaExc = document.getElementById('zonaExcluirConta');
       if (zonaExc) zonaExc.style.display = (sbClient && currentUserId !== 'guest' && !isAdminUser) ? 'block' : 'none';
     }
@@ -2907,6 +2847,7 @@
       if (txt) txt.textContent = `Meta líquida calculada: ${Core.fromMinutes(liq)} por dia útil`;
     }
 
+    // ===== COMUNICADOS DA GESTÃO (tabela compartilhada bh_announcements) =====
     let sharedAnnouncements = [];
 
     function esc(t) {
@@ -2920,7 +2861,7 @@
       return data || [];
     }
 
-    // SOM DA NOTIFICAÇÃO PRESERVADO
+    // ===== SOM DA NOTIFICAÇÃO (gerado no navegador, sem arquivo) =====
     let audioCtx = null;
     function somLigado() { return localStorage.getItem('realtime_notif_sound') !== 'off'; }
     function destravarAudio() {
@@ -2929,6 +2870,7 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
       } catch (e) {}
     }
+    // iPhone/Chrome só liberam som depois de um toque da pessoa na página
     ['click', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, destravarAudio, { passive: true }));
 
     function tocarSomNotificacao() {
@@ -2960,6 +2902,7 @@
       if (somLigado()) tocarSomNotificacao();
     }
 
+    // ===== ANIVERSÁRIOS DA EQUIPE (tabela compartilhada bh_aniversarios: só dia e mês) =====
     let sharedBirthdays = [];
     let ultimoAnivPublicado = '';
 
@@ -2974,7 +2917,7 @@
         const { error } = await sbClient.from('bh_aniversarios').upsert(
           { user_id: currentUserId, nome, nascimento: `${mm}-${dd}` }, { onConflict: 'user_id' });
         if (!error) ultimoAnivPublicado = assinatura;
-        else console.warn('Não consegui publicar o aniversário:', error.message);
+        else console.warn('Não consegui publicar o aniversário (a tabela bh_aniversarios existe?):', error.message);
       } catch (e) {}
     }
     async function buscarAniversarios() {
@@ -2985,7 +2928,8 @@
       } catch (e) { console.warn('Aniversários da equipe indisponíveis:', e.message || e); }
     }
 
-    let idsComunicadosConhecidos = null;
+    // ===== COMUNICADOS EM TEMPO REAL =====
+    let idsComunicadosConhecidos = null; // null = ainda não carregou (primeira carga não toca som)
     let canalComunicados = null;
     let carregandoAvisos = false;
 
@@ -2996,7 +2940,7 @@
           .on('postgres_changes', { event: '*', schema: 'public', table: 'bh_announcements' }, () => loadAnnouncements())
           .on('postgres_changes', { event: '*', schema: 'public', table: 'bh_aniversarios' }, () => loadAnnouncements())
           .subscribe();
-      } catch (e) { console.warn('Tempo real indisponível:', e); }
+      } catch (e) { console.warn('Tempo real indisponível, usando atualização periódica:', e); }
     }
 
     async function loadAnnouncements() {
@@ -3005,6 +2949,7 @@
       try {
         sharedAnnouncements = await buscarComunicados();
 
+        // Migração única (só gestão): comunicados antigos que estavam apenas neste aparelho
         if (isAdminUser && Array.isArray(appState.announcements) && appState.announcements.length) {
           const rows = appState.announcements.map(a => ({
             title: String(a.title || '').slice(0, 120),
@@ -3024,10 +2969,11 @@
       await publicarMeuAniversario();
       await buscarAniversarios();
 
+      // Comunicado novo (que não estava na tela) -> som + aviso
       const idsAgora = new Set(sharedAnnouncements.map(a => String(a.id)));
       if (idsComunicadosConhecidos !== null) {
         const st = lerNotifState();
-        const novos = sharedAnnouncements.filter(a => !idsComunicadosConhecidos.has(String(a.id)) && !st.read['a:' + a.id] && !st.cleared['a:' + a.id]);
+        const novos = sharedAnnouncements.filter(a => !idsComunicadosConhecidos.has(String(a.id)) && !st.read['a:' + a.id]);
         if (novos.length) {
           tocarSomNotificacao();
           showToast('🔔 Novo comunicado: ' + novos[0].title);
@@ -3040,25 +2986,18 @@
       checkBirthdaysNotification();
     }
 
+    // Garantia caso o tempo real falhe: confere a cada 30s e sempre que a pessoa volta para o app
     setInterval(() => { if (currentUserId !== 'guest') loadAnnouncements(); }, 30 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden && currentUserId !== 'guest') loadAnnouncements(); });
     window.addEventListener('focus', () => { if (currentUserId !== 'guest') loadAnnouncements(); });
 
+    // ===== ESTADO DAS NOTIFICAÇÕES (lidas / histórico / limpas) — guardado por usuário neste aparelho =====
     function notifKey() { return 'realtime_notif_' + currentUserId; }
     function lerNotifState() {
-      try {
-        const r = JSON.parse(localStorage.getItem(notifKey()) || '{}');
-        return { 
-          read: (r && typeof r.read === 'object' && !Array.isArray(r.read)) ? r.read : {}, 
-          cleared: (r && typeof r.cleared === 'object' && !Array.isArray(r.cleared)) ? r.cleared : {} 
-        };
-      } catch (e) {
-        return { read: {}, cleared: {} };
-      }
+      try { const r = JSON.parse(localStorage.getItem(notifKey()) || '{}'); return { read: r.read || {}, cleared: r.cleared || {} }; }
+      catch (e) { return { read: {}, cleared: {} }; }
     }
-    function salvarNotifState(st) { 
-      try { localStorage.setItem(notifKey(), JSON.stringify(st)); } catch (e) {} 
-    }
+    function salvarNotifState(st) { try { localStorage.setItem(notifKey(), JSON.stringify(st)); } catch (e) {} }
 
     function montarListaNotificacoes() {
       const itens = [];
@@ -3066,6 +3005,7 @@
       const hojeMD = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const ano = now.getFullYear();
 
+      // Aniversariantes de hoje (a própria pessoa + toda a equipe)
       const mesclados = new Map();
       sharedBirthdays.forEach(p => { if (p && p.user_id) mesclados.set(p.user_id, { id: p.user_id, nome: p.nome, md: p.nascimento }); });
       const bd = appState.profile && appState.profile.birthDate;
@@ -3078,7 +3018,7 @@
         itens.push({
           key: `b:${p.id}:${ano}`, tipo: 'bday',
           title: eu ? '🎉 Feliz aniversário!' : `🎂 Aniversário de ${p.nome || 'colega'}`,
-          message: eu ? 'Hoje é o seu aniversário! Toda a equipe Real Estate te deseja um excelente dia! 🎂' : `Hoje é aniversário de ${p.nome || 'um colega da equipe'}. Lembre-se de parabenizar!`,
+          message: eu ? 'Hoje é seu aniversário. Parabéns! 🎂' : `Hoje é aniversário de ${p.nome || 'um colega'}. Que tal dar os parabéns?`,
           ts: now.getTime()
         });
       });
@@ -3090,83 +3030,53 @@
     }
 
     function marcarNotifLida(key) {
-      const st = lerNotifState(); 
-      st.read[key] = Date.now(); 
-      salvarNotifState(st); 
-      checkBirthdaysNotification();
+      const st = lerNotifState(); st.read[key] = Date.now(); salvarNotifState(st); checkBirthdaysNotification();
     }
-
-    function dispensarNotificacao(key) {
+    function dispensarBannerAviso() {
       const st = lerNotifState();
-      const agora = Date.now();
-      st.read[key] = agora;
-      st.cleared[key] = agora;
-      salvarNotifState(st);
-      checkBirthdaysNotification();
-      showToast('Notificação removida.');
+      const prox = montarListaNotificacoes().find(n => n.tipo === 'aviso' && !st.read[n.key]);
+      if (prox) marcarNotifLida(prox.key); else document.getElementById('companyAnnouncementBanner').style.display = 'none';
     }
-
+    function dispensarBannerNiver() {
+      const st = lerNotifState();
+      const prox = montarListaNotificacoes().find(n => n.tipo === 'bday' && !st.read[n.key]);
+      if (prox) marcarNotifLida(prox.key); else document.getElementById('birthdayAlertBox').style.display = 'none';
+    }
     function marcarTodasLidas() {
-      const st = lerNotifState(); 
-      const t = Date.now();
+      const st = lerNotifState(); const t = Date.now();
       montarListaNotificacoes().forEach(n => { if (!st.read[n.key]) st.read[n.key] = t; });
-      salvarNotifState(st); 
-      checkBirthdaysNotification();
-      showToast('Todas as notificações foram marcadas como lidas.');
+      salvarNotifState(st); checkBirthdaysNotification();
     }
-
     function limparHistoricoNotif() {
-      const todas = montarListaNotificacoes();
-      if (!todas.length) {
-        showToast('Nada para limpar.');
-        return;
-      }
-      if (!confirm('Deseja limpar as notificações da sua tela?\n\n(Isso esvazia sua central pessoal, sem apagar os comunicados da empresa).')) return;
-      
-      const st = lerNotifState(); 
-      const t = Date.now();
-      todas.forEach(n => {
-        st.read[n.key] = t;
-        st.cleared[n.key] = t;
-      });
-      salvarNotifState(st); 
-      checkBirthdaysNotification();
-      showToast('Central de notificações limpa com sucesso!');
-    }
-
-    function formataTempoRelativo(ts) {
-      if (!ts) return '';
-      const diffMin = Math.round((Date.now() - ts) / 60000);
-      if (diffMin < 1) return 'Agora mesmo';
-      if (diffMin < 60) return `Há ${diffMin} min`;
-      const diffHoras = Math.round(diffMin / 60);
-      if (diffHoras < 24) return `Há ${diffHoras} h`;
-      return new Date(ts).toLocaleDateString('pt-BR') + ' ' + new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      if (!confirm('Limpar o histórico de notificações? Isso não apaga os comunicados da equipe, só some da sua lista.')) return;
+      const st = lerNotifState(); const t = Date.now();
+      Object.keys(st.read).forEach(k => { st.cleared[k] = t; });
+      salvarNotifState(st); renderNotificationsModalContent();
     }
 
     function checkBirthdaysNotification() {
       const st = lerNotifState();
       const todas = montarListaNotificacoes();
-      
-      const visiveis = todas.filter(n => !st.cleared[n.key]);
-      const novas = visiveis.filter(n => !st.read[n.key]);
+      const novas = todas.filter(n => !st.read[n.key]);
+
+      const alertBox = document.getElementById('birthdayAlertBox');
+      const bd = novas.find(n => n.tipo === 'bday');
+      if (bd) {
+        document.getElementById('birthdayAlertText').innerHTML = `<strong>${esc(bd.title)}</strong> ${esc(bd.message)}`;
+        alertBox.style.display = 'flex';
+      } else { alertBox.style.display = 'none'; }
+
+      const bannerBox = document.getElementById('companyAnnouncementBanner');
+      const av = novas.find(n => n.tipo === 'aviso');
+      if (av) {
+        document.getElementById('bannerAnnounceTitle').textContent = av.title;
+        document.getElementById('bannerAnnounceMsg').textContent = av.message;
+        bannerBox.style.display = 'flex';
+      } else { bannerBox.style.display = 'none'; }
 
       const bellBadge = document.getElementById('bellCountBadge');
-      const bellIcon = document.getElementById('bellIconEmoji');
-      
-      if (novas.length > 0) { 
-        if (bellBadge) {
-          bellBadge.textContent = novas.length; 
-          bellBadge.style.display = 'inline-block';
-        }
-        if (bellIcon) bellIcon.classList.add('bell-ring');
-      } else { 
-        if (bellBadge) bellBadge.style.display = 'none'; 
-        if (bellIcon) bellIcon.classList.remove('bell-ring');
-      }
-
-      const countNovasBadge = document.getElementById('badgeNovasCountModal');
-      if (countNovasBadge) countNovasBadge.textContent = novas.length;
+      if (novas.length > 0) { bellBadge.textContent = novas.length; bellBadge.style.display = 'inline-block'; }
+      else { bellBadge.style.display = 'none'; }
 
       renderNotificationsModalContent();
     }
@@ -3180,54 +3090,23 @@
 
       const st = lerNotifState();
       const todas = montarListaNotificacoes();
-      
-      const novas = todas.filter(n => !st.read[n.key] && !st.cleared[n.key]);
+      const novas = todas.filter(n => !st.read[n.key]);
       const historico = todas.filter(n => st.read[n.key] && !st.cleared[n.key]);
 
+      const fmt = (ts) => ts ? new Date(ts).toLocaleDateString('pt-BR') + ' ' + new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
       const card = (n, lida) => {
-        const delAdmin = (isAdminUser && n.tipo === 'aviso')
-          ? `<button class="btn" style="padding:4px 8px; color:var(--neg); border-color:rgba(239, 68, 68, 0.3);" title="Excluir comunicado geral para todos" data-id="${esc(n.id)}" onclick="deleteAnnouncement(this.dataset.id)">🗑️ Mural</button>` : '';
-        
-        const btnLida = lida ? '' : `<button class="btn" style="padding:4px 8px; color:var(--pos); border-color:var(--pos);" title="Marcar como lida" data-key="${esc(n.key)}" onclick="marcarNotifLida(this.dataset.key)">✓ Lida</button>`;
-        const btnDispensar = `<button class="btn" style="padding:4px 8px;" title="Dispensar da minha tela" data-key="${esc(n.key)}" onclick="dispensarNotificacao(this.dataset.key)">✕</button>`;
-
-        const icone = n.tipo === 'bday' ? '🎂' : '📢';
-        const tagLabel = n.tipo === 'bday' ? 'Festa & Aniversário' : 'Aviso da Gestão';
-
-        return `
-          <div class="notif-card ${n.tipo === 'bday' ? 'bday' : ''} ${lida ? 'lida' : ''}">
-            <div class="notif-icon-circle">${icone}</div>
-            <div class="notif-body">
-              <div class="notif-title">
-                <span>${esc(n.title)}</span>
-                <span class="tag neutral" style="font-size:9px; padding:1px 5px;">${tagLabel}</span>
-              </div>
-              <div class="notif-text">${esc(n.message)}</div>
-              <div class="notif-time">
-                <span>🕒</span>
-                <span>${formataTempoRelativo(n.ts)}</span>
-              </div>
-            </div>
-            <div class="notif-actions">
-              ${btnLida}
-              ${btnDispensar}
-              ${delAdmin}
-            </div>
-          </div>
-        `;
+        const del = (isAdminUser && n.tipo === 'aviso')
+          ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" title="Apagar para toda a equipe" data-id="${esc(n.id)}" onclick="deleteAnnouncement(this.dataset.id)">✕</button>` : '';
+        const ok = lida ? '' : `<button class="btn" style="padding:2px 6px;" title="Marcar como lida" data-key="${esc(n.key)}" onclick="marcarNotifLida(this.dataset.key)">✓</button>`;
+        return `<div class="holiday-item" style="${lida ? 'opacity:.7;' : ''}">
+          <div><strong style="color:var(--c-laranja);">${esc(n.title)}</strong>
+            <div style="font-size:11px; margin-top:2px;">${esc(n.message)}</div>
+            <div class="muted" style="font-size:10px; margin-top:3px;">${fmt(n.ts)}</div></div>
+          <div style="display:flex; gap:4px;">${ok}${del}</div></div>`;
       };
 
-      if (noticeBox) {
-        noticeBox.innerHTML = novas.length 
-          ? novas.map(n => card(n, false)).join('') 
-          : '<div style="text-align:center; padding:18px 12px; background:var(--card-sub); border-radius:var(--radius-md); border:1px dashed var(--border-color);"><span style="font-size:24px; display:block; margin-bottom:4px;">✨</span><span class="muted" style="font-size:12px;">Tudo em dia! Você não tem notificações não lidas.</span></div>';
-      }
-
-      if (histBox) {
-        histBox.innerHTML = historico.length 
-          ? historico.map(n => card(n, true)).join('') 
-          : '<span class="muted" style="font-size:12px; display:block; padding:4px 2px;">Histórico vazio.</span>';
-      }
+      if (noticeBox) noticeBox.innerHTML = novas.length ? novas.map(n => card(n, false)).join('') : '<span class="muted" style="font-size:12px;">Nenhuma notificação nova.</span>';
+      if (histBox) histBox.innerHTML = historico.length ? historico.map(n => card(n, true)).join('') : '<span class="muted" style="font-size:12px;">Nada no histórico.</span>';
 
       if (bdayBox) {
         const now = new Date();
@@ -3246,7 +3125,7 @@
         if (lista.length) {
           bdayBox.innerHTML = lista.map(p => {
             const quando = p.dias === 0 ? '🎉 Hoje!' : (p.dias === 1 ? 'Amanhã' : `em ${p.dias} dias`);
-            return `<div class="holiday-item"><span>🎂 <strong>${esc(p.nome)}</strong>${p.eu ? ' <span class="muted" style="font-size:10px;">(você)</span>' : ''}</span>
+            return `<div class="holiday-item"><span>🎂 ${esc(p.nome)}${p.eu ? ' <span class="muted" style="font-size:10px;">(você)</span>' : ''}</span>
               <span class="mono" style="color:var(--c-laranja); font-weight:700; text-align:right;">${String(p.dd).padStart(2, '0')}/${String(p.mm).padStart(2, '0')}
               <span class="muted" style="font-size:10px; font-weight:400; display:block;">${quando}</span></span></div>`;
           }).join('');
@@ -3254,16 +3133,17 @@
           bdayBox.innerHTML = '<span class="muted" style="font-size:12px;">Preencha sua data no perfil para aparecer aqui.</span>';
         }
       }
-    }
+        }
 
     async function deleteAnnouncement(id) {
-      if (!confirm('Remover este comunicado da equipe inteira?')) return;
+      if (!confirm('Remover este comunicado da equipe?')) return;
       const { error } = await sbClient.from('bh_announcements').delete().eq('id', id);
       if (error) { showToast('Não consegui remover: ' + (error.message || 'sem permissão')); return; }
       await loadAnnouncements();
-      showToast('Comunicado removido do mural.');
+      showToast('Comunicado removido.');
     }
 
+    /* TODOS OS LISTENERS 100% REGISTRADOS E CONECTADOS */
     function setupEventListeners() {
       document.querySelectorAll('dialog [data-close]').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -3293,6 +3173,7 @@
         document.getElementById('btnConfirmarExclusao').disabled = ev.target.value.trim().toUpperCase() !== 'EXCLUIR';
       });
 
+      // ABRIR PERFIL (CARREGA OS DADOS SALVOS)
       document.getElementById('btnOpenProfile').addEventListener('click', () => {
         document.getElementById('perfilNome').value = appState.profile.name || '';
         document.getElementById('perfilEmail').value = appState.profile.email || '';
@@ -3306,6 +3187,7 @@
         document.getElementById('btnOpenProfile').click();
       });
 
+      // ABRIR CONFIGURAÇÕES (CARREGA OS DADOS SALVOS)
       document.getElementById('btnSettings').addEventListener('click', () => {
         document.getElementById('cfgModalidade').value = appState.config.modalidade || appState.profile.modalidade || 'custom';
         document.getElementById('cfgEntrada').value = appState.config.entrada || '09:00';
@@ -3320,6 +3202,8 @@
       document.getElementById('cfgSaida').addEventListener('input', atualizarTextoCalculoMeta);
       document.getElementById('cfgIntervalo').addEventListener('input', atualizarTextoCalculoMeta);
 
+      // Mudança na modalidade das Configurações: só preenche os campos na tela.
+      // Nada é gravado até clicar em "Salvar Configurações" (Cancelar descarta tudo).
       document.getElementById('cfgModalidade').addEventListener('change', (e) => {
         const p = MODALIDADE_PRESETS[e.target.value];
         if (p) {
@@ -3330,6 +3214,7 @@
         atualizarTextoCalculoMeta();
       });
 
+      // Se mexer manualmente nos horários, a modalidade vira "Personalizado" na hora
       ['cfgEntrada', 'cfgSaida', 'cfgIntervalo'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => {
           const sel = document.getElementById('cfgModalidade');
@@ -3354,6 +3239,7 @@
       document.getElementById('searchTableInput').addEventListener('input', renderDashboard);
       document.getElementById('filterMonth').addEventListener('change', renderDashboard);
 
+      // Seleção em massa: clique numa linha; Shift+clique seleciona o intervalo
       document.getElementById('entriesTableBody').addEventListener('click', (ev) => {
         const chk = ev.target.closest('.row-chk');
         if (!chk) return;
@@ -3435,6 +3321,7 @@
         showToast('Comunicado publicado para toda a equipe!');
       });
 
+      // SALVAR PERFIL (SINCRONIZA MODALIDADE E JORNADA)
       document.getElementById('formPerfil').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('perfilNome').value.trim();
@@ -3447,6 +3334,7 @@
         appState.profile.birthDate = birthDate;
         appState.profile.updatedAt = Date.now();
 
+        // Só altera a jornada se a modalidade realmente mudou (não sobrescreve horários personalizados)
         const modalidadeAnterior = appState.config.modalidade || appState.profile.modalidade || 'custom';
         if (modalidade !== modalidadeAnterior) {
           if (modalidade !== 'custom') {
@@ -3470,18 +3358,21 @@
         showToast('Perfil e jornada salvos com sucesso!');
       });
 
+      // SALVAR CONFIGURAÇÕES (SINCRONIZA COM PERFIL)
       document.getElementById('btnSaveConfigs').addEventListener('click', () => {
         const selecionada = document.getElementById('cfgModalidade').value;
         const entrada = document.getElementById('cfgEntrada').value;
         const saida = document.getElementById('cfgSaida').value;
         const intervalo = Number(document.getElementById('cfgIntervalo').value) || 0;
 
+        // Validação básica
         if (!entrada || !saida) { showToast('Preencha o horário de entrada e de saída.'); return; }
         if (entrada === saida) { showToast('Entrada e saída não podem ser iguais.'); return; }
         let span = Core.toMinutes(saida) - Core.toMinutes(entrada);
         if (span < 0) span += 1440;
         if (intervalo < 0 || intervalo >= span) { showToast('O intervalo precisa ser menor que a jornada.'); return; }
 
+        // Só mantém a modalidade escolhida se os horários batem com o preset dela
         const p = MODALIDADE_PRESETS[selecionada];
         const bate = p && p.entrada === entrada && p.saida === saida && p.intervalo === intervalo;
         const modalidade = bate ? selecionada : 'custom';
@@ -3641,6 +3532,7 @@
               return;
             }
 
+            // Mescla com o que já existe (não apaga nada): ignora o que já está lançado
             const chave = (x) => `${x.date}|${x.type}|${x.entrada}`;
             const existentes = new Set(appState.entries.map(chave));
             const ids = new Set(appState.entries.map(x => x.id));
@@ -3671,19 +3563,6 @@
           if (viewId === 'v-equipe' || viewId === 'v-aprovacoes') loadTeamMembersFromCloud();
         });
       });
-
-      O arquivo cortou no finalzinho de novo por limite de caracteres da resposta.
-Para resolver isso de vez e nunca mais bugar, aqui está a parte final exata (do
-botão do tema até o </html>).
-
-Onde colar:
-
-No seu arquivo index.html, vá até a última linha onde está escrito:
-
-document.getElementById('btnThemeToggle').addEventListener('click', () => {
-  const cur = document.documentElement.getAttribute('data-
-
-Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
 
       document.getElementById('btnThemeToggle').addEventListener('click', () => {
         const cur = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -3735,8 +3614,10 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
       } catch (e) {}
     }
 
+    // SINCRONIZAÇÃO BLINDADA COM TIMESTAMP (O MAIS NOVO SEMPRE VENCE)
     let usuarioEntrouId = null;
     async function onUserSignedIn(user) {
+      // O Supabase avisa mais de uma vez (sessão salva, login, renovação de token). Só entramos uma vez por usuário.
       if (usuarioEntrouId === user.id) return;
       usuarioEntrouId = user.id;
       currentUserId = user.id;
@@ -3751,12 +3632,13 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
           const { data: cloudRow } = await sbClient.from('bh_state').select('state').eq('user_id', user.id).maybeSingle();
           if (cloudRow && cloudRow.state) {
             const cloudState = typeof cloudRow.state === 'string' ? JSON.parse(cloudRow.state) : cloudRow.state;
+            
             mesclarEstadoDaNuvem(cloudState);
           }
         } catch (e) {}
       }
 
-      if (deduplicarEntradasAbertas()) saveLocal();
+      if (deduplicarEntradasAbertas()) saveLocal(); // limpa duplicatas já gravadas
       appState.profile.email = user.email || '';
       const meta = user.user_metadata || {};
       if (!appState.profile.name && meta.name) appState.profile.name = meta.name;
@@ -3771,8 +3653,8 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
       renderMonthlyChart();
       await executarCheckIn();
       loadAnnouncements();
-      syncWithCloud();
-      atualizarSolicitacoesEmSegundoPlano();
+      syncWithCloud(); // garante que pontos e solicitações já feitos neste aparelho subam para a nuvem
+      atualizarSolicitacoesEmSegundoPlano(); // gestão: já abre mostrando as solicitações pendentes da equipe
     }
 
     let syncPendente = false;
@@ -3802,11 +3684,13 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
       renderMiniCalendar();
     }
 
+    // soPuxar: só traz as novidades da nuvem (aprovações, outro aparelho), sem gravar
     async function syncWithCloud(opcoes = {}) {
       if (!sbClient || currentUserId === 'guest') return;
       if (syncEmAndamento) { if (!opcoes.soPuxar) syncRepetir = true; return; }
       syncEmAndamento = true;
       try {
+        // 1) Antes de gravar, traz o que mudou na nuvem (assim nada da gestão é sobrescrito)
         try {
           const { data: row, error: errLer } = await sbClient.from('bh_state').select('state').eq('user_id', currentUserId).maybeSingle();
           if (errLer) throw errLer;
@@ -3817,6 +3701,7 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
         }
         if (opcoes.soPuxar && !syncPendente) return;
 
+        // 2) Grava
         const { error } = await sbClient.from('bh_state').upsert({
           user_id: currentUserId,
           state: JSON.stringify(appState),
@@ -3841,18 +3726,22 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
       }
     }
 
+    // Com o app aberto o dia todo: puxa as novidades (ex.: aprovação da gestão) a cada 5 min e ao voltar para a aba
     setInterval(() => { if (!document.hidden) syncWithCloud({ soPuxar: true }); }, 5 * 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWithCloud({ soPuxar: true }); });
 
+    // Tenta de novo sozinho a cada 1 min e quando a internet volta
     setInterval(() => { if (syncPendente) syncWithCloud(); }, 60000);
     window.addEventListener('online', () => { if (syncPendente) syncWithCloud(); });
 
+    // Se a checagem de gestão falhou ao entrar (internet ruim), tenta de novo sozinho
     setInterval(() => {
       if (sbClient && currentUserId !== 'guest' && isCloudAdmin === null) {
         carregarPapelDeGestao().then(() => { try { renderProfile(); } catch (e) {} });
       }
     }, 60000);
 
+    // Gestão: traz as solicitações novas da equipe sem F5 (silencioso, sem mexer na tela)
     async function atualizarSolicitacoesEmSegundoPlano() {
       if (!isAdminUser || !sbClient || currentUserId === 'guest') return;
       try {
@@ -3991,6 +3880,7 @@ Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
     });
   </script>
   <script>
+    // Registra o service worker (necessário para o botão "Instalar" do Edge/Chrome)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(() => {});
