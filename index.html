@@ -494,6 +494,9 @@
                 <button class="btn" id="btnSolicitarAjuste" style="width:100%;">
                   ✏️ Solicitar Ajuste / Justificativa
                 </button>
+                <button class="btn" id="btnLancarAntigos" style="width:100%;">
+                  📋 Lançar horários antigos (ex.: estágio)
+                </button>
               </div>
             </div>
 
@@ -616,6 +619,7 @@
           <p class="muted" style="margin-bottom:16px;">
             Aprovações de solicitações enviadas pelos colaboradores para segurança do banco de horas.
           </p>
+          <div id="bulkApproveBar" style="display:none; gap:8px; flex-wrap:wrap; margin-bottom:14px;"></div>
 
           <div class="table-container">
             <table>
@@ -715,6 +719,57 @@
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
         <button type="button" class="btn" data-close>Cancelar</button>
         <button type="submit" class="btn-laranja" style="width:auto;">Enviar para Aprovação</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- MODAL: LANÇAR HORÁRIOS ANTIGOS -->
+  <dialog id="modalLancarAntigos" style="max-width:640px;">
+    <form id="formLancarAntigos">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);">Lançar horários antigos</h3>
+        <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+      </div>
+      <p class="muted" style="font-size:12px; margin-bottom:12px;">
+        Cole suas anotações, <strong>um dia por linha</strong>. Os lançamentos vão para aprovação da Gestão e, depois de aprovados, entram no saldo.
+      </p>
+      <div class="form-group">
+        <label>Horários (data, entrada e saída)</label>
+        <textarea id="estagioTexto" rows="8" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="10/03/2026 09:00 15:00&#10;11/03 09:10 - 15:30&#10;12/03 9h 15h almoço 30"></textarea>
+        <small class="muted" style="font-size:11px;">Aceita 09:00, 9h ou 9h30. Para um dia com almoço diferente, escreva "almoço 30" (minutos) na linha.</small>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Ano (quando a linha não tiver)</label>
+          <input type="number" id="estagioAno" min="2000" max="2100" step="1">
+        </div>
+        <div class="form-group">
+          <label>Meta diária da época (horas)</label>
+          <input type="number" id="estagioMeta" min="0" max="12" step="0.25">
+        </div>
+        <div class="form-group">
+          <label>Intervalo padrão (minutos)</label>
+          <input type="number" id="estagioIntervalo" min="0" max="480" step="5" value="0">
+        </div>
+        <div class="form-group">
+          <label>Local</label>
+          <select id="estagioLocal">
+            <option value="home">🏠 Home Office</option>
+            <option value="escritorio">🏢 Escritório (presencial)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Justificativa</label>
+        <input type="text" id="estagioMotivo" maxlength="200" value="Horas feitas no período de estágio, lançadas após a contratação.">
+      </div>
+      <div style="display:flex; justify-content:flex-start; margin-bottom:10px;">
+        <button type="button" class="btn" id="btnConferirAntigos" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">🔍 Conferir antes de enviar</button>
+      </div>
+      <div id="estagioPreview" style="margin-bottom:6px;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn-laranja" id="btnEnviarAntigos" style="width:auto;" disabled>Enviar para Aprovação</button>
       </div>
     </form>
   </dialog>
@@ -1726,6 +1781,7 @@
 
       document.getElementById('pendingCountTab').textContent = allPending.length;
       document.getElementById('badgePendingCount').textContent = `${allPending.length} pendentes`;
+      renderBulkApproveBar(allPending);
 
       if (allPending.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;" class="muted">Nenhuma solicitação pendente.</td></tr>';
@@ -1866,6 +1922,174 @@
         });
         if (error) console.warn('Não consegui registrar no histórico:', error.message);
       } catch (e) { console.warn('Não consegui registrar no histórico:', e); }
+    }
+
+    // ===== LANÇAR HORÁRIOS ANTIGOS (ex.: período de estágio) =====
+    let estagioLinhasValidas = [];
+
+    function analisarHorariosAntigos() {
+      const texto = document.getElementById('estagioTexto').value;
+      const anoPadrao = parseInt(document.getElementById('estagioAno').value, 10) || new Date().getFullYear();
+      const metaHoras = parseFloat(String(document.getElementById('estagioMeta').value).replace(',', '.'));
+      const meta = Math.round((isNaN(metaHoras) ? 0 : metaHoras) * 60);
+      let intervaloPadrao = parseInt(document.getElementById('estagioIntervalo').value, 10);
+      if (isNaN(intervaloPadrao) || intervaloPadrao < 0 || intervaloPadrao > 480) intervaloPadrao = 0;
+      const hojeStr = getLocalDateStr();
+      const jaTemDia = new Set(appState.entries.filter(e => e.type === 'trabalhado').map(e => e.date));
+      const vistos = new Set();
+      const linhas = [];
+      const p2 = (n) => String(n).padStart(2, '0');
+
+      texto.split(/\r?\n/).forEach((bruta, i) => {
+        const original = bruta.trim();
+        if (!original) return;
+        const r = { n: i + 1, bruta: original, ok: false, erro: '' };
+        linhas.push(r);
+        if (linhas.length > 400) { r.erro = 'Limite de 400 linhas por envio'; return; }
+
+        const md = original.match(/(^|[^\d:])(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?(?![\d:])/);
+        if (!md) { r.erro = 'Não achei a data'; return; }
+        const dia = parseInt(md[2], 10), mes = parseInt(md[3], 10);
+        let ano = md[4] ? parseInt(md[4], 10) : anoPadrao;
+        if (md[4] && md[4].length === 2) ano += 2000;
+        const dt = new Date(ano, mes - 1, dia);
+        if (dt.getFullYear() !== ano || dt.getMonth() !== mes - 1 || dt.getDate() !== dia) { r.erro = 'Data inválida'; return; }
+        const dateStr = `${ano}-${p2(mes)}-${p2(dia)}`;
+        r.date = dateStr;
+
+        let resto = original.replace(md[0], ' ' );
+        let intervalo = intervaloPadrao;
+        const mi = resto.match(/(?:almo[cç]o|interv\w*)\s*:?\s*(\d{1,3})\s*(?:min\w*|m)?/i);
+        if (mi) { intervalo = parseInt(mi[1], 10); resto = resto.replace(mi[0], ' '); }
+        if (intervalo > 480) { r.erro = 'Intervalo acima de 480 min'; return; }
+
+        const horas = [...resto.matchAll(/(\d{1,2})(?::|h)(\d{2})?(?!\d)/gi)];
+        if (horas.length < 2) { r.erro = 'Faltou entrada ou saída'; return; }
+        const hm = (m) => ({ h: parseInt(m[1], 10), m: m[2] ? parseInt(m[2], 10) : 0 });
+        const a = hm(horas[0]), b = hm(horas[1]);
+        if (a.h > 23 || a.m > 59 || b.h > 23 || b.m > 59) { r.erro = 'Horário inválido'; return; }
+        const entrada = `${p2(a.h)}:${p2(a.m)}`, saida = `${p2(b.h)}:${p2(b.m)}`;
+        if (Core.toMinutes(saida) <= Core.toMinutes(entrada)) { r.erro = 'Saída não é depois da entrada'; return; }
+        if (dateStr > hojeStr) { r.erro = 'Data no futuro'; return; }
+        if (jaTemDia.has(dateStr)) { r.erro = 'Já existe lançamento neste dia'; return; }
+        if (vistos.has(dateStr)) { r.erro = 'Dia repetido na lista'; return; }
+        vistos.add(dateStr);
+
+        const calc = Core.calcPJ(entrada, saida, intervalo, false, meta, dateStr);
+        Object.assign(r, { ok: true, entrada, saida, intervalo, calc, meta, folga: Core.isWeekendOrHoliday(dateStr) });
+      });
+      return linhas;
+    }
+
+    function conferirHorariosAntigos() {
+      const linhas = analisarHorariosAntigos();
+      const box = document.getElementById('estagioPreview');
+      const btn = document.getElementById('btnEnviarAntigos');
+      estagioLinhasValidas = linhas.filter(l => l.ok);
+      if (linhas.length === 0) {
+        box.innerHTML = '<p class="muted" style="font-size:12px;">Cole os horários acima para conferir.</p>';
+        btn.disabled = true;
+        return;
+      }
+      const dataBR = (d) => d.split('-').reverse().join('/');
+      const totalSaldo = estagioLinhasValidas.reduce((acc, l) => acc + l.calc.saldo, 0);
+      const erros = linhas.length - estagioLinhasValidas.length;
+      const linhasHtml = linhas.map(l => l.ok ? `
+        <tr>
+          <td>${dataBR(l.date)}${l.folga ? ' <span class="tag neutral">fim de semana/feriado</span>' : ''}</td>
+          <td class="mono">${l.entrada} → ${l.saida}</td>
+          <td class="mono">${l.intervalo} min</td>
+          <td class="mono">${Core.fromMinutes(l.calc.totalLiquido)}</td>
+          <td class="mono ${l.calc.saldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(l.calc.saldo, true)}</td>
+        </tr>` : `
+        <tr>
+          <td colspan="5"><span class="tag neg">Linha ${l.n}</span> <span class="neg">${esc(l.erro)}</span> <small class="muted">— ${esc(l.bruta)}</small></td>
+        </tr>`).join('');
+      box.innerHTML = `
+        <div class="bulk-bar" style="margin-bottom:10px;">
+          <strong>${estagioLinhasValidas.length} dia(s) prontos</strong>
+          <span>• saldo total <strong class="mono ${totalSaldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(totalSaldo, true)}</strong></span>
+          ${erros ? `<span class="neg">• ${erros} linha(s) com problema (não serão enviadas)</span>` : ''}
+        </div>
+        <div class="table-container" style="max-height:260px; overflow-y:auto;">
+          <table>
+            <thead><tr><th>Data</th><th>Horário</th><th>Almoço</th><th>Líquido</th><th>Saldo</th></tr></thead>
+            <tbody>${linhasHtml}</tbody>
+          </table>
+        </div>`;
+      btn.disabled = estagioLinhasValidas.length === 0;
+    }
+
+    function enviarHorariosAntigos(e) {
+      e.preventDefault();
+      const linhas = analisarHorariosAntigos().filter(l => l.ok);
+      if (linhas.length === 0) { showToast('Nenhuma linha válida para enviar.'); return; }
+      const motivo = document.getElementById('estagioMotivo').value.trim();
+      if (!motivo) { showToast('Escreva a justificativa.'); return; }
+      const local = document.getElementById('estagioLocal').value || 'home';
+      const agora = Date.now();
+      linhas.forEach((l, i) => {
+        appState.entries.push({
+          id: 'estagio_' + agora + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
+          date: l.date,
+          type: 'trabalhado',
+          entrada: l.entrada, saida: l.saida,
+          intervalo: l.intervalo,
+          location: local,
+          locManual: true,
+          variation: l.calc.saldo,
+          meta: l.meta,
+          obs: `[Estágio] ${motivo}` + (l.intervalo ? ` (almoço de ${l.intervalo} min)` : ''),
+          status: 'pendente_aprovacao',
+          updatedAt: agora
+        });
+      });
+      saveLocal();
+      document.getElementById('modalLancarAntigos').close();
+      showToast(`${linhas.length} dia(s) enviados para aprovação da Gestão.`);
+    }
+
+    // Aprova de uma vez todas as pendências de um colaborador (aba Solicitações)
+    function renderBulkApproveBar(allPending) {
+      const box = document.getElementById('bulkApproveBar');
+      if (!box) return;
+      const porUsuario = new Map();
+      allPending.forEach(p => {
+        if (!porUsuario.has(p.userId)) porUsuario.set(p.userId, { nome: p.userName, n: 0 });
+        porUsuario.get(p.userId).n++;
+      });
+      box.innerHTML = '';
+      porUsuario.forEach((v, uid) => {
+        if (v.n < 2) return;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn';
+        b.style.cssText = 'background:var(--pos); color:#fff; border:0; font-weight:700;';
+        b.textContent = `✓ Aprovar as ${v.n} solicitações de ${v.nome}`;
+        b.addEventListener('click', () => aprovarTodasDoColaborador(uid));
+        box.appendChild(b);
+      });
+      box.style.display = box.children.length ? 'flex' : 'none';
+    }
+
+    async function aprovarTodasDoColaborador(uid) {
+      const m = allTeamLoadedData.find(x => x.userId === uid);
+      const ids = m ? (m.entries || []).filter(e => e.status === 'pendente_aprovacao').map(e => e.id) : [];
+      if (ids.length === 0) return;
+      const nome = nomeDoMembro(uid);
+      if (!confirm(`Aprovar TODAS as ${ids.length} solicitações pendentes de ${nome}?\n\nConfira a lista abaixo antes: isso aprova tudo de uma vez.`)) return;
+      const aplicar = (st) => { let alguma = false; ids.forEach(id => { if (aplicarAprovacao(st, id)) alguma = true; }); return alguma; };
+      if (uid === currentUserId) {
+        if (!aplicar(appState)) { showToast('Essas solicitações não existem mais.'); loadTeamMembersFromCloud(); return; }
+        saveLocal();
+      } else {
+        if (!sbClient) return;
+        const ok = await alterarEstadoDoColega(uid, aplicar);
+        if (!ok) return;
+      }
+      registrarEvento('aprovacao', uid, nome, { lote: `${ids.length} solicitações` });
+      showToast(`${ids.length} solicitações aprovadas!`);
+      loadTeamMembersFromCloud();
     }
 
     async function exportarTudo() {
@@ -2614,6 +2838,18 @@
         document.getElementById('ajusteIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
         document.getElementById('ajusteAbono').value = 0;
         document.getElementById('modalSolicitarAjuste').showModal();
+      });
+      document.getElementById('btnLancarAntigos').addEventListener('click', () => {
+        document.getElementById('estagioAno').value = new Date().getFullYear();
+        document.getElementById('estagioMeta').value = (appState.config.expected || 360) / 60;
+        document.getElementById('estagioPreview').innerHTML = '';
+        document.getElementById('btnEnviarAntigos').disabled = true;
+        document.getElementById('modalLancarAntigos').showModal();
+      });
+      document.getElementById('btnConferirAntigos').addEventListener('click', conferirHorariosAntigos);
+      document.getElementById('formLancarAntigos').addEventListener('submit', enviarHorariosAntigos);
+      ['estagioTexto', 'estagioAno', 'estagioMeta', 'estagioIntervalo'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => { document.getElementById('btnEnviarAntigos').disabled = true; });
       });
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
       document.getElementById('btnNotificationBell').addEventListener('click', () => {
