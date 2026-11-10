@@ -220,7 +220,7 @@
     #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card-white); color: var(--text-main); padding: 12px 24px; border-radius: 999px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 10000; border: 1px solid var(--c-laranja); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); } .dashboard-grid > * { min-width: 0; } }
 
     /* ===== AJUSTES PARA CELULAR ===== */
     .metric-value { overflow-wrap: anywhere; line-height: 1.15; }
@@ -394,12 +394,12 @@
     <main class="container">
       <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
         <div><strong id="bannerAnnounceTitle">Aviso da Gestão</strong>: <span id="bannerAnnounceMsg"></span></div>
-        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="companyAnnouncementBanner.style.display='none'">✕</button>
+        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="dispensarBannerAviso()">✕</button>
       </div>
 
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
         <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
-        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="birthdayAlertBox.style.display='none'">✕</button>
+        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="marcarNotifLida('b:'+new Date().getFullYear())">✕</button>
       </div>
 
       <!-- BARRA DE NAVEGAÇÃO -->
@@ -495,7 +495,7 @@
                   ✏️ Solicitar Ajuste / Justificativa
                 </button>
                 <button class="btn" id="btnLancarAntigos" style="width:100%;">
-                  📋 Horas retroativas
+                  📋 Lançar período anterior (estágio, antes do sistema…)
                 </button>
               </div>
             </div>
@@ -1093,9 +1093,22 @@
     </div>
 
     <div style="margin-bottom:18px;">
-      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">Avisos Recentes</h4>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Novas</h4>
+        <button type="button" class="btn" id="btnMarcarTodasLidas" style="padding:3px 8px; font-size:11px;">✓ Marcar todas como lidas</button>
+      </div>
       <div id="noticesListBox" style="display:flex; flex-direction:column; gap:8px;">
         <span class="muted" style="font-size:12px;">Nenhum comunicado ativo.</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Histórico</h4>
+        <button type="button" class="btn" id="btnLimparHistoricoNotif" style="padding:3px 8px; font-size:11px; color:var(--neg);">🗑 Limpar histórico</button>
+      </div>
+      <div id="notifHistoryBox" style="display:flex; flex-direction:column; gap:8px;">
+        <span class="muted" style="font-size:12px;">Nada no histórico.</span>
       </div>
     </div>
 
@@ -2872,74 +2885,101 @@
 
     setInterval(() => { if (currentUserId !== 'guest') loadAnnouncements(); }, 5 * 60 * 1000);
 
-    function checkBirthdaysNotification() {
+    // ===== ESTADO DAS NOTIFICAÇÕES (lidas / histórico / limpas) — guardado por usuário neste aparelho =====
+    function notifKey() { return 'realtime_notif_' + currentUserId; }
+    function lerNotifState() {
+      try { const r = JSON.parse(localStorage.getItem(notifKey()) || '{}'); return { read: r.read || {}, cleared: r.cleared || {} }; }
+      catch (e) { return { read: {}, cleared: {} }; }
+    }
+    function salvarNotifState(st) { try { localStorage.setItem(notifKey(), JSON.stringify(st)); } catch (e) {} }
+
+    function montarListaNotificacoes() {
+      const itens = [];
+      const bday = appState.profile.birthDate;
       const now = new Date();
-      const formatMD = (d) => `-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const todayKey = formatMD(now);
+      const hojeMD = `-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      if (bday && bday.endsWith(hojeMD)) {
+        itens.push({ key: 'b:' + now.getFullYear(), tipo: 'bday', title: '🎉 Feliz aniversário!', message: 'Hoje é seu aniversário. Parabéns! 🎂', ts: now.getTime() });
+      }
+      (sharedAnnouncements || []).forEach(a => {
+        itens.push({ key: 'a:' + a.id, tipo: 'aviso', id: a.id, title: a.title, message: a.message, ts: a.created_at ? new Date(a.created_at).getTime() : 0 });
+      });
+      return itens;
+    }
+
+    function marcarNotifLida(key) {
+      const st = lerNotifState(); st.read[key] = Date.now(); salvarNotifState(st); checkBirthdaysNotification();
+    }
+    function dispensarBannerAviso() {
+      const st = lerNotifState();
+      const prox = montarListaNotificacoes().find(n => n.tipo === 'aviso' && !st.read[n.key]);
+      if (prox) marcarNotifLida(prox.key); else document.getElementById('companyAnnouncementBanner').style.display = 'none';
+    }
+    function marcarTodasLidas() {
+      const st = lerNotifState(); const t = Date.now();
+      montarListaNotificacoes().forEach(n => { if (!st.read[n.key]) st.read[n.key] = t; });
+      salvarNotifState(st); checkBirthdaysNotification();
+    }
+    function limparHistoricoNotif() {
+      if (!confirm('Limpar o histórico de notificações? Isso não apaga os comunicados da equipe, só some da sua lista.')) return;
+      const st = lerNotifState(); const t = Date.now();
+      Object.keys(st.read).forEach(k => { st.cleared[k] = t; });
+      salvarNotifState(st); renderNotificationsModalContent();
+    }
+
+    function checkBirthdaysNotification() {
+      const st = lerNotifState();
+      const todas = montarListaNotificacoes();
+      const novas = todas.filter(n => !st.read[n.key]);
 
       const alertBox = document.getElementById('birthdayAlertBox');
-      const bday = appState.profile.birthDate;
-      let count = 0;
-
-      if (bday && bday.endsWith(todayKey)) {
+      const bd = novas.find(n => n.tipo === 'bday');
+      if (bd) {
         document.getElementById('birthdayAlertText').innerHTML = `🎉 <strong>Hoje é seu aniversário!</strong> Parabéns! 🎂`;
         alertBox.style.display = 'flex';
-        count++;
-      } else {
-        alertBox.style.display = 'none';
-      }
+      } else { alertBox.style.display = 'none'; }
 
-      const announcements = sharedAnnouncements;
-      if (announcements.length > 0) {
-        count += announcements.length;
-        const bannerBox = document.getElementById('companyAnnouncementBanner');
-        document.getElementById('bannerAnnounceTitle').textContent = announcements[0].title;
-        document.getElementById('bannerAnnounceMsg').textContent = announcements[0].message;
+      const bannerBox = document.getElementById('companyAnnouncementBanner');
+      const av = novas.find(n => n.tipo === 'aviso');
+      if (av) {
+        document.getElementById('bannerAnnounceTitle').textContent = av.title;
+        document.getElementById('bannerAnnounceMsg').textContent = av.message;
         bannerBox.style.display = 'flex';
-      } else {
-        document.getElementById('companyAnnouncementBanner').style.display = 'none';
-      }
+      } else { bannerBox.style.display = 'none'; }
 
       const bellBadge = document.getElementById('bellCountBadge');
-      if (count > 0) {
-        bellBadge.textContent = count;
-        bellBadge.style.display = 'inline-block';
-      } else {
-        bellBadge.style.display = 'none';
-      }
+      if (novas.length > 0) { bellBadge.textContent = novas.length; bellBadge.style.display = 'inline-block'; }
+      else { bellBadge.style.display = 'none'; }
 
       renderNotificationsModalContent();
     }
 
     function renderNotificationsModalContent() {
       const noticeBox = document.getElementById('noticesListBox');
+      const histBox = document.getElementById('notifHistoryBox');
       const bdayBox = document.getElementById('birthdaysListBox');
       const adminNoticeForm = document.getElementById('boxAdminCreateNotice');
+      if (adminNoticeForm) adminNoticeForm.style.display = isAdminUser ? 'block' : 'none';
 
-      if (adminNoticeForm) {
-        adminNoticeForm.style.display = isAdminUser ? 'block' : 'none';
-      }
+      const st = lerNotifState();
+      const todas = montarListaNotificacoes();
+      const novas = todas.filter(n => !st.read[n.key]);
+      const historico = todas.filter(n => st.read[n.key] && !st.cleared[n.key]);
 
-      const announcements = sharedAnnouncements;
-      if (noticeBox) {
-        if (announcements.length > 0) {
-          noticeBox.innerHTML = '';
-          announcements.forEach((a, idx) => {
-            const item = document.createElement('div');
-            item.className = 'holiday-item';
-            item.innerHTML = `
-              <div>
-                <strong style="color:var(--c-laranja);">${esc(a.title)}</strong>
-                <div style="font-size:11px; margin-top:2px;">${esc(a.message)}</div>
-              </div>
-              ${isAdminUser ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" data-id="${esc(a.id)}" onclick="deleteAnnouncement(this.dataset.id)">✕</button>` : ''}
-            `;
-            noticeBox.appendChild(item);
-          });
-        } else {
-          noticeBox.innerHTML = '<span class="muted" style="font-size:12px;">Nenhum comunicado ativo no momento.</span>';
-        }
-      }
+      const fmt = (ts) => ts ? new Date(ts).toLocaleDateString('pt-BR') + ' ' + new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+      const card = (n, lida) => {
+        const del = (isAdminUser && n.tipo === 'aviso')
+          ? `<button class="btn" style="padding:2px 6px; color:var(--neg);" title="Apagar para toda a equipe" data-id="${esc(n.id)}" onclick="deleteAnnouncement(this.dataset.id)">✕</button>` : '';
+        const ok = lida ? '' : `<button class="btn" style="padding:2px 6px;" title="Marcar como lida" data-key="${esc(n.key)}" onclick="marcarNotifLida(this.dataset.key)">✓</button>`;
+        return `<div class="holiday-item" style="${lida ? 'opacity:.7;' : ''}">
+          <div><strong style="color:var(--c-laranja);">${esc(n.title)}</strong>
+            <div style="font-size:11px; margin-top:2px;">${esc(n.message)}</div>
+            <div class="muted" style="font-size:10px; margin-top:3px;">${fmt(n.ts)}</div></div>
+          <div style="display:flex; gap:4px;">${ok}${del}</div></div>`;
+      };
+
+      if (noticeBox) noticeBox.innerHTML = novas.length ? novas.map(n => card(n, false)).join('') : '<span class="muted" style="font-size:12px;">Nenhuma notificação nova.</span>';
+      if (histBox) histBox.innerHTML = historico.length ? historico.map(n => card(n, true)).join('') : '<span class="muted" style="font-size:12px;">Nada no histórico.</span>';
 
       if (bdayBox) {
         if (appState.profile.birthDate) {
@@ -2973,6 +3013,8 @@
         if (hoje) alternarLocal(hoje.id); else showToast('Ainda não há ponto registrado hoje.');
       });
 
+      document.getElementById('btnMarcarTodasLidas').addEventListener('click', marcarTodasLidas);
+      document.getElementById('btnLimparHistoricoNotif').addEventListener('click', limparHistoricoNotif);
       document.getElementById('btnFinalizarDiaInstantaneo').addEventListener('click', finalizarDiaInstantaneo);
       document.getElementById('btnFinalizarDiaHero').addEventListener('click', finalizarDiaInstantaneo);
       document.getElementById('btnSimularAtraso').addEventListener('click', simularAtrasoParaTeste);
@@ -3413,6 +3455,12 @@
             if (session && session.user) onUserSignedIn(session.user);
           });
           sbClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+              const nova = prompt('Digite sua nova senha (mínimo 6 caracteres):');
+              if (nova && nova.length >= 6) {
+                sbClient.auth.updateUser({ password: nova }).then(({ error }) => showToast(error ? 'Erro: ' + error.message : 'Senha alterada com sucesso!'));
+              } else if (nova) { showToast('Senha muito curta. Peça o link de novo.'); }
+            }
             if (event === 'SIGNED_OUT') usuarioEntrouId = null;
             if (session && session.user) onUserSignedIn(session.user);
           });
@@ -3626,6 +3674,17 @@
         renderMiniCalendar();
         renderMonthlyChart();
         showToast('Modo Offline Ativo.');
+      };
+
+      document.getElementById('btnForgotPass').onclick = async () => {
+        const email = document.getElementById('authEmail').value.trim();
+        if (!email) { msgBox.textContent = 'Digite seu e-mail no campo acima e clique em "Esqueci a senha" de novo.'; return; }
+        try {
+          if (!sbClient) throw new Error('Serviço não iniciado.');
+          const { error } = await sbClient.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+          if (error) throw error;
+          msgBox.textContent = 'Enviamos um link para redefinir a senha no seu e-mail.';
+        } catch (err) { msgBox.textContent = err.message; }
       };
 
       document.getElementById('formAuth').onsubmit = async (e) => {
