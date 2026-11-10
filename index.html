@@ -393,6 +393,30 @@
       .punch-time { font-size: 18px; }
       .table-actions-bar > * { flex: 1 1 100%; }
     }
+
+/* BANNER COMPACTO / PÍLULA ELEGANTE */
+    .announcement-bar, .birthday-alert-bar {
+      border-radius: 999px !important;
+      padding: 7px 18px !important;
+      margin-bottom: 14px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 12px !important;
+      font-size: 12px !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+    }
+    .announcement-bar {
+      background: rgba(236, 137, 77, 0.12) !important;
+      border: 1px solid rgba(236, 137, 77, 0.45) !important;
+      color: var(--text-main) !important;
+    }
+    .birthday-alert-bar {
+      background: rgba(244, 63, 94, 0.12) !important;
+      border: 1px solid rgba(244, 63, 94, 0.45) !important;
+      color: var(--text-main) !important;
+    }
+
   </style>
 </head>
 <body>
@@ -518,20 +542,20 @@
 
     <main class="container">
      <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
-  <div style="display:flex; align-items:center; gap:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-    <span style="font-size:14px;">📢</span>
-    <strong id="bannerAnnounceTitle" style="color:var(--c-laranja); font-weight:700;">Aviso:</strong>
-    <span id="bannerAnnounceMsg" style="color:var(--text-main); font-weight:500;"></span>
-  </div>
-  <button class="btn" style="padding:2px 8px; font-size:10px; border-radius:999px; margin-left:12px; flex-shrink:0;" onclick="dispensarBannerAviso()" title="Dispensar aviso">✕</button>
-</div>
+        <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
+          <span style="font-size:14px; flex-shrink:0;">📢</span>
+          <strong id="bannerAnnounceTitle" style="color:var(--c-laranja); font-weight:700; white-space:nowrap;">Aviso da Gestão:</strong>
+          <span id="bannerAnnounceMsg" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-main); opacity:0.9;"></span>
+        </div>
+        <button type="button" class="btn" style="padding:2px 8px; font-size:11px; border-radius:999px; flex-shrink:0; border:0; background:rgba(255,255,255,0.08);" onclick="dispensarBannerAviso()" title="Dispensar aviso">✕</button>
+      </div>
 
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:20px;">🎂</span>
-          <span id="birthdayAlertText"><strong>Aniversário na equipe!</strong></span>
+        <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
+          <span style="font-size:14px; flex-shrink:0;">🎂</span>
+          <span id="birthdayAlertText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></span>
         </div>
-        <button class="btn" style="padding:4px 10px; font-size:11px;" onclick="dispensarBannerNiver()" title="Dispensar">✕ Fechar</button>
+        <button type="button" class="btn" style="padding:2px 8px; font-size:11px; border-radius:999px; flex-shrink:0; border:0; background:rgba(255,255,255,0.08);" onclick="dispensarBannerNiver()" title="Dispensar">✕</button>
       </div>
 
       <!-- BARRA DE NAVEGAÇÃO -->
@@ -3156,18 +3180,24 @@
       showToast('Notificação removida.');
     }
 
-    function dispensarBannerAviso() {
+   function dispensarBannerAviso() {
+      const banner = document.getElementById('companyAnnouncementBanner');
+      if (banner) banner.style.display = 'none';
       const st = lerNotifState();
-      const prox = montarListaNotificacoes().find(n => n.tipo === 'aviso' && !st.read[n.key] && !st.cleared[n.key]);
-      if (prox) marcarNotifLida(prox.key); 
-      document.getElementById('companyAnnouncementBanner').style.display = 'none';
+      const avisos = montarListaNotificacoes().filter(n => n.tipo === 'aviso');
+      avisos.forEach(a => { st.read[a.key] = Date.now(); });
+      salvarNotifState(st);
+      checkBirthdaysNotification();
     }
 
     function dispensarBannerNiver() {
+      const box = document.getElementById('birthdayAlertBox');
+      if (box) box.style.display = 'none';
       const st = lerNotifState();
-      const prox = montarListaNotificacoes().find(n => n.tipo === 'bday' && !st.read[n.key] && !st.cleared[n.key]);
-      if (prox) marcarNotifLida(prox.key); 
-      document.getElementById('birthdayAlertBox').style.display = 'none';
+      const nivers = montarListaNotificacoes().filter(n => n.tipo === 'bday');
+      nivers.forEach(b => { st.read[b.key] = Date.now(); });
+      salvarNotifState(st);
+      checkBirthdaysNotification();
     }
 
     function marcarTodasLidas() {
