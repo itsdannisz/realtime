@@ -399,7 +399,7 @@
 
       <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
         <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
-        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="marcarNotifLida('b:'+new Date().getFullYear())">✕</button>
+        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="dispensarBannerNiver()">✕</button>
       </div>
 
       <!-- BARRA DE NAVEGAÇÃO -->
@@ -495,7 +495,7 @@
                   ✏️ Solicitar Ajuste / Justificativa
                 </button>
                 <button class="btn" id="btnLancarAntigos" style="width:100%;">
-                  📋 Adicionar horas anteriores
+                  📋 Lançar período anterior (estágio, antes do sistema…)
                 </button>
               </div>
             </div>
@@ -1074,7 +1074,10 @@
   <dialog id="modalNotificacoes">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
       <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
-      <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button type="button" class="btn" id="btnSomNotif" style="padding:3px 8px; font-size:11px;">🔊 Som: ligado</button>
+        <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+      </div>
     </div>
 
     <div id="boxAdminCreateNotice" style="display:none; background:var(--card-sub); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:14px; margin-bottom:18px;">
@@ -2858,8 +2861,91 @@
       return data || [];
     }
 
+    // ===== SOM DA NOTIFICAÇÃO (gerado no navegador, sem arquivo) =====
+    let audioCtx = null;
+    function somLigado() { return localStorage.getItem('realtime_notif_sound') !== 'off'; }
+    function destravarAudio() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+      } catch (e) {}
+    }
+    // iPhone/Chrome só liberam som depois de um toque da pessoa na página
+    ['click', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, destravarAudio, { passive: true }));
+
+    function tocarSomNotificacao() {
+      if (!somLigado()) return;
+      try {
+        destravarAudio();
+        if (!audioCtx) return;
+        const t0 = audioCtx.currentTime;
+        [[880, 0], [1318.5, 0.16]].forEach(([freq, delay]) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine'; osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, t0 + delay);
+          gain.gain.exponentialRampToValueAtTime(0.25, t0 + delay + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + delay + 0.45);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(t0 + delay); osc.stop(t0 + delay + 0.5);
+        });
+        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+      } catch (e) {}
+    }
+    function atualizarBotaoSom() {
+      const btn = document.getElementById('btnSomNotif');
+      if (btn) btn.textContent = somLigado() ? '🔊 Som: ligado' : '🔇 Som: desligado';
+    }
+    function alternarSomNotif() {
+      localStorage.setItem('realtime_notif_sound', somLigado() ? 'off' : 'on');
+      atualizarBotaoSom();
+      if (somLigado()) tocarSomNotificacao();
+    }
+
+    // ===== ANIVERSÁRIOS DA EQUIPE (tabela compartilhada bh_aniversarios: só dia e mês) =====
+    let sharedBirthdays = [];
+    let ultimoAnivPublicado = '';
+
+    async function publicarMeuAniversario() {
+      try {
+        const bd = appState.profile && appState.profile.birthDate;
+        if (!sbClient || currentUserId === 'guest' || !bd) return;
+        const [, mm, dd] = bd.split('-');
+        const nome = (appState.profile.name || 'Colaborador').slice(0, 80);
+        const assinatura = `${nome}|${mm}-${dd}`;
+        if (assinatura === ultimoAnivPublicado) return;
+        const { error } = await sbClient.from('bh_aniversarios').upsert(
+          { user_id: currentUserId, nome, nascimento: `${mm}-${dd}` }, { onConflict: 'user_id' });
+        if (!error) ultimoAnivPublicado = assinatura;
+        else console.warn('Não consegui publicar o aniversário (a tabela bh_aniversarios existe?):', error.message);
+      } catch (e) {}
+    }
+    async function buscarAniversarios() {
+      try {
+        const { data, error } = await sbClient.from('bh_aniversarios').select('user_id, nome, nascimento');
+        if (error) throw error;
+        sharedBirthdays = data || [];
+      } catch (e) { console.warn('Aniversários da equipe indisponíveis:', e.message || e); }
+    }
+
+    // ===== COMUNICADOS EM TEMPO REAL =====
+    let idsComunicadosConhecidos = null; // null = ainda não carregou (primeira carga não toca som)
+    let canalComunicados = null;
+    let carregandoAvisos = false;
+
+    function iniciarTempoRealComunicados() {
+      if (canalComunicados || !sbClient) return;
+      try {
+        canalComunicados = sbClient.channel('realtime-comunicados')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'bh_announcements' }, () => loadAnnouncements())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'bh_aniversarios' }, () => loadAnnouncements())
+          .subscribe();
+      } catch (e) { console.warn('Tempo real indisponível, usando atualização periódica:', e); }
+    }
+
     async function loadAnnouncements() {
-      if (!sbClient || currentUserId === 'guest') return;
+      if (!sbClient || currentUserId === 'guest' || carregandoAvisos) return;
+      carregandoAvisos = true;
       try {
         sharedAnnouncements = await buscarComunicados();
 
@@ -2880,10 +2966,30 @@
       } catch (err) {
         console.warn('Não consegui carregar os comunicados:', err);
       }
+      await publicarMeuAniversario();
+      await buscarAniversarios();
+
+      // Comunicado novo (que não estava na tela) -> som + aviso
+      const idsAgora = new Set(sharedAnnouncements.map(a => String(a.id)));
+      if (idsComunicadosConhecidos !== null) {
+        const st = lerNotifState();
+        const novos = sharedAnnouncements.filter(a => !idsComunicadosConhecidos.has(String(a.id)) && !st.read['a:' + a.id]);
+        if (novos.length) {
+          tocarSomNotificacao();
+          showToast('🔔 Novo comunicado: ' + novos[0].title);
+        }
+      }
+      idsComunicadosConhecidos = idsAgora;
+      carregandoAvisos = false;
+
+      iniciarTempoRealComunicados();
       checkBirthdaysNotification();
     }
 
-    setInterval(() => { if (currentUserId !== 'guest') loadAnnouncements(); }, 5 * 60 * 1000);
+    // Garantia caso o tempo real falhe: confere a cada 30s e sempre que a pessoa volta para o app
+    setInterval(() => { if (currentUserId !== 'guest') loadAnnouncements(); }, 30 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && currentUserId !== 'guest') loadAnnouncements(); });
+    window.addEventListener('focus', () => { if (currentUserId !== 'guest') loadAnnouncements(); });
 
     // ===== ESTADO DAS NOTIFICAÇÕES (lidas / histórico / limpas) — guardado por usuário neste aparelho =====
     function notifKey() { return 'realtime_notif_' + currentUserId; }
@@ -2895,12 +3001,28 @@
 
     function montarListaNotificacoes() {
       const itens = [];
-      const bday = appState.profile.birthDate;
       const now = new Date();
-      const hojeMD = `-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      if (bday && bday.endsWith(hojeMD)) {
-        itens.push({ key: 'b:' + now.getFullYear(), tipo: 'bday', title: '🎉 Feliz aniversário!', message: 'Hoje é seu aniversário. Parabéns! 🎂', ts: now.getTime() });
-      }
+      const hojeMD = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const ano = now.getFullYear();
+
+      // Aniversariantes de hoje (a própria pessoa + toda a equipe)
+      const mesclados = new Map();
+      sharedBirthdays.forEach(p => { if (p && p.user_id) mesclados.set(p.user_id, { id: p.user_id, nome: p.nome, md: p.nascimento }); });
+      const bd = appState.profile && appState.profile.birthDate;
+      if (bd && currentUserId !== 'guest') mesclados.set(currentUserId, { id: currentUserId, nome: appState.profile.name, md: bd.slice(5) });
+      else if (bd) mesclados.set('eu', { id: 'eu', nome: appState.profile.name, md: bd.slice(5) });
+
+      mesclados.forEach(p => {
+        if (p.md !== hojeMD) return;
+        const eu = p.id === currentUserId || p.id === 'eu';
+        itens.push({
+          key: `b:${p.id}:${ano}`, tipo: 'bday',
+          title: eu ? '🎉 Feliz aniversário!' : `🎂 Aniversário de ${p.nome || 'colega'}`,
+          message: eu ? 'Hoje é seu aniversário. Parabéns! 🎂' : `Hoje é aniversário de ${p.nome || 'um colega'}. Que tal dar os parabéns?`,
+          ts: now.getTime()
+        });
+      });
+
       (sharedAnnouncements || []).forEach(a => {
         itens.push({ key: 'a:' + a.id, tipo: 'aviso', id: a.id, title: a.title, message: a.message, ts: a.created_at ? new Date(a.created_at).getTime() : 0 });
       });
@@ -2914,6 +3036,11 @@
       const st = lerNotifState();
       const prox = montarListaNotificacoes().find(n => n.tipo === 'aviso' && !st.read[n.key]);
       if (prox) marcarNotifLida(prox.key); else document.getElementById('companyAnnouncementBanner').style.display = 'none';
+    }
+    function dispensarBannerNiver() {
+      const st = lerNotifState();
+      const prox = montarListaNotificacoes().find(n => n.tipo === 'bday' && !st.read[n.key]);
+      if (prox) marcarNotifLida(prox.key); else document.getElementById('birthdayAlertBox').style.display = 'none';
     }
     function marcarTodasLidas() {
       const st = lerNotifState(); const t = Date.now();
@@ -2935,7 +3062,7 @@
       const alertBox = document.getElementById('birthdayAlertBox');
       const bd = novas.find(n => n.tipo === 'bday');
       if (bd) {
-        document.getElementById('birthdayAlertText').innerHTML = `🎉 <strong>Hoje é seu aniversário!</strong> Parabéns! 🎂`;
+        document.getElementById('birthdayAlertText').innerHTML = `<strong>${esc(bd.title)}</strong> ${esc(bd.message)}`;
         alertBox.style.display = 'flex';
       } else { alertBox.style.display = 'none'; }
 
@@ -2982,14 +3109,31 @@
       if (histBox) histBox.innerHTML = historico.length ? historico.map(n => card(n, true)).join('') : '<span class="muted" style="font-size:12px;">Nada no histórico.</span>';
 
       if (bdayBox) {
-        if (appState.profile.birthDate) {
-          const [y, mm, dd] = appState.profile.birthDate.split('-');
-          bdayBox.innerHTML = `<div class="holiday-item"><span>🎂 ${esc(appState.profile.name || 'Colaborador')}</span> <span class="mono" style="color:var(--c-laranja); font-weight:700;">${dd}/${mm}</span></div>`;
+        const now = new Date();
+        const hoje0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const mapa = new Map();
+        sharedBirthdays.forEach(p => { if (p && p.nascimento) mapa.set(p.user_id, { nome: p.nome, md: p.nascimento, eu: p.user_id === currentUserId }); });
+        const bd = appState.profile && appState.profile.birthDate;
+        if (bd) mapa.set(currentUserId, { nome: appState.profile.name || 'Colaborador', md: bd.slice(5), eu: true });
+        const lista = [...mapa.values()].map(p => {
+          const [mm, dd] = p.md.split('-').map(Number);
+          let prox = new Date(now.getFullYear(), mm - 1, dd);
+          if (prox < hoje0) prox = new Date(now.getFullYear() + 1, mm - 1, dd);
+          return { ...p, mm, dd, dias: Math.round((prox - hoje0) / 86400000) };
+        }).sort((x, y) => x.dias - y.dias);
+
+        if (lista.length) {
+          bdayBox.innerHTML = lista.map(p => {
+            const quando = p.dias === 0 ? '🎉 Hoje!' : (p.dias === 1 ? 'Amanhã' : `em ${p.dias} dias`);
+            return `<div class="holiday-item"><span>🎂 ${esc(p.nome)}${p.eu ? ' <span class="muted" style="font-size:10px;">(você)</span>' : ''}</span>
+              <span class="mono" style="color:var(--c-laranja); font-weight:700; text-align:right;">${String(p.dd).padStart(2, '0')}/${String(p.mm).padStart(2, '0')}
+              <span class="muted" style="font-size:10px; font-weight:400; display:block;">${quando}</span></span></div>`;
+          }).join('');
         } else {
           bdayBox.innerHTML = '<span class="muted" style="font-size:12px;">Preencha sua data no perfil para aparecer aqui.</span>';
         }
       }
-    }
+        }
 
     async function deleteAnnouncement(id) {
       if (!confirm('Remover este comunicado da equipe?')) return;
@@ -3013,6 +3157,8 @@
         if (hoje) alternarLocal(hoje.id); else showToast('Ainda não há ponto registrado hoje.');
       });
 
+      document.getElementById('btnSomNotif').addEventListener('click', alternarSomNotif);
+      atualizarBotaoSom();
       document.getElementById('btnMarcarTodasLidas').addEventListener('click', marcarTodasLidas);
       document.getElementById('btnLimparHistoricoNotif').addEventListener('click', limparHistoricoNotif);
       document.getElementById('btnFinalizarDiaInstantaneo').addEventListener('click', finalizarDiaInstantaneo);
