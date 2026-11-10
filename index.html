@@ -990,6 +990,7 @@
 
     let currentUserId = localStorage.getItem('realtime_current_uid') || 'guest';
     let isAdminUser = false;
+    let isCloudAdmin = null; // null = ainda não sabemos; true/false vem do Supabase (tabela bh_admins)
     let cachedDetectedIP = 'Offline/Local';
 
     function getStorageKey() {
@@ -1042,18 +1043,32 @@
       recalculateExpected();
     }
 
+    // Gestão = quem está na tabela bh_admins do Supabase (checado pelo servidor).
+    // Convidado (sem nuvem) continua vendo as telas de gestão só no próprio aparelho.
     function updateAdminStatus() {
-      const p = appState.profile;
-      const email = (p.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-      const role = (p.role || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-      isAdminUser = email.includes('marketing') || 
-                    email.includes('danielle') || 
-                    email.includes('gestao') || 
-                    role.includes('gestao') || 
-                    role.includes('admin') || 
-                    currentUserId === 'guest';
+      isAdminUser = currentUserId === 'guest' || isCloudAdmin === true;
       const btnSim = document.getElementById('btnSimularAtraso');
       if (btnSim) btnSim.style.display = isAdminUser ? '' : 'none';
+    }
+
+    // Pergunta ao Supabase se esta conta é de gestão. Guarda a última resposta só como dica de tela
+    // (quem manda de verdade é o RLS do banco, então mexer nesse valor não libera nenhum dado).
+    async function carregarPapelDeGestao() {
+      if (!sbClient || currentUserId === 'guest') return;
+      const chave = 'realtime_is_admin_' + currentUserId;
+      try {
+        const { data, error } = await sbClient.rpc('is_bh_admin');
+        if (!error && typeof data === 'boolean') {
+          isCloudAdmin = data;
+          try { localStorage.setItem(chave, String(data)); } catch (e) {}
+          return;
+        }
+        if (error) console.warn('Não consegui checar o papel de gestão:', error.message);
+      } catch (e) { console.warn('Não consegui checar o papel de gestão:', e); }
+      try {
+        const guardado = localStorage.getItem(chave);
+        if (guardado === 'true' || guardado === 'false') isCloudAdmin = guardado === 'true';
+      } catch (e) {}
     }
 
     function recalculateExpected() {
@@ -2600,7 +2615,7 @@
       document.getElementById('btnTopLogout').addEventListener('click', async () => {
         if (confirm('Deseja realmente sair da sua conta?')) {
           if (sbClient) await sbClient.auth.signOut();
-          currentUserId = 'guest';
+          currentUserId = 'guest'; isCloudAdmin = null;
           localStorage.removeItem('realtime_current_uid');
           appState.profile = { name: '', email: '', role: '', company: 'Real Estate São Paulo', birthDate: '', modalidade: 'custom', photo: '', updatedAt: 0 };
           appState.entries = [];
@@ -2657,6 +2672,7 @@
       if (!appState.profile.role && meta.role) appState.profile.role = meta.role;
       if (!appState.profile.birthDate && meta.birthDate) appState.profile.birthDate = meta.birthDate;
 
+      await carregarPapelDeGestao();
       updateAdminStatus();
 
       renderDashboard();
@@ -2745,6 +2761,13 @@
     setInterval(() => { if (syncPendente) syncWithCloud(); }, 60000);
     window.addEventListener('online', () => { if (syncPendente) syncWithCloud(); });
 
+    // Se a checagem de gestão falhou ao entrar (internet ruim), tenta de novo sozinho
+    setInterval(() => {
+      if (sbClient && currentUserId !== 'guest' && isCloudAdmin === null) {
+        carregarPapelDeGestao().then(() => { try { renderProfile(); } catch (e) {} });
+      }
+    }, 60000);
+
     // Gestão: traz as solicitações novas da equipe sem F5 (silencioso, sem mexer na tela)
     async function atualizarSolicitacoesEmSegundoPlano() {
       if (!isAdminUser || !sbClient || currentUserId === 'guest') return;
@@ -2802,7 +2825,7 @@
       };
 
       document.getElementById('btnContinueOffline').onclick = () => {
-        currentUserId = 'guest';
+        currentUserId = 'guest'; isCloudAdmin = null;
         loadLocal();
         if (!appState.profile.name) {
           appState.profile = {
