@@ -59,9 +59,9 @@
       --hero-bg: #220C27;
       --hero-border: #EC894D;
       
-      --tt-main: #220C27;
-      --tt-muted: #645069;
-      --tt-dim: #8e7a93;
+      --text-main: #220C27;
+      --text-muted: #645069;
+      --text-dim: #8e7a93;
       --bg-contrast: #ffffff;
       
       --pos: #059669;
@@ -78,13 +78,13 @@
     
     body {
       background-color: var(--bg-page);
-      color: var(--tt-main);
+      color: var(--text-main);
       font-family: var(--font-main);
       font-size: 14px;
       line-height: 1.5;
       min-height: 100vh;
-      display: fl;
-      fl-direction: column;
+      display: flex;
+      flex-direction: column;
       -webkit-font-smoothing: antialiased;
       transition: background-color 0.2s ease, color 0.2s ease;
     }
@@ -93,18 +93,18 @@
     .pos { color: var(--pos) !important; }
     .neg { color: var(--neg) !important; }
     .warn { color: var(--warn) !important; }
-    .muted { color: var(--tt-muted); }
+    .muted { color: var(--text-muted); }
 
-    .brand-wrap { display: fl; align-items: center; gap: 12px; tt-decoration: none; color: inherit; }
-    .brand-logo-svg { height: 36px; width: auto; color: var(--tt-main); display: block; }
+    .brand-wrap { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .brand-logo-svg { height: 36px; width: auto; color: var(--text-main); display: block; }
     .brand-divider { width: 1px; height: 26px; background: var(--border-color); }
-    .brand-app-badge { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; tt-transform: uppercase; color: var(--c-laranja); }
+    .brand-app-badge { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--c-laranja); }
 
     /* AUTH */
-    #authScreen { min-height: 100vh; display: fl; align-items: center; justify-content: center; padding: 24px; background: var(--bg-page); }
+    #authScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-page); }
     #authScreen[hidden] { display: none !important; }
     .auth-container { width: 100%; max-width: 440px; background: var(--card-white); border: 1px solid var(--border-color); border-top: 4px solid var(--c-laranja); border-radius: var(--radius-lg); padding: 34px 30px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
-    .auth-brand-center { display: fl; flex-direction: column; align-items: center; text-align: center; margin-bottom: 22px; gap: 8px; }
+    .auth-brand-center { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 22px; gap: 8px; }
     .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--card-sub); padding: 4px; border-radius: var(--radius-sm); margin-bottom: 22px; gap: 4px; border: 1px solid var(--border-color); }
     .auth-tabs button { border: 0; background: transparent; color: var(--text-muted); font-family: inherit; font-weight: 700; font-size: 13px; padding: 9px; border-radius: 6px; cursor: pointer; }
     .auth-tabs button.active { background: var(--card-white); color: var(--c-laranja); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
@@ -495,7 +495,7 @@
                   ✏️ Solicitar Ajuste / Justificativa
                 </button>
                 <button class="btn" id="btnLancarAntigos" style="width:100%;">
-                  📋 Lançar horários antigos
+                  📋 Lançar período anterior (estágio, antes do sistema…)
                 </button>
               </div>
             </div>
@@ -723,48 +723,99 @@
     </form>
   </dialog>
 
-  <!-- MODAL: LANÇAR HORÁRIOS ANTIGOS -->
-  <dialog id="modalLancarAntigos" style="max-width:640px;">
+  <!-- MODAL: LANÇAR PERÍODO ANTERIOR -->
+  <dialog id="modalLancarAntigos" style="max-width:680px;">
     <form id="formLancarAntigos">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);">Lançar horários antigos</h3>
+        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);">Lançar período anterior</h3>
         <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
       </div>
       <p class="muted" style="font-size:12px; margin-bottom:12px;">
-        Cole suas anotações, <strong>um dia por linha</strong>. Os lançamentos vão para aprovação da Gestão e, depois de aprovados, entram no saldo.
+        Os lançamentos vão para aprovação da Gestão (agrupados em <strong>um único lote</strong>) e, depois de aprovados, entram no saldo.
       </p>
-      <div class="form-group">
-        <label>Horários (data, entrada e saída)</label>
-        <textarea id="estagioTexto" rows="8" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="10/03/2026 09:00 15:00&#10;11/03 09:10 - 15:30&#10;12/03 9h 15h almoço 30"></textarea>
-        <small class="muted" style="font-size:11px;">Aceita 09:00, 9h ou 9h30. Para um dia com almoço diferente, escreva "almoço 30" (minutos) na linha.</small>
-      </div>
       <div class="grid-2">
         <div class="form-group">
-          <label>Ano (quando a linha não tiver)</label>
-          <input type="number" id="estagioAno" min="2000" max="2100" step="1">
-        </div>
-        <div class="form-group">
-          <label>Meta diária da época (horas)</label>
-          <input type="number" id="estagioMeta" min="0" max="12" step="0.25">
-        </div>
-        <div class="form-group">
-          <label>Intervalo padrão (minutos)</label>
-          <input type="number" id="estagioIntervalo" min="0" max="480" step="5" value="0">
-        </div>
-        <div class="form-group">
-          <label>Local</label>
-          <select id="estagioLocal">
-            <option value="home">🏠 Home Office</option>
-            <option value="escritorio">🏢 Escritório (presencial)</option>
+          <label>Tipo de período</label>
+          <select id="estagioTipo">
+            <option value="estagio">Estágio (antes da contratação)</option>
+            <option value="antes">Antes do sistema de banco de horas</option>
+            <option value="outro">Outro período anterior</option>
           </select>
         </div>
+        <div class="form-group">
+          <label>Como lançar</label>
+          <div style="display:flex; gap:14px; padding-top:8px; font-size:13px;">
+            <label style="display:flex; gap:5px; align-items:center;"><input type="radio" name="estagioModo" value="dias" checked> Dia a dia</label>
+            <label style="display:flex; gap:5px; align-items:center;"><input type="radio" name="estagioModo" value="saldo"> Só o saldo total</label>
+          </div>
+        </div>
       </div>
+
+      <div id="estagioBoxDias">
+        <details style="margin-bottom:12px; border:1px solid var(--border, #ddd); border-radius:8px; padding:8px 10px;">
+          <summary style="cursor:pointer; font-weight:700; font-size:13px;">⚡ Gerar período com horário fixo</summary>
+          <div class="grid-2" style="margin-top:10px;">
+            <div class="form-group"><label>De</label><input type="date" id="gerDe"></div>
+            <div class="form-group"><label>Até</label><input type="date" id="gerAte"></div>
+            <div class="form-group"><label>Entrada</label><input type="time" id="gerEntrada" value="09:00"></div>
+            <div class="form-group"><label>Saída</label><input type="time" id="gerSaida" value="15:00"></div>
+          </div>
+          <small class="muted" style="font-size:11px;">Pula fins de semana e feriados. Usa o intervalo padrão abaixo. Depois é só editar as exceções na lista.</small>
+          <div style="margin-top:8px;"><button type="button" class="btn" id="btnGerarPeriodo">Gerar linhas</button></div>
+        </details>
+        <div class="form-group">
+          <label>Horários (data, entrada e saída)</label>
+          <textarea id="estagioTexto" rows="7" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="10/03/2026 09:00 15:00&#10;11/03 09:10 - 15:30&#10;12/03 9h 15h almoço 30 meta 6"></textarea>
+          <small class="muted" style="font-size:11px;">Aceita 09:00, 9h ou 9h30. Por linha você pode escrever "almoço 30" (minutos) e "meta 6" (horas do dia).</small>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Ano (quando a linha não tiver)</label>
+            <input type="number" id="estagioAno" min="2000" max="2100" step="1">
+          </div>
+          <div class="form-group">
+            <label>Meta diária padrão (horas)</label>
+            <input type="number" id="estagioMeta" min="0" max="12" step="0.25">
+          </div>
+          <div class="form-group">
+            <label>Intervalo padrão (minutos)</label>
+            <input type="number" id="estagioIntervalo" min="0" max="480" step="5" value="0">
+          </div>
+          <div class="form-group">
+            <label>Local</label>
+            <select id="estagioLocal">
+              <option value="home">🏠 Home Office</option>
+              <option value="escritorio">🏢 Escritório (presencial)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Meta por época (opcional)</label>
+          <textarea id="estagioFaixas" rows="2" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="01/03/2026 6h&#10;01/06/2026 8h"></textarea>
+          <small class="muted" style="font-size:11px;">Uma regra por linha: "a partir de [data], meta de [X] horas". Dias antes da primeira regra usam a meta padrão.</small>
+        </div>
+        <label style="display:flex; gap:6px; align-items:center; font-size:12px; margin-bottom:10px;">
+          <input type="checkbox" id="estagioPular" checked> Ignorar (sem erro) dias que já têm lançamento
+        </label>
+      </div>
+
+      <div id="estagioBoxSaldo" hidden>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Data de referência</label>
+            <input type="date" id="saldoData">
+          </div>
+          <div class="form-group">
+            <label>Saldo anterior (horas)</label>
+            <input type="text" id="saldoValor" placeholder="ex.: 12:30, +12h30, -2:15 ou 12,5">
+          </div>
+        </div>
+        <small class="muted" style="font-size:11px; display:block; margin-bottom:10px;">Lança um único ajuste com o saldo total, sem precisar dos horários de cada dia. Aceita negativo.</small>
+      </div>
+
       <div class="form-group">
         <label>Justificativa</label>
-        <input type="text" id="estagioMotivo" maxlength="200" value="Horas feitas no período de estágio, lançadas após a contratação.">
-      </div>
-      <div style="display:flex; justify-content:flex-start; margin-bottom:10px;">
-        <button type="button" class="btn" id="btnConferirAntigos" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">🔍 Conferir antes de enviar</button>
+        <input type="text" id="estagioMotivo" maxlength="200">
       </div>
       <div id="estagioPreview" style="margin-bottom:6px;"></div>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
@@ -1343,6 +1394,7 @@
       if (e.nextDay) out.nextDay = true;
       if (e.locManual) out.locManual = true;
       if (abono) out.abono = abono;
+      if (e.lote) out.lote = String(e.lote);
       return out;
     }
 
@@ -1788,7 +1840,32 @@
         return;
       }
 
+      const itens = [];
+      const lotes = new Map();
       allPending.forEach(e => {
+        if (!e.lote) { itens.push(e); return; }
+        const k = e.userId + '|' + e.lote;
+        if (!lotes.has(k)) { const g = { isLote: true, userId: e.userId, userName: e.userName, lote: e.lote, dias: [] }; lotes.set(k, g); itens.push(g); }
+        lotes.get(k).dias.push(e);
+      });
+      itens.forEach(e => {
+        if (e.isLote) {
+          const ds = e.dias.slice().sort((x, y) => String(x.date).localeCompare(String(y.date)));
+          const saldo = ds.reduce((acc, d) => acc + (d.variation || 0), 0);
+          const lista = ds.map(d => `${esc(d.date)} ${esc(d.entrada)}→${esc(d.saida)} (${Core.fromMinutes(d.variation || 0, true)})`).join('<br>');
+          const trL = document.createElement('tr');
+          trL.innerHTML = `
+            <td><strong>${esc(ds[0].date)}</strong><br><small class="muted">até ${esc(ds[ds.length - 1].date)}</small></td>
+            <td>${esc(e.userName)}</td>
+            <td><span class="tag neutral">Lote • ${ds.length} dia(s)</span><br><span class="mono ${saldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(saldo, true)}</span></td>
+            <td><small>${esc(ds[0].obs)}</small><details><summary style="cursor:pointer; font-size:11px;">Ver os ${ds.length} dias</summary><small class="mono">${lista}</small></details></td>
+            <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
+              <button class="btn" style="background:var(--pos); color:#fff; border:0; padding:4px 8px;" data-uid="${esc(e.userId)}" data-lote="${esc(e.lote)}" onclick="decidirLote(this.dataset.uid, this.dataset.lote, true)">✓ Aprovar lote</button>
+              <button class="btn" style="color:var(--neg); padding:4px 8px;" data-uid="${esc(e.userId)}" data-lote="${esc(e.lote)}" onclick="decidirLote(this.dataset.uid, this.dataset.lote, false)">✕ Recusar lote</button>
+            </td>`;
+          tbody.appendChild(trL);
+          return;
+        }
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${esc(e.date)}</strong></td>
@@ -1924,16 +2001,64 @@
       } catch (e) { console.warn('Não consegui registrar no histórico:', e); }
     }
 
-    // ===== LANÇAR HORÁRIOS ANTIGOS (ex.: período de estágio) =====
+    // ===== LANÇAR PERÍODO ANTERIOR (estágio, antes do sistema, outros) =====
+    const eAnt = (id) => document.getElementById(id);
+    const TIPOS_ANTIGOS = {
+      estagio: { rotulo: 'Estágio', motivo: 'Horas feitas no período de estágio, lançadas após a contratação.' },
+      antes: { rotulo: 'Antes do sistema', motivo: 'Horas registradas antes da implantação do sistema de banco de horas.' },
+      outro: { rotulo: 'Período anterior', motivo: 'Horas de período anterior, lançadas retroativamente.' }
+    };
     let estagioLinhasValidas = [];
+    let estagioSaldoValido = null;
+    let estagioTimer = null;
+
+    function modoAntigos() {
+      const r = document.querySelector('input[name="estagioModo"]:checked');
+      return r ? r.value : 'dias';
+    }
+
+    function parseDataBR(txt, anoPadrao) {
+      const m = String(txt).match(/(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/);
+      if (!m) return null;
+      let ano = m[3] ? parseInt(m[3], 10) : anoPadrao;
+      if (m[3] && m[3].length === 2) ano += 2000;
+      const dia = parseInt(m[1], 10), mes = parseInt(m[2], 10);
+      const dt = new Date(ano, mes - 1, dia);
+      if (dt.getFullYear() !== ano || dt.getMonth() !== mes - 1 || dt.getDate() !== dia) return null;
+      const p2 = (n) => String(n).padStart(2, '0');
+      return `${ano}-${p2(mes)}-${p2(dia)}`;
+    }
+
+    function parseSaldoMin(txt) {
+      const m = String(txt).trim().replace(',', '.').match(/^([+-]?)\s*(\d+)(?:(?::|h)(\d{1,2}))?(?:\.(\d+))?\s*h?$/i);
+      if (!m) return null;
+      let min = parseInt(m[2], 10) * 60;
+      if (m[3]) min += parseInt(m[3], 10);
+      if (m[4]) min += Math.round(parseFloat('0.' + m[4]) * 60);
+      return m[1] === '-' ? -min : min;
+    }
 
     function analisarHorariosAntigos() {
-      const texto = document.getElementById('estagioTexto').value;
-      const anoPadrao = parseInt(document.getElementById('estagioAno').value, 10) || new Date().getFullYear();
-      const metaHoras = parseFloat(String(document.getElementById('estagioMeta').value).replace(',', '.'));
-      const meta = Math.round((isNaN(metaHoras) ? 0 : metaHoras) * 60);
-      let intervaloPadrao = parseInt(document.getElementById('estagioIntervalo').value, 10);
+      const texto = eAnt('estagioTexto').value;
+      const anoPadrao = parseInt(eAnt('estagioAno').value, 10) || new Date().getFullYear();
+      const metaHoras = parseFloat(String(eAnt('estagioMeta').value).replace(',', '.'));
+      const metaPadrao = Math.round((isNaN(metaHoras) ? 0 : metaHoras) * 60);
+      let intervaloPadrao = parseInt(eAnt('estagioIntervalo').value, 10);
       if (isNaN(intervaloPadrao) || intervaloPadrao < 0 || intervaloPadrao > 480) intervaloPadrao = 0;
+      const pular = eAnt('estagioPular').checked;
+
+      // Metas por época: "01/03/2026 6h" = a partir dessa data, meta de 6h
+      const faixas = [];
+      eAnt('estagioFaixas').value.split(/\r?\n/).forEach(l => {
+        const d = parseDataBR(l, anoPadrao);
+        if (!d) return;
+        const resto = l.replace(/(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/, ' ');
+        const mh = resto.match(/(\d{1,2}(?:[.,]\d+)?)/);
+        if (mh) faixas.push({ d, meta: Math.round(parseFloat(mh[1].replace(',', '.')) * 60) });
+      });
+      faixas.sort((x, y) => x.d.localeCompare(y.d));
+      const metaDaData = (dateStr) => faixas.reduce((acc, f) => (f.d <= dateStr ? f.meta : acc), metaPadrao);
+
       const hojeStr = getLocalDateStr();
       const jaTemDia = new Set(appState.entries.filter(e => e.type === 'trabalhado').map(e => e.date));
       const vistos = new Set();
@@ -1943,7 +2068,7 @@
       texto.split(/\r?\n/).forEach((bruta, i) => {
         const original = bruta.trim();
         if (!original) return;
-        const r = { n: i + 1, bruta: original, ok: false, erro: '' };
+        const r = { n: i + 1, bruta: original, ok: false, skip: false, erro: '' };
         linhas.push(r);
         if (linhas.length > 400) { r.erro = 'Limite de 400 linhas por envio'; return; }
 
@@ -1957,11 +2082,14 @@
         const dateStr = `${ano}-${p2(mes)}-${p2(dia)}`;
         r.date = dateStr;
 
-        let resto = original.replace(md[0], ' ' );
+        let resto = original.replace(md[0], ' ');
         let intervalo = intervaloPadrao;
         const mi = resto.match(/(?:almo[cç]o|interv\w*)\s*:?\s*(\d{1,3})\s*(?:min\w*|m)?/i);
         if (mi) { intervalo = parseInt(mi[1], 10); resto = resto.replace(mi[0], ' '); }
         if (intervalo > 480) { r.erro = 'Intervalo acima de 480 min'; return; }
+        let meta = metaDaData(dateStr);
+        const mm = resto.match(/\bmeta\s*:?\s*(\d{1,2}(?:[.,]\d+)?)\s*h?/i);
+        if (mm) { meta = Math.round(parseFloat(mm[1].replace(',', '.')) * 60); resto = resto.replace(mm[0], ' '); }
 
         const horas = [...resto.matchAll(/(\d{1,2})(?::|h)(\d{2})?(?!\d)/gi)];
         if (horas.length < 2) { r.erro = 'Faltou entrada ou saída'; return; }
@@ -1971,7 +2099,11 @@
         const entrada = `${p2(a.h)}:${p2(a.m)}`, saida = `${p2(b.h)}:${p2(b.m)}`;
         if (Core.toMinutes(saida) <= Core.toMinutes(entrada)) { r.erro = 'Saída não é depois da entrada'; return; }
         if (dateStr > hojeStr) { r.erro = 'Data no futuro'; return; }
-        if (jaTemDia.has(dateStr)) { r.erro = 'Já existe lançamento neste dia'; return; }
+        if (jaTemDia.has(dateStr)) {
+          r.erro = 'Já existe lançamento neste dia';
+          if (pular) r.skip = true;
+          return;
+        }
         if (vistos.has(dateStr)) { r.erro = 'Dia repetido na lista'; return; }
         vistos.add(dateStr);
 
@@ -1982,52 +2114,125 @@
     }
 
     function conferirHorariosAntigos() {
+      const box = eAnt('estagioPreview');
+      const btn = eAnt('btnEnviarAntigos');
+      const dataBR = (d) => d.split('-').reverse().join('/');
+
+      if (modoAntigos() === 'saldo') {
+        estagioLinhasValidas = [];
+        const data = eAnt('saldoData').value;
+        const bruto = eAnt('saldoValor').value;
+        if (!bruto.trim()) { estagioSaldoValido = null; box.innerHTML = '<p class="muted" style="font-size:12px;">Informe o saldo anterior para conferir.</p>'; btn.disabled = true; return; }
+        const min = parseSaldoMin(bruto);
+        let erro = '';
+        if (min === null || min === 0) erro = 'Não entendi o saldo (use 12:30, +12h30, -2:15 ou 12,5)';
+        else if (Math.abs(min) > 60 * 2000) erro = 'Saldo muito alto';
+        else if (!data) erro = 'Escolha a data de referência';
+        else if (data > getLocalDateStr()) erro = 'Data no futuro';
+        if (erro) { estagioSaldoValido = null; box.innerHTML = `<p class="neg" style="font-size:12px;">${esc(erro)}</p>`; btn.disabled = true; return; }
+        estagioSaldoValido = { data, min };
+        box.innerHTML = `<div class="bulk-bar"><strong>1 ajuste de saldo</strong><span>• em ${dataBR(data)}</span><span>• saldo <strong class="mono ${min >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(min, true)}</strong></span></div>`;
+        btn.disabled = false;
+        return;
+      }
+
+      estagioSaldoValido = null;
       const linhas = analisarHorariosAntigos();
-      const box = document.getElementById('estagioPreview');
-      const btn = document.getElementById('btnEnviarAntigos');
       estagioLinhasValidas = linhas.filter(l => l.ok);
       if (linhas.length === 0) {
-        box.innerHTML = '<p class="muted" style="font-size:12px;">Cole os horários acima para conferir.</p>';
+        box.innerHTML = '<p class="muted" style="font-size:12px;">Cole ou gere os horários acima para conferir.</p>';
         btn.disabled = true;
         return;
       }
-      const dataBR = (d) => d.split('-').reverse().join('/');
       const totalSaldo = estagioLinhasValidas.reduce((acc, l) => acc + l.calc.saldo, 0);
-      const erros = linhas.length - estagioLinhasValidas.length;
+      const ignorados = linhas.filter(l => l.skip).length;
+      const erros = linhas.filter(l => !l.ok && !l.skip).length;
       const linhasHtml = linhas.map(l => l.ok ? `
         <tr>
           <td>${dataBR(l.date)}${l.folga ? ' <span class="tag neutral">fim de semana/feriado</span>' : ''}</td>
           <td class="mono">${l.entrada} → ${l.saida}</td>
           <td class="mono">${l.intervalo} min</td>
+          <td class="mono">${Core.fromMinutes(l.meta)}</td>
           <td class="mono">${Core.fromMinutes(l.calc.totalLiquido)}</td>
           <td class="mono ${l.calc.saldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(l.calc.saldo, true)}</td>
+        </tr>` : l.skip ? `
+        <tr>
+          <td colspan="6"><span class="tag neutral">Ignorado</span> ${dataBR(l.date)} <small class="muted">— já existe lançamento neste dia</small></td>
         </tr>` : `
         <tr>
-          <td colspan="5"><span class="tag neg">Linha ${l.n}</span> <span class="neg">${esc(l.erro)}</span> <small class="muted">— ${esc(l.bruta)}</small></td>
+          <td colspan="6"><span class="tag neg">Linha ${l.n}</span> <span class="neg">${esc(l.erro)}</span> <small class="muted">— ${esc(l.bruta)}</small></td>
         </tr>`).join('');
       box.innerHTML = `
         <div class="bulk-bar" style="margin-bottom:10px;">
           <strong>${estagioLinhasValidas.length} dia(s) prontos</strong>
           <span>• saldo total <strong class="mono ${totalSaldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(totalSaldo, true)}</strong></span>
+          ${ignorados ? `<span class="muted">• ${ignorados} já existente(s) ignorado(s)</span>` : ''}
           ${erros ? `<span class="neg">• ${erros} linha(s) com problema (não serão enviadas)</span>` : ''}
         </div>
         <div class="table-container" style="max-height:260px; overflow-y:auto;">
           <table>
-            <thead><tr><th>Data</th><th>Horário</th><th>Almoço</th><th>Líquido</th><th>Saldo</th></tr></thead>
+            <thead><tr><th>Data</th><th>Horário</th><th>Almoço</th><th>Meta</th><th>Líquido</th><th>Saldo</th></tr></thead>
             <tbody>${linhasHtml}</tbody>
           </table>
         </div>`;
       btn.disabled = estagioLinhasValidas.length === 0;
     }
 
+    function agendarConferenciaAntigos() {
+      eAnt('btnEnviarAntigos').disabled = true;
+      clearTimeout(estagioTimer);
+      estagioTimer = setTimeout(conferirHorariosAntigos, 250);
+    }
+
+    function gerarPeriodoAntigos() {
+      const de = eAnt('gerDe').value, ate = eAnt('gerAte').value;
+      const ent = eAnt('gerEntrada').value, sai = eAnt('gerSaida').value;
+      if (!de || !ate || !ent || !sai) { showToast('Preencha De, Até, Entrada e Saída.'); return; }
+      if (de > ate) { showToast('A data inicial é depois da final.'); return; }
+      const p2 = (n) => String(n).padStart(2, '0');
+      const d = new Date(de + 'T00:00:00'), fim = new Date(ate + 'T00:00:00');
+      const out = [];
+      for (let g = 0; d <= fim && g < 400; g++, d.setDate(d.getDate() + 1)) {
+        const s = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+        if (!Core.isWeekendOrHoliday(s)) out.push(`${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()} ${ent} ${sai}`);
+      }
+      if (!out.length) { showToast('Nenhum dia útil nesse intervalo.'); return; }
+      const ta = eAnt('estagioTexto');
+      ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + out.join('\n');
+      showToast(`${out.length} dia(s) gerados. Edite as exceções se precisar.`);
+      agendarConferenciaAntigos();
+    }
+
     function enviarHorariosAntigos(e) {
       e.preventDefault();
+      const motivo = eAnt('estagioMotivo').value.trim();
+      if (!motivo) { showToast('Escreva a justificativa.'); return; }
+      const tipo = TIPOS_ANTIGOS[eAnt('estagioTipo').value] || TIPOS_ANTIGOS.outro;
+      const agora = Date.now();
+
+      if (modoAntigos() === 'saldo') {
+        conferirHorariosAntigos();
+        if (!estagioSaldoValido) { showToast('Confira o saldo antes de enviar.'); return; }
+        const { data, min } = estagioSaldoValido;
+        appState.entries.push({
+          id: 'saldoant_' + agora + '_' + Math.random().toString(36).slice(2, 6),
+          date: data, type: 'uso',
+          entrada: '--:--', saida: '--:--',
+          variation: min,
+          obs: `[${tipo.rotulo} • saldo anterior ${Core.fromMinutes(min, true)}] ${motivo}`,
+          status: 'pendente_aprovacao',
+          updatedAt: agora
+        });
+        saveLocal();
+        eAnt('modalLancarAntigos').close();
+        showToast('Saldo anterior enviado para aprovação da Gestão.');
+        return;
+      }
+
       const linhas = analisarHorariosAntigos().filter(l => l.ok);
       if (linhas.length === 0) { showToast('Nenhuma linha válida para enviar.'); return; }
-      const motivo = document.getElementById('estagioMotivo').value.trim();
-      if (!motivo) { showToast('Escreva a justificativa.'); return; }
-      const local = document.getElementById('estagioLocal').value || 'home';
-      const agora = Date.now();
+      const local = eAnt('estagioLocal').value || 'home';
+      const lote = 'lote_' + agora + '_' + Math.random().toString(36).slice(2, 6);
       linhas.forEach((l, i) => {
         appState.entries.push({
           id: 'estagio_' + agora + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
@@ -2039,14 +2244,32 @@
           locManual: true,
           variation: l.calc.saldo,
           meta: l.meta,
-          obs: `[Estágio] ${motivo}` + (l.intervalo ? ` (almoço de ${l.intervalo} min)` : ''),
+          lote,
+          obs: `[${tipo.rotulo}] ${motivo}` + (l.intervalo ? ` (almoço de ${l.intervalo} min)` : ''),
           status: 'pendente_aprovacao',
           updatedAt: agora
         });
       });
       saveLocal();
-      document.getElementById('modalLancarAntigos').close();
-      showToast(`${linhas.length} dia(s) enviados para aprovação da Gestão.`);
+      eAnt('estagioTexto').value = '';
+      eAnt('modalLancarAntigos').close();
+      showToast(`${linhas.length} dia(s) enviados em um lote para aprovação da Gestão.`);
+    }
+
+    function abrirLancarAntigos() {
+      eAnt('estagioAno').value = new Date().getFullYear();
+      eAnt('estagioMeta').value = (appState.config.expected || 360) / 60;
+      eAnt('saldoData').value = getLocalDateStr();
+      eAnt('saldoValor').value = '';
+      eAnt('estagioTipo').value = 'estagio';
+      eAnt('estagioMotivo').value = TIPOS_ANTIGOS.estagio.motivo;
+      document.querySelector('input[name="estagioModo"][value="dias"]').checked = true;
+      eAnt('estagioBoxDias').hidden = false;
+      eAnt('estagioBoxSaldo').hidden = true;
+      eAnt('estagioPreview').innerHTML = '';
+      eAnt('btnEnviarAntigos').disabled = true;
+      eAnt('modalLancarAntigos').showModal();
+      if (eAnt('estagioTexto').value.trim()) conferirHorariosAntigos();
     }
 
     // Aprova de uma vez todas as pendências de um colaborador (aba Solicitações)
@@ -2070,6 +2293,27 @@
         box.appendChild(b);
       });
       box.style.display = box.children.length ? 'flex' : 'none';
+    }
+
+    async function decidirLote(uid, lote, aprovar) {
+      const m = allTeamLoadedData.find(x => x.userId === uid);
+      const ids = m ? (m.entries || []).filter(e => e.lote === lote && e.status === 'pendente_aprovacao').map(e => e.id) : [];
+      if (ids.length === 0) return;
+      const nome = nomeDoMembro(uid);
+      if (!confirm(`${aprovar ? 'Aprovar' : 'Recusar e descartar'} o lote de ${ids.length} dia(s) de ${nome}?`)) return;
+      const fn = aprovar ? aplicarAprovacao : aplicarRecusa;
+      const aplicar = (st) => { let alguma = false; ids.forEach(id => { if (fn(st, id)) alguma = true; }); return alguma; };
+      if (uid === currentUserId) {
+        if (!aplicar(appState)) { showToast('Esse lote não existe mais.'); loadTeamMembersFromCloud(); return; }
+        saveLocal();
+      } else {
+        if (!sbClient) return;
+        const ok = await alterarEstadoDoColega(uid, aplicar);
+        if (!ok) return;
+      }
+      registrarEvento(aprovar ? 'aprovacao' : 'recusa', uid, nome, { lote: `${ids.length} dias (lote)` });
+      showToast(aprovar ? `Lote de ${ids.length} dia(s) aprovado!` : 'Lote recusado.');
+      loadTeamMembersFromCloud();
     }
 
     async function aprovarTodasDoColaborador(uid) {
@@ -2839,18 +3083,19 @@
         document.getElementById('ajusteAbono').value = 0;
         document.getElementById('modalSolicitarAjuste').showModal();
       });
-      document.getElementById('btnLancarAntigos').addEventListener('click', () => {
-        document.getElementById('estagioAno').value = new Date().getFullYear();
-        document.getElementById('estagioMeta').value = (appState.config.expected || 360) / 60;
-        document.getElementById('estagioPreview').innerHTML = '';
-        document.getElementById('btnEnviarAntigos').disabled = true;
-        document.getElementById('modalLancarAntigos').showModal();
-      });
-      document.getElementById('btnConferirAntigos').addEventListener('click', conferirHorariosAntigos);
+      document.getElementById('btnLancarAntigos').addEventListener('click', abrirLancarAntigos);
       document.getElementById('formLancarAntigos').addEventListener('submit', enviarHorariosAntigos);
-      ['estagioTexto', 'estagioAno', 'estagioMeta', 'estagioIntervalo'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => { document.getElementById('btnEnviarAntigos').disabled = true; });
+      document.getElementById('formLancarAntigos').addEventListener('input', agendarConferenciaAntigos);
+      document.getElementById('formLancarAntigos').addEventListener('change', agendarConferenciaAntigos);
+      document.getElementById('btnGerarPeriodo').addEventListener('click', gerarPeriodoAntigos);
+      document.getElementById('estagioTipo').addEventListener('change', (ev) => {
+        document.getElementById('estagioMotivo').value = (TIPOS_ANTIGOS[ev.target.value] || TIPOS_ANTIGOS.outro).motivo;
       });
+      document.querySelectorAll('input[name="estagioModo"]').forEach(r => r.addEventListener('change', () => {
+        const saldo = modoAntigos() === 'saldo';
+        document.getElementById('estagioBoxDias').hidden = saldo;
+        document.getElementById('estagioBoxSaldo').hidden = !saldo;
+      }));
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
       document.getElementById('btnNotificationBell').addEventListener('click', () => {
         loadAnnouncements();
