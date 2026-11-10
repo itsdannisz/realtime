@@ -540,8 +540,7 @@
       </div>
     </header>
 
-    <main class="container">
-     <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
+     
         <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
           <span style="font-size:14px; flex-shrink:0;">📢</span>
           <strong id="bannerAnnounceTitle" style="color:var(--c-laranja); font-weight:700; white-space:nowrap;">Aviso da Gestão:</strong>
@@ -550,7 +549,6 @@
         <button type="button" class="btn" style="padding:2px 8px; font-size:11px; border-radius:999px; flex-shrink:0; border:0; background:rgba(255,255,255,0.08);" onclick="dispensarBannerAviso()" title="Dispensar aviso">✕</button>
       </div>
 
-      <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
         <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
           <span style="font-size:14px; flex-shrink:0;">🎂</span>
           <span id="birthdayAlertText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></span>
@@ -3243,34 +3241,27 @@
       const st = lerNotifState();
       const todas = montarListaNotificacoes();
       
-      // Filtra as não limpas
       const visiveis = todas.filter(n => !st.cleared[n.key]);
       const novas = visiveis.filter(n => !st.read[n.key]);
 
+      // Garante que se as barras ainda existirem no DOM, fiquem ocultas
       const alertBox = document.getElementById('birthdayAlertBox');
-      const bd = novas.find(n => n.tipo === 'bday');
-      if (bd) {
-        document.getElementById('birthdayAlertText').innerHTML = `<strong>${esc(bd.title)}</strong> ${esc(bd.message)}`;
-        alertBox.style.display = 'flex';
-      } else { alertBox.style.display = 'none'; }
+      if (alertBox) alertBox.style.display = 'none';
 
       const bannerBox = document.getElementById('companyAnnouncementBanner');
-      const av = novas.find(n => n.tipo === 'aviso');
-      if (av) {
-        document.getElementById('bannerAnnounceTitle').textContent = av.title;
-        document.getElementById('bannerAnnounceMsg').textContent = av.message;
-        bannerBox.style.display = 'flex';
-      } else { bannerBox.style.display = 'none'; }
+      if (bannerBox) bannerBox.style.display = 'none';
 
       const bellBadge = document.getElementById('bellCountBadge');
       const bellIcon = document.getElementById('bellIconEmoji');
       
       if (novas.length > 0) { 
-        bellBadge.textContent = novas.length; 
-        bellBadge.style.display = 'inline-block';
+        if (bellBadge) {
+          bellBadge.textContent = novas.length; 
+          bellBadge.style.display = 'inline-block';
+        }
         if (bellIcon) bellIcon.classList.add('bell-ring');
       } else { 
-        bellBadge.style.display = 'none'; 
+        if (bellBadge) bellBadge.style.display = 'none'; 
         if (bellIcon) bellIcon.classList.remove('bell-ring');
       }
 
