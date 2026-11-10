@@ -526,7 +526,11 @@
         <div class="content-card">
           <div class="card-title">
             <span>Visão Geral dos Colaboradores (Tempo Real)</span>
-            <button class="btn" id="btnRefreshTeam" style="font-size:11px;">🔄 Atualizar Dados</button>
+            <span style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn" id="btnHistorico" style="font-size:11px;">📜 Histórico</button>
+              <button class="btn" id="btnExportarTudo" style="font-size:11px;">📦 Exportar tudo</button>
+              <button class="btn" id="btnRefreshTeam" style="font-size:11px;">🔄 Atualizar Dados</button>
+            </span>
           </div>
           <p class="muted" style="margin-bottom:16px;">
             Acesso total da gestão para auditar jornadas, IP de acesso, local híbrido e saldos individuais.
@@ -773,6 +777,41 @@
   </dialog>
 
   <!-- MODAL: PERFIL -->
+  <dialog id="modalExcluirPerfil" style="max-width:460px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:16px; font-weight:800; color:var(--neg);">Excluir perfil</h3>
+      <button type="button" class="btn" data-close style="border:0;">✕</button>
+    </div>
+    <p id="excluirPerfilTexto" style="margin-bottom:10px;"></p>
+    <p class="muted" style="font-size:12px; margin-bottom:12px;">
+      Antes de excluir, um arquivo de backup (JSON) deste perfil é baixado automaticamente. A exclusão apaga o login e todos os lançamentos e é definitiva.
+    </p>
+    <div class="form-group">
+      <label>Digite <strong>EXCLUIR</strong> para confirmar</label>
+      <input type="text" id="excluirPerfilConfirma" autocomplete="off">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button type="button" class="btn" data-close>Cancelar</button>
+      <button type="button" class="btn" id="btnConfirmarExclusao" disabled style="background:var(--neg); color:#fff; border:0;">Excluir definitivamente</button>
+    </div>
+  </dialog>
+
+  <dialog id="modalHistorico" style="max-width:900px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Histórico de ações da gestão</h3>
+      <button type="button" class="btn" data-close style="border:0;">✕</button>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr><th>Quando</th><th>Quem fez</th><th>Ação</th><th>Sobre</th><th>Detalhes</th></tr>
+        </thead>
+        <tbody id="historicoTableBody"></tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size:11px; margin-top:8px;">Mostra os 200 registros mais recentes.</p>
+  </dialog>
+
   <dialog id="modalPerfil">
     <form id="formPerfil">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -820,6 +859,11 @@
       <div style="display: flex; justify-content: flex-end; gap:8px; margin-top: 20px;">
         <button type="button" class="btn" data-close>Cancelar</button>
         <button type="submit" class="btn-laranja" style="width: auto;">Salvar Perfil</button>
+      </div>
+
+      <div id="zonaExcluirConta" style="display:none; margin-top:18px; padding-top:14px; border-top:1px solid var(--border-color);">
+        <small class="muted" style="display:block; margin-bottom:8px;">Zona de risco: apaga sua conta e todos os seus lançamentos. Não tem volta.</small>
+        <button type="button" class="btn" id="btnExcluirMinhaConta" style="color:var(--neg);">🗑️ Excluir minha conta</button>
       </div>
     </form>
   </dialog>
@@ -1530,6 +1574,7 @@
           <td style="text-align:right;" class="mono ${balance >= 0 ? 'pos' : 'neg'}"><strong>${Core.fromMinutes(balance, true)}</strong></td>
           <td style="text-align:center;">
             <button class="btn" style="padding:4px 8px; font-size:11px;" data-uid="${esc(member.userId)}" onclick="openColaboradorDossie(this.dataset.uid)">👁️ Extrato</button>
+            ${member.userId !== currentUserId ? `<button class="btn" style="padding:4px 8px; font-size:11px; color:var(--neg); margin-left:4px;" title="Excluir perfil" data-uid="${esc(member.userId)}" onclick="abrirExclusaoPerfil(this.dataset.uid)">🗑️</button>` : ''}
           </td>
         `;
         tbody.appendChild(tr);
@@ -1668,6 +1713,7 @@
     }
 
     async function aprovarSolicitacaoReal(targetUserId, entryId) {
+      const info = infoSolicitacao(targetUserId, entryId);
       if (targetUserId === currentUserId) {
         if (!aplicarAprovacao(appState, entryId)) { showToast('Essa solicitação não existe mais.'); loadTeamMembersFromCloud(); return; }
         saveLocal();
@@ -1676,11 +1722,13 @@
         const ok = await alterarEstadoDoColega(targetUserId, (s) => aplicarAprovacao(s, entryId));
         if (!ok) return;
       }
+      registrarEvento('aprovacao', targetUserId, info.nome, info.detalhes);
       showToast('Solicitação aprovada!');
       loadTeamMembersFromCloud();
     }
 
     async function recusarSolicitacaoReal(targetUserId, entryId) {
+      const info = infoSolicitacao(targetUserId, entryId);
       if (!confirm('Recusar esta solicitação e descartar o registro?')) return;
       if (targetUserId === currentUserId) {
         if (!aplicarRecusa(appState, entryId)) { showToast('Essa solicitação não existe mais.'); loadTeamMembersFromCloud(); return; }
@@ -1690,7 +1738,152 @@
         const ok = await alterarEstadoDoColega(targetUserId, (s) => aplicarRecusa(s, entryId));
         if (!ok) return;
       }
+      registrarEvento('recusa', targetUserId, info.nome, info.detalhes);
       showToast('Solicitação recusada.');
+      loadTeamMembersFromCloud();
+    }
+
+
+    // ===== Auditoria, exportação da equipe e exclusão de perfil =====
+    function baixarJSON(obj, nomeArquivo) {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nomeArquivo; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function estadoSemFoto(st) {
+      return { ...st, profile: { ...((st && st.profile) || {}), photo: '' } };
+    }
+    function nomeDoMembro(userId) {
+      const m = allTeamLoadedData.find(x => x.userId === userId);
+      return (m && m.profile && (m.profile.name || m.profile.email)) || '';
+    }
+    function infoSolicitacao(userId, entryId) {
+      const m = allTeamLoadedData.find(x => x.userId === userId);
+      const e = m && (m.entries || []).find(x => x.id === entryId);
+      return {
+        nome: nomeDoMembro(userId),
+        detalhes: e ? { data: e.date || '', entrada: e.entrada || '', saida: e.saida || '' } : {}
+      };
+    }
+
+    // Registra no histórico (quem fez é preenchido pelo servidor). Nunca trava o app se falhar.
+    async function registrarEvento(acao, alvoId, alvoNome, detalhes) {
+      if (!sbClient || currentUserId === 'guest') return;
+      try {
+        const { error } = await sbClient.from('bh_eventos').insert({
+          acao,
+          alvo_id: alvoId || null,
+          alvo_nome: alvoNome || null,
+          detalhes: detalhes || {}
+        });
+        if (error) console.warn('Não consegui registrar no histórico:', error.message);
+      } catch (e) { console.warn('Não consegui registrar no histórico:', e); }
+    }
+
+    async function exportarTudo() {
+      if (!sbClient || !isAdminUser) return;
+      const { data, error } = await sbClient.from('bh_state').select('user_id, state, updated_at');
+      if (error || !data) { showToast('Não consegui buscar os dados da equipe: ' + ((error && error.message) || 'erro')); return; }
+      const perfis = data.map(row => {
+        const st = stateFromRow(row.state) || {};
+        return { userId: row.user_id, atualizadoEm: row.updated_at, state: estadoSemFoto(st) };
+      });
+      baixarJSON({ exportadoEm: new Date().toISOString(), perfis }, `backup_equipe_${getLocalDateStr()}.json`);
+      registrarEvento('exportacao_total', null, null, { perfis: perfis.length });
+      showToast(`Backup de ${perfis.length} perfil(is) baixado.`);
+    }
+
+    const ROTULOS_EVENTO = {
+      aprovacao: 'Aprovou ajuste',
+      recusa: 'Recusou ajuste',
+      edicao_ponto: 'Editou horários',
+      exportacao_total: 'Exportou backup da equipe',
+      exclusao_perfil: 'Excluiu perfil'
+    };
+    async function abrirHistorico() {
+      if (!sbClient || !isAdminUser) return;
+      const tbody = document.getElementById('historicoTableBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">Carregando...</td></tr>';
+      document.getElementById('modalHistorico').showModal();
+      const { data, error } = await sbClient.from('bh_eventos').select('*').order('criado_em', { ascending: false }).limit(200);
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;">Não consegui carregar: ${esc(error.message)}</td></tr>`;
+        return;
+      }
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;">Nenhuma ação registrada ainda.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      data.forEach(ev => {
+        const det = Object.entries(ev.detalhes || {}).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `${k}: ${v}`).join(' • ');
+        const quando = new Date(ev.criado_em).toLocaleString('pt-BR');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><small class="mono">${esc(quando)}</small></td>
+          <td>${esc(ev.ator_email || '—')}</td>
+          <td><strong>${esc(ROTULOS_EVENTO[ev.acao] || ev.acao)}</strong></td>
+          <td>${esc(ev.alvo_nome || '—')}</td>
+          <td><small>${esc(det || '—')}</small></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    let excluirAlvo = null;
+    function abrirExclusaoPerfil(userId) {
+      if (!sbClient || currentUserId === 'guest') return;
+      const proprio = userId === currentUserId;
+      if (proprio && isAdminUser) { showToast('Conta de gestão não pode ser excluída por aqui.'); return; }
+      if (!proprio && !isAdminUser) return;
+      const membro = proprio
+        ? { profile: appState.profile, state: appState }
+        : allTeamLoadedData.find(m => m.userId === userId);
+      if (!membro) return;
+      const rotulo = (membro.profile && (membro.profile.name || membro.profile.email)) || 'este perfil';
+      excluirAlvo = { userId, proprio, rotulo, state: membro.state };
+      document.getElementById('excluirPerfilTexto').innerHTML = proprio
+        ? 'Você vai excluir <strong>a sua própria conta</strong> e todos os seus lançamentos.'
+        : `Você vai excluir o perfil de <strong>${esc(rotulo)}</strong> e todos os lançamentos dessa pessoa.`;
+      const campo = document.getElementById('excluirPerfilConfirma');
+      campo.value = '';
+      document.getElementById('btnConfirmarExclusao').disabled = true;
+      document.getElementById('modalPerfil').close();
+      document.getElementById('modalExcluirPerfil').showModal();
+    }
+
+    async function confirmarExclusaoPerfil() {
+      const alvo = excluirAlvo;
+      if (!alvo || !sbClient) return;
+      const btn = document.getElementById('btnConfirmarExclusao');
+      btn.disabled = true;
+      // 1) backup automático antes de apagar
+      try {
+        const slug = String(alvo.rotulo).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'perfil';
+        baixarJSON(estadoSemFoto(alvo.state || {}), `backup_${slug}_${getLocalDateStr()}.json`);
+      } catch (e) { console.warn('Backup automático falhou:', e); }
+      // 2) o servidor confere quem pode e apaga de verdade
+      const { error } = await sbClient.rpc('bh_excluir_perfil', { alvo: alvo.userId });
+      if (error) {
+        showToast('Não consegui excluir: ' + (error.message || 'erro'));
+        btn.disabled = false;
+        return;
+      }
+      document.getElementById('modalExcluirPerfil').close();
+      excluirAlvo = null;
+      if (alvo.proprio) {
+        try { await sbClient.auth.signOut({ scope: 'local' }); } catch (e) {}
+        try {
+          localStorage.removeItem('realtime_state_user_' + alvo.userId);
+          localStorage.removeItem('realtime_is_admin_' + alvo.userId);
+          localStorage.removeItem('realtime_current_uid');
+        } catch (e) {}
+        location.reload();
+        return;
+      }
+      allTeamLoadedData = allTeamLoadedData.filter(m => m.userId !== alvo.userId);
+      showToast('Perfil excluído. O backup foi baixado.');
       loadTeamMembersFromCloud();
     }
 
@@ -1994,6 +2187,7 @@
       saveLocal();
       document.getElementById('modalEditarPontos').close();
       showToast(`${alterados} ponto(s) atualizado(s).`);
+      if (alterados > 0) registrarEvento('edicao_ponto', currentUserId, appState.profile.name, { quantidade: alterados, motivo: motivo || '' });
     }
 
     function definirLocalSelecionados(local) {
@@ -2066,6 +2260,9 @@
       const tabAprovacoes = document.getElementById('tabApprovals');
       if (tabEquipe) tabEquipe.style.display = isAdminUser ? 'inline-flex' : 'none';
       if (tabAprovacoes) tabAprovacoes.style.display = isAdminUser ? 'inline-flex' : 'none';
+      // Excluir a própria conta: só quem está na nuvem e não é gestão (conta de gestão não sai por aqui)
+      const zonaExc = document.getElementById('zonaExcluirConta');
+      if (zonaExc) zonaExc.style.display = (sbClient && currentUserId !== 'guest' && !isAdminUser) ? 'block' : 'none';
     }
 
     function atualizarTextoCalculoMeta() {
@@ -2225,6 +2422,13 @@
       document.getElementById('btnFinalizarDiaHero').addEventListener('click', finalizarDiaInstantaneo);
       document.getElementById('btnSimularAtraso').addEventListener('click', simularAtrasoParaTeste);
       document.getElementById('btnRefreshTeam').addEventListener('click', loadTeamMembersFromCloud);
+      document.getElementById('btnHistorico').addEventListener('click', abrirHistorico);
+      document.getElementById('btnExportarTudo').addEventListener('click', exportarTudo);
+      document.getElementById('btnExcluirMinhaConta').addEventListener('click', () => abrirExclusaoPerfil(currentUserId));
+      document.getElementById('btnConfirmarExclusao').addEventListener('click', confirmarExclusaoPerfil);
+      document.getElementById('excluirPerfilConfirma').addEventListener('input', (ev) => {
+        document.getElementById('btnConfirmarExclusao').disabled = ev.target.value.trim().toUpperCase() !== 'EXCLUIR';
+      });
 
       // ABRIR PERFIL (CARREGA OS DADOS SALVOS)
       document.getElementById('btnOpenProfile').addEventListener('click', () => {
@@ -2615,6 +2819,7 @@
       document.getElementById('btnTopLogout').addEventListener('click', async () => {
         if (confirm('Deseja realmente sair da sua conta?')) {
           if (sbClient) await sbClient.auth.signOut();
+          usuarioEntrouId = null;
           currentUserId = 'guest'; isCloudAdmin = null;
           localStorage.removeItem('realtime_current_uid');
           appState.profile = { name: '', email: '', role: '', company: 'Real Estate São Paulo', birthDate: '', modalidade: 'custom', photo: '', updatedAt: 0 };
@@ -2640,6 +2845,7 @@
             if (session && session.user) onUserSignedIn(session.user);
           });
           sbClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') usuarioEntrouId = null;
             if (session && session.user) onUserSignedIn(session.user);
           });
         }
@@ -2647,7 +2853,11 @@
     }
 
     // SINCRONIZAÇÃO BLINDADA COM TIMESTAMP (O MAIS NOVO SEMPRE VENCE)
+    let usuarioEntrouId = null;
     async function onUserSignedIn(user) {
+      // O Supabase avisa mais de uma vez (sessão salva, login, renovação de token). Só entramos uma vez por usuário.
+      if (usuarioEntrouId === user.id) return;
+      usuarioEntrouId = user.id;
       currentUserId = user.id;
       localStorage.setItem('realtime_current_uid', currentUserId);
       document.getElementById('authScreen').hidden = true;
