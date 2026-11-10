@@ -125,37 +125,6 @@
 
     .container { max-width: 1260px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
-    /* BANNERS MODERNIZADOS COM ENTRADA SUAVE */
-    @keyframes slideDownFade {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .announcement-bar {
-  background: rgba(236, 137, 77, 0.12);
-  border: 1px solid rgba(236, 137, 77, 0.35);
-  border-radius: 999px; /* Formato de pílula arredondada */
-  padding: 6px 16px;
-  margin-bottom: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  font-size: 12px;
-  color: var(--text-main);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-    .announcement-bar {
-      background: linear-gradient(90deg, rgba(236, 137, 77, 0.18) 0%, rgba(236, 137, 77, 0.08) 100%);
-      border: 1px solid var(--c-laranja);
-      color: var(--text-main);
-    }
-    .birthday-alert-bar {
-      background: linear-gradient(90deg, rgba(244, 63, 94, 0.18) 0%, rgba(244, 63, 94, 0.08) 100%);
-      border: 1px solid #f43f5e;
-      color: var(--text-main);
-    }
-
     /* ANIMAÇÃO DO SINO DE NOTIFICAÇÕES */
     @keyframes bellRing {
       0%, 100% { transform: rotate(0); }
@@ -179,7 +148,7 @@
       100% { box-shadow: 0 0 0 0 rgba(236, 137, 77, 0); }
     }
 
-    /* ESTILO NOVO E MODERNO PARA CARDS DE NOTIFICAÇÃO */
+    /* CARDS DA CENTRAL DE NOTIFICAÇÕES */
     .notif-card {
       background: var(--card-sub);
       border: 1px solid var(--border-color);
@@ -351,7 +320,7 @@
 
     @media (max-width: 900px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); } .dashboard-grid > * { min-width: 0; } }
 
-    /* ===== AJUSTES PARA CELULAR ===== */
+    /* AJUSTES PARA CELULAR */
     .metric-value { overflow-wrap: anywhere; line-height: 1.15; }
     .metric-value.metric-text { font-family: var(--font-main); font-size: 16px; letter-spacing: 0; font-weight: 700; }
 
@@ -393,30 +362,6 @@
       .punch-time { font-size: 18px; }
       .table-actions-bar > * { flex: 1 1 100%; }
     }
-
-/* BANNER COMPACTO / PÍLULA ELEGANTE */
-    .announcement-bar, .birthday-alert-bar {
-      border-radius: 999px !important;
-      padding: 7px 18px !important;
-      margin-bottom: 14px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      gap: 12px !important;
-      font-size: 12px !important;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
-    }
-    .announcement-bar {
-      background: rgba(236, 137, 77, 0.12) !important;
-      border: 1px solid rgba(236, 137, 77, 0.45) !important;
-      color: var(--text-main) !important;
-    }
-    .birthday-alert-bar {
-      background: rgba(244, 63, 94, 0.12) !important;
-      border: 1px solid rgba(244, 63, 94, 0.45) !important;
-      color: var(--text-main) !important;
-    }
-
   </style>
 </head>
 <body>
@@ -540,22 +485,7 @@
       </div>
     </header>
 
-     
-        <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
-          <span style="font-size:14px; flex-shrink:0;">📢</span>
-          <strong id="bannerAnnounceTitle" style="color:var(--c-laranja); font-weight:700; white-space:nowrap;">Aviso da Gestão:</strong>
-          <span id="bannerAnnounceMsg" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-main); opacity:0.9;"></span>
-        </div>
-        <button type="button" class="btn" style="padding:2px 8px; font-size:11px; border-radius:999px; flex-shrink:0; border:0; background:rgba(255,255,255,0.08);" onclick="dispensarBannerAviso()" title="Dispensar aviso">✕</button>
-      </div>
-
-        <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
-          <span style="font-size:14px; flex-shrink:0;">🎂</span>
-          <span id="birthdayAlertText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></span>
-        </div>
-        <button type="button" class="btn" style="padding:2px 8px; font-size:11px; border-radius:999px; flex-shrink:0; border:0; background:rgba(255,255,255,0.08);" onclick="dispensarBannerNiver()" title="Dispensar">✕</button>
-      </div>
-
+    <main class="container">
       <!-- BARRA DE NAVEGAÇÃO -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
         <div class="main-nav-tabs">
@@ -649,7 +579,7 @@
                   ✏️ Solicitar Ajuste / Justificativa
                 </button>
                 <button class="btn" id="btnLancarAntigos" style="width:100%;">
-                  📋 Adicionar horas anteriores
+                  📋 Lançar período anterior (estágio, antes do sistema…)
                 </button>
               </div>
             </div>
@@ -1088,7 +1018,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL: PERFIL -->
+  <!-- MODAL: EXCLUIR PERFIL -->
   <dialog id="modalExcluirPerfil" style="max-width:460px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
       <h3 style="font-size:16px; font-weight:800; color:var(--neg);">Excluir perfil</h3>
@@ -1224,7 +1154,7 @@
     </div>
   </dialog>
 
-  <!-- CENTRAL DE NOTIFICAÇÕES (REESTILIZADA) -->
+  <!-- CENTRAL DE NOTIFICAÇÕES -->
   <dialog id="modalNotificacoes" style="max-width: 580px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
       <div style="display:flex; align-items:center; gap:8px;">
@@ -2710,7 +2640,7 @@
       const sortedChronological = [...appState.entries].sort((a, b) => {
         const dDiff = new Date(a.date) - new Date(b.date);
         if (dDiff !== 0) return dDiff;
-        return (a.updatedAt || 0) - (a.updatedAt || 0);
+        return (a.updatedAt || 0) - (b.updatedAt || 0);
       });
 
       let runningSum = 0;
@@ -2990,7 +2920,7 @@
       return data || [];
     }
 
-    // SOM DA NOTIFICAÇÃO (MANTIDO EXATAMENTE COMO VOCÊ AMOU)
+    // SOM DA NOTIFICAÇÃO PRESERVADO
     let audioCtx = null;
     function somLigado() { return localStorage.getItem('realtime_notif_sound') !== 'off'; }
     function destravarAudio() {
@@ -3114,7 +3044,6 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden && currentUserId !== 'guest') loadAnnouncements(); });
     window.addEventListener('focus', () => { if (currentUserId !== 'guest') loadAnnouncements(); });
 
-    // GERENCIAMENTO INTELIGENTE DE ESTADO DAS NOTIFICAÇÕES
     function notifKey() { return 'realtime_notif_' + currentUserId; }
     function lerNotifState() {
       try {
@@ -3167,7 +3096,6 @@
       checkBirthdaysNotification();
     }
 
-    // DISPENSA/REMOVE UMA NOTIFICAÇÃO INDIVIDUAL DA VISUALIZAÇÃO
     function dispensarNotificacao(key) {
       const st = lerNotifState();
       const agora = Date.now();
@@ -3176,26 +3104,6 @@
       salvarNotifState(st);
       checkBirthdaysNotification();
       showToast('Notificação removida.');
-    }
-
-   function dispensarBannerAviso() {
-      const banner = document.getElementById('companyAnnouncementBanner');
-      if (banner) banner.style.display = 'none';
-      const st = lerNotifState();
-      const avisos = montarListaNotificacoes().filter(n => n.tipo === 'aviso');
-      avisos.forEach(a => { st.read[a.key] = Date.now(); });
-      salvarNotifState(st);
-      checkBirthdaysNotification();
-    }
-
-    function dispensarBannerNiver() {
-      const box = document.getElementById('birthdayAlertBox');
-      if (box) box.style.display = 'none';
-      const st = lerNotifState();
-      const nivers = montarListaNotificacoes().filter(n => n.tipo === 'bday');
-      nivers.forEach(b => { st.read[b.key] = Date.now(); });
-      salvarNotifState(st);
-      checkBirthdaysNotification();
     }
 
     function marcarTodasLidas() {
@@ -3207,7 +3115,6 @@
       showToast('Todas as notificações foram marcadas como lidas.');
     }
 
-    // LIMPEZA COMPLETA: LIMPA TODAS DA VISUALIZAÇÃO DO USUÁRIO
     function limparHistoricoNotif() {
       const todas = montarListaNotificacoes();
       if (!todas.length) {
@@ -3243,13 +3150,6 @@
       
       const visiveis = todas.filter(n => !st.cleared[n.key]);
       const novas = visiveis.filter(n => !st.read[n.key]);
-
-      // Garante que se as barras ainda existirem no DOM, fiquem ocultas
-      const alertBox = document.getElementById('birthdayAlertBox');
-      if (alertBox) alertBox.style.display = 'none';
-
-      const bannerBox = document.getElementById('companyAnnouncementBanner');
-      if (bannerBox) bannerBox.style.display = 'none';
 
       const bellBadge = document.getElementById('bellCountBadge');
       const bellIcon = document.getElementById('bellIconEmoji');
@@ -3602,7 +3502,7 @@
         showToast('Configurações de jornada salvas!');
       });
 
-     document.getElementById('formFalta').addEventListener('submit', (e) => {
+      document.getElementById('formFalta').addEventListener('submit', (e) => {
         e.preventDefault();
         const data = document.getElementById('faltaData').value;
         const tipo = document.getElementById('faltaTipo').value;
@@ -3772,6 +3672,19 @@
         });
       });
 
+      O arquivo cortou no finalzinho de novo por limite de caracteres da resposta.
+Para resolver isso de vez e nunca mais bugar, aqui está a parte final exata (do
+botão do tema até o </html>).
+
+Onde colar:
+
+No seu arquivo index.html, vá até a última linha onde está escrito:
+
+document.getElementById('btnThemeToggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-
+
+Substitua essa linha quebrada e tudo o que vier depois por este bloco final:
+
       document.getElementById('btnThemeToggle').addEventListener('click', () => {
         const cur = document.documentElement.getAttribute('data-theme') || 'dark';
         const next = cur === 'dark' ? 'light' : 'dark';
@@ -3876,7 +3789,7 @@
         (app || document.body).prepend(b);
       }
       b.textContent = `⚠️ Suas alterações estão salvas só neste computador e NÃO estão indo para a nuvem${detalhe ? ' (' + detalhe + ')' : ''}. Tentando de novo automaticamente. Não limpe os dados do navegador.`;
-      b.display = 'block';
+      b.style.display = 'block';
     }
 
     let syncEmAndamento = false;
