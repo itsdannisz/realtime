@@ -125,9 +125,19 @@
 
     .container { max-width: 1260px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
-    .announcement-bar, .birthday-alert-bar { border-radius: var(--radius-md); padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
-    .announcement-bar { background: rgba(236, 137, 77, 0.15); border: 1px solid var(--c-laranja); color: var(--text-main); }
-    .birthday-alert-bar { background: rgba(16, 185, 129, 0.12); border: 1px solid var(--pos); color: var(--text-main); }
+    /* ===== AVISOS NO TOPO (cartão de notificação fixo na página) ===== */
+    .notice-card { --notice-color: var(--c-laranja); --notice-bg: rgba(236, 137, 77, 0.16); position: relative; display: flex; align-items: flex-start; gap: 12px; background: var(--card-white); border: 1px solid var(--border-color); border-left: 4px solid var(--notice-color); border-radius: var(--radius-md); padding: 12px 12px 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow-card); animation: noticeIn 0.25s ease-out both; }
+    .notice-bday { --notice-color: var(--pos); --notice-bg: var(--pos-bg); }
+    .notice-ico { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--notice-bg); }
+    .notice-body { flex: 1 1 auto; min-width: 0; }
+    .notice-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--notice-color); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .notice-count { font-size: 10px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--notice-bg); color: var(--notice-color); letter-spacing: 0; text-transform: none; }
+    .notice-title { font-size: 14px; font-weight: 800; line-height: 1.3; color: var(--text-main); overflow-wrap: anywhere; }
+    .notice-msg { font-size: 12.5px; line-height: 1.5; color: var(--text-muted); margin-top: 3px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .notice-msg:empty { display: none; }
+    .notice-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+    @keyframes noticeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 560px) { .notice-card { flex-wrap: wrap; } .notice-body { flex: 1 1 0; } .notice-actions { flex: 0 0 calc(100% - 50px); margin-left: 50px; } }
 
     .hero-banner { background: var(--hero-bg); color: #ffffff; border-radius: var(--radius-lg); padding: 26px 30px; margin-bottom: 24px; border: 1px solid var(--border-color); border-top: 3px solid var(--hero-border); box-shadow: var(--shadow-card); }
     .hero-top-wrap { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
@@ -217,8 +227,46 @@
     input:focus, select:focus, textarea:focus { border-color: var(--c-laranja); }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card-white); color: var(--text-main); padding: 12px 24px; border-radius: 999px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 10000; border: 1px solid var(--c-laranja); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* ===== NOTIFICAÇÕES (cartões no canto da tela) ===== */
+    #toastStack { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); right: 16px; width: min(380px, calc(100vw - 32px)); display: flex; flex-direction: column-reverse; gap: 10px; z-index: 10000; pointer-events: none; }
+    .toast-card { --tc: var(--c-laranja); --tc-bg: rgba(236, 137, 77, 0.16); position: relative; overflow: hidden; pointer-events: auto; display: flex; align-items: flex-start; gap: 12px; background: var(--card-white); color: var(--text-main); border: 1px solid var(--border-color); border-left: 4px solid var(--tc); border-radius: 14px; padding: 12px 10px 15px 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); animation: toastIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    .toast-card.clicavel { cursor: pointer; }
+    .toast-card.clicavel:hover { border-color: var(--tc); }
+    .toast-card.saindo { animation: toastOut 0.2s ease-in both; pointer-events: none; }
+    .toast-card.t-success { --tc: var(--pos); --tc-bg: var(--pos-bg); }
+    .toast-card.t-error { --tc: var(--neg); --tc-bg: var(--neg-bg); }
+    .toast-card.t-warn { --tc: var(--warn); --tc-bg: var(--warn-bg); }
+    .toast-ico { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: var(--tc); background: var(--tc-bg); }
+    .toast-body { flex: 1 1 auto; min-width: 0; }
+    .toast-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--tc); margin-bottom: 1px; }
+    .toast-title { font-size: 13px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+    .toast-msg { font-size: 12.5px; line-height: 1.45; color: var(--text-muted); margin-top: 2px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .toast-msg:empty { display: none; }
+    .toast-x { flex: 0 0 auto; background: transparent; border: 0; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; padding: 4px 6px; border-radius: 6px; font-family: inherit; }
+    .toast-x:hover { color: var(--text-main); background: var(--card-sub); }
+    .toast-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--tc); opacity: 0.75; transform-origin: left; animation: toastBar var(--dur, 4000ms) linear forwards; }
+    .toast-card:hover .toast-bar, .toast-card:focus-within .toast-bar { animation-play-state: paused; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(26px) scale(0.98); } to { opacity: 1; transform: none; } }
+    @keyframes toastOut { to { opacity: 0; transform: translateX(26px); } }
+    @keyframes toastBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+    @media (max-width: 560px) { #toastStack { bottom: max(10px, env(safe-area-inset-bottom)); right: 10px; left: 10px; width: auto; } }
+    @media (prefers-reduced-motion: reduce) { .toast-card, .toast-card.saindo, .notice-card { animation: none; } }
+
+    /* ===== RESUMO AO ENCERRAR O EXPEDIENTE ===== */
+    #modalResumoDia { max-width: 400px; text-align: center; border-top: 4px solid var(--rs, var(--pos)); }
+    #modalResumoDia.rs-neg { --rs: var(--neg); --rs-bg: var(--neg-bg); }
+    #modalResumoDia.rs-pos { --rs: var(--pos); --rs-bg: var(--pos-bg); }
+    .resumo-ico { width: 52px; height: 52px; border-radius: 50%; margin: 2px auto 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--rs-bg, var(--pos-bg)); color: var(--rs, var(--pos)); font-weight: 800; }
+    .resumo-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); }
+    #resumoTitulo { font-size: 18px; font-weight: 800; margin: 2px 0 10px; }
+    .resumo-saldo { font-family: var(--font-mono); font-size: 34px; font-weight: 800; letter-spacing: -1px; color: var(--rs, var(--pos)); }
+    .resumo-saldo-label { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+    .resumo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .resumo-cell { background: var(--card-sub); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 8px 6px; }
+    .resumo-cell b { display: block; font-family: var(--font-mono); font-size: 14px; }
+    .resumo-cell span { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .resumo-nota { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; min-height: 0; }
+    .resumo-nota:empty { display: none; }
 
     @media (max-width: 900px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); } .dashboard-grid > * { min-width: 0; } }
 
@@ -392,14 +440,29 @@
     </header>
 
     <main class="container">
-      <div id="companyAnnouncementBanner" class="announcement-bar" style="display:none;">
-        <div><strong id="bannerAnnounceTitle">Aviso da Gestão</strong>: <span id="bannerAnnounceMsg"></span></div>
-        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="dispensarBannerAviso()">✕</button>
+      <div id="companyAnnouncementBanner" class="notice-card notice-aviso" role="status" style="display:none;">
+        <div class="notice-ico">📢</div>
+        <div class="notice-body">
+          <div class="notice-kicker"><span>Aviso da Gestão</span><span class="notice-count" id="bannerAnnounceCount" style="display:none;"></span></div>
+          <div class="notice-title" id="bannerAnnounceTitle"></div>
+          <div class="notice-msg" id="bannerAnnounceMsg"></div>
+        </div>
+        <div class="notice-actions">
+          <button type="button" class="btn" style="padding:4px 10px; font-size:11px;" onclick="abrirCentralNotificacoes()">Ver na central</button>
+          <button type="button" class="btn" style="padding:4px 8px; font-size:11px;" title="Dispensar" aria-label="Dispensar aviso" onclick="dispensarBannerAviso()">✕</button>
+        </div>
       </div>
 
-      <div id="birthdayAlertBox" class="birthday-alert-bar" style="display:none;">
-        <span id="birthdayAlertText">🎂 Aniversário na equipe!</span>
-        <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="dispensarBannerNiver()">✕</button>
+      <div id="birthdayAlertBox" class="notice-card notice-bday" role="status" style="display:none;">
+        <div class="notice-ico" id="birthdayAlertIco">🎂</div>
+        <div class="notice-body">
+          <div class="notice-kicker"><span>Aniversário</span><span class="notice-count" id="birthdayAlertCount" style="display:none;"></span></div>
+          <div class="notice-title" id="birthdayAlertTitle"></div>
+          <div class="notice-msg" id="birthdayAlertText"></div>
+        </div>
+        <div class="notice-actions">
+          <button type="button" class="btn" style="padding:4px 8px; font-size:11px;" title="Dispensar" aria-label="Dispensar aviso" onclick="dispensarBannerNiver()">✕</button>
+        </div>
       </div>
 
       <!-- BARRA DE NAVEGAÇÃO -->
@@ -1125,7 +1188,23 @@
     </div>
   </dialog>
 
-  <div id="toast">RealTime</div>
+  <div id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- RESUMO AO ENCERRAR O EXPEDIENTE -->
+  <dialog id="modalResumoDia">
+    <div class="resumo-ico" id="resumoIco">✓</div>
+    <div class="resumo-kicker">Expediente encerrado</div>
+    <h3 id="resumoTitulo"></h3>
+    <div class="resumo-saldo" id="resumoSaldo"></div>
+    <div class="resumo-saldo-label" id="resumoSaldoLabel"></div>
+    <div class="resumo-grid">
+      <div class="resumo-cell"><b id="resumoEntrada">--:--</b><span>Entrada</span></div>
+      <div class="resumo-cell"><b id="resumoSaida">--:--</b><span>Saída</span></div>
+      <div class="resumo-cell"><b id="resumoMeta">--:--</b><span>Meta</span></div>
+    </div>
+    <div class="resumo-nota" id="resumoNota"></div>
+    <button type="button" class="btn-laranja" data-close style="width:100%;">Ok</button>
+  </dialog>
 
   <!-- SUPABASE SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -1448,12 +1527,111 @@
       }
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      if (!t) return;
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
+    // ===== NOTIFICAÇÕES (cartões no canto da tela) =====
+    // showToast(msg)                       -> tom é deduzido pelo texto (sucesso / atenção / erro)
+    // showToast(msg, { tone, title, kicker, icon, duration, onClick })
+    const TOAST_MAX = 3;
+    const TOAST_ICONES = { success: '✓', warn: '!', error: '✕', info: 'i', notice: '🔔' };
+    const TOAST_TITULOS = { success: 'Tudo certo', warn: 'Atenção', error: 'Algo não funcionou', info: 'Aviso', notice: 'Novidade' };
+    const TOAST_DURACAO = { success: 4000, warn: 6500, error: 9000, info: 6000, notice: 9000 };
+
+    function _toastTom(msg) {
+      if (/^N[aã]o consegui/i.test(msg)) return 'error';
+      if (/^(Preencha|Informe|Confira|Escreva|Nenhum|Nenhuma|A data inicial|S[oó] a gest|S[oó] aparece|Conta de gest|Ess[ae]s?\s)/i.test(msg)) return 'warn';
+      return 'success';
+    }
+
+    function _toastFechar(card, rapido) {
+      if (!card || card._fechando) return;
+      card._fechando = true;
+      clearTimeout(card._t);
+      card.classList.add('saindo');
+      setTimeout(() => card.remove(), rapido ? 0 : 200);
+    }
+
+    function showToast(msg, opts) {
+      const stack = document.getElementById('toastStack');
+      if (!stack) return;
+      opts = opts || {};
+      msg = String(msg == null ? '' : msg).trim();
+      const tom = opts.tone || _toastTom(msg);
+
+      let titulo = opts.title, corpo = msg;
+      if (titulo === undefined) {
+        const m = (tom === 'error') ? msg.match(/^(.{4,80}?):\s+([\s\S]+)$/) : null;
+        if (m) { titulo = m[1]; corpo = m[2]; } else { titulo = TOAST_TITULOS[tom]; }
+      }
+
+      // Mesmo aviso repetido: troca o antigo pelo novo (não empilha igual)
+      const chave = tom + '|' + titulo + '|' + corpo;
+      stack.querySelectorAll('.toast-card').forEach(c => { if (c.dataset.k === chave) _toastFechar(c, true); });
+      // Limite da pilha: some o mais antigo
+      const vivos = stack.querySelectorAll('.toast-card:not(.saindo)');
+      if (vivos.length >= TOAST_MAX) _toastFechar(vivos[vivos.length - 1], true);
+
+      const dur = opts.duration || Math.min(14000, (TOAST_DURACAO[tom] || 5000) + Math.max(0, corpo.length - 60) * 40);
+
+      const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt !== undefined) n.textContent = txt; return n; };
+      const card = el('div', 'toast-card t-' + tom);
+      card.dataset.k = chave;
+      card.setAttribute('role', tom === 'error' ? 'alert' : 'status');
+      card.style.setProperty('--dur', dur + 'ms');
+
+      card.appendChild(el('div', 'toast-ico', opts.icon || TOAST_ICONES[tom] || 'i'));
+      const body = el('div', 'toast-body');
+      if (opts.kicker) body.appendChild(el('div', 'toast-kicker', opts.kicker));
+      if (titulo) body.appendChild(el('div', 'toast-title', titulo));
+      body.appendChild(el('div', 'toast-msg', corpo));
+      card.appendChild(body);
+
+      const x = el('button', 'toast-x', '✕');
+      x.type = 'button'; x.title = 'Fechar'; x.setAttribute('aria-label', 'Fechar notificação');
+      x.addEventListener('click', (e) => { e.stopPropagation(); _toastFechar(card); });
+      card.appendChild(x);
+      card.appendChild(el('div', 'toast-bar'));
+
+      if (typeof opts.onClick === 'function') {
+        card.classList.add('clicavel');
+        card.tabIndex = 0;
+        const abrir = () => { _toastFechar(card); try { opts.onClick(); } catch (e) { console.warn(e); } };
+        card.addEventListener('click', abrir);
+        card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+      }
+
+      // Passar o mouse (ou focar) pausa o tempo; ao sair, continua de onde parou
+      card._rest = dur;
+      const agendar = () => { card._ini = Date.now(); card._t = setTimeout(() => _toastFechar(card), card._rest); };
+      const pausar = () => { clearTimeout(card._t); card._rest = Math.max(800, card._rest - (Date.now() - card._ini)); };
+      card.addEventListener('mouseenter', pausar);
+      card.addEventListener('mouseleave', agendar);
+      card.addEventListener('focusin', pausar);
+      card.addEventListener('focusout', agendar);
+      agendar();
+
+      stack.prepend(card);
+    }
+
+    function abrirCentralNotificacoes() {
+      loadAnnouncements();
+      renderNotificationsModalContent();
+      const m = document.getElementById('modalNotificacoes');
+      if (m && !m.open) m.showModal();
+    }
+
+    // ===== RESUMO AO ENCERRAR O EXPEDIENTE =====
+    function mostrarResumoExpediente(d) {
+      const dlg = document.getElementById('modalResumoDia');
+      dlg.classList.remove('rs-neg', 'rs-pos');
+      dlg.classList.add(d.saldo < 0 ? 'rs-neg' : 'rs-pos');
+      document.getElementById('resumoIco').textContent = d.saldo < 0 ? '!' : '✓';
+      document.getElementById('resumoTitulo').textContent = d.saldo < 0 ? 'Fechou com débito' : (d.saldo > 0 ? 'Fechou com crédito' : 'Meta cumprida');
+      document.getElementById('resumoSaldo').textContent = (d.saldo < 0 ? '-' : (d.saldo > 0 ? '+' : '')) + Core.fromMinutes(Math.abs(d.saldo));
+      document.getElementById('resumoSaldoLabel').textContent = d.saldo === 0 ? 'Sem saldo a lançar no banco de horas' : 'Saldo lançado no banco de horas';
+      document.getElementById('resumoEntrada').textContent = d.entrada;
+      document.getElementById('resumoSaida').textContent = d.saida;
+      document.getElementById('resumoMeta').textContent = d.meta;
+      document.getElementById('resumoNota').textContent = d.atraso > 0 ? `Entrada com ${d.atraso} min de atraso.` : '';
+      if (!dlg.open) dlg.showModal();
     }
 
     async function detectUserIP() {
@@ -1634,7 +1812,7 @@
         });
 
         saveLocal();
-        showToast(`Início registrado às ${timeNow} (${locType === 'escritorio' ? 'Escritório' : 'Home Office'})`);
+        showToast(`Início às ${timeNow} · ${locType === 'escritorio' ? 'Escritório' : 'Home Office'}`, { title: 'Entrada registrada', tone: 'success' });
       } else {
         if (!entry.ip || entry.ip === 'Offline/Local' || entry.ip === 'Rede Conectada') {
           entry.ip = ip;
@@ -1652,7 +1830,7 @@
       let entry = appState.entries.find(e => e.date === todayStr);
 
       if (!entry || !entry.entrada) {
-        alert('O expediente não estava iniciado. Vamos iniciar agora para você!');
+        showToast('Vamos iniciar agora para você!', { title: 'O expediente não estava iniciado', tone: 'info' });
         executarCheckIn(true);
         return;
       }
@@ -1673,14 +1851,14 @@
       if (calc.saldo < 0) {
         const debitoFormatado = Core.fromMinutes(Math.abs(calc.saldo));
         entry.obs = `Encerrou com débito de -${debitoFormatado}. (Atraso/Saída não compensada)`;
-        alert(`⚠️ EXPEDIENTE ENCERRADO COM DÉBITO\n\nEntrada: ${entry.entrada} (${delayMin > 0 ? delayMin + ' min atraso' : 'no horário'})\nSaída: ${timeNow}\nMeta: ${Core.fromMinutes(appState.config.expected || 360)}\n\nSaldo Lançado no Banco: -${debitoFormatado}`);
+        mostrarResumoExpediente({ saldo: calc.saldo, entrada: entry.entrada, saida: timeNow, meta: Core.fromMinutes(appState.config.expected || 360), atraso: delayMin });
       } else if (calc.saldo > 0) {
         const creditoFormatado = Core.fromMinutes(calc.saldo);
         entry.obs = `Compensou o horário e gerou +${creditoFormatado} de crédito no banco.`;
-        alert(`✅ EXPEDIENTE ENCERRADO COM CRÉDITO\n\nJornada cumprida com sucesso!\nCrédito adicionado: +${creditoFormatado}`);
+        mostrarResumoExpediente({ saldo: calc.saldo, entrada: entry.entrada, saida: timeNow, meta: Core.fromMinutes(appState.config.expected || 360), atraso: delayMin });
       } else {
         entry.obs = 'Meta líquida diária cumprida com exatidão.';
-        alert(`✅ EXPEDIENTE ENCERRADO\n\nMeta cumprida exatamente (00:00).`);
+        mostrarResumoExpediente({ saldo: 0, entrada: entry.entrada, saida: timeNow, meta: Core.fromMinutes(appState.config.expected || 360), atraso: delayMin });
       }
 
       saveLocal();
@@ -1704,7 +1882,7 @@
         updatedAt: Date.now()
       });
       saveLocal();
-      alert('🧪 SIMULAÇÃO ATIVA:\n\nEntrada cravada às 09:30 com 30 minutos de atraso.\nAgora clique em "Encerrar Expediente" para testar o alerta de desconto no banco de horas!');
+      showToast('Entrada às 09:30 (30 min de atraso). Agora clique em "Encerrar Expediente" para testar o desconto no banco de horas.', { title: 'Simulação ativa', tone: 'warn', icon: '🧪', duration: 12000 });
     }
 
     let allTeamLoadedData = [];
@@ -2976,7 +3154,7 @@
         const novos = sharedAnnouncements.filter(a => !idsComunicadosConhecidos.has(String(a.id)) && !st.read['a:' + a.id]);
         if (novos.length) {
           tocarSomNotificacao();
-          showToast('🔔 Novo comunicado: ' + novos[0].title);
+          showToast(novos[0].message, { tone: 'notice', kicker: novos.length > 1 ? `${novos.length} novos comunicados` : 'Novo comunicado', title: novos[0].title, onClick: abrirCentralNotificacoes });
         }
       }
       idsComunicadosConhecidos = idsAgora;
@@ -3060,17 +3238,26 @@
       const novas = todas.filter(n => !st.read[n.key]);
 
       const alertBox = document.getElementById('birthdayAlertBox');
-      const bd = novas.find(n => n.tipo === 'bday');
+      const bds = novas.filter(n => n.tipo === 'bday');
+      const bd = bds[0];
       if (bd) {
-        document.getElementById('birthdayAlertText').innerHTML = `<strong>${esc(bd.title)}</strong> ${esc(bd.message)}`;
+        const mi = /^(\p{Extended_Pictographic}\uFE0F?)\s*/u.exec(bd.title || '');
+        document.getElementById('birthdayAlertIco').textContent = mi ? mi[1] : '🎂';
+        document.getElementById('birthdayAlertTitle').textContent = mi ? bd.title.slice(mi[0].length) : bd.title;
+        document.getElementById('birthdayAlertText').textContent = bd.message;
+        const cb = document.getElementById('birthdayAlertCount');
+        cb.textContent = bds.length > 1 ? `+${bds.length - 1}` : ''; cb.style.display = bds.length > 1 ? '' : 'none';
         alertBox.style.display = 'flex';
       } else { alertBox.style.display = 'none'; }
 
       const bannerBox = document.getElementById('companyAnnouncementBanner');
-      const av = novas.find(n => n.tipo === 'aviso');
+      const avs = novas.filter(n => n.tipo === 'aviso');
+      const av = avs[0];
       if (av) {
         document.getElementById('bannerAnnounceTitle').textContent = av.title;
         document.getElementById('bannerAnnounceMsg').textContent = av.message;
+        const ca = document.getElementById('bannerAnnounceCount');
+        ca.textContent = avs.length > 1 ? `+${avs.length - 1} ${avs.length - 1 === 1 ? 'aviso' : 'avisos'}` : ''; ca.style.display = avs.length > 1 ? '' : 'none';
         bannerBox.style.display = 'flex';
       } else { bannerBox.style.display = 'none'; }
 
@@ -3285,11 +3472,7 @@
         document.getElementById('estagioBoxSaldo').hidden = !saldo;
       }));
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
-      document.getElementById('btnNotificationBell').addEventListener('click', () => {
-        loadAnnouncements();
-        renderNotificationsModalContent();
-        document.getElementById('modalNotificacoes').showModal();
-      });
+      document.getElementById('btnNotificationBell').addEventListener('click', abrirCentralNotificacoes);
 
       document.getElementById('btnTrocarFoto').addEventListener('click', () => document.getElementById('profilePhotoInput').click());
       document.getElementById('profilePhotoInput').addEventListener('change', (e) => {
@@ -3545,7 +3728,7 @@
             saveLocal();
             showToast(`Importação concluída: ${novos} novo(s), ${repetidos} já existia(m).`);
           } catch (err) {
-            alert('Arquivo JSON inválido.');
+            showToast('Confira se é o arquivo JSON exportado pelo próprio sistema.', { title: 'Arquivo JSON inválido', tone: 'error' });
           }
           e.target.value = '';
         };
