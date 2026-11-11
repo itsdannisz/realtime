@@ -152,6 +152,7 @@
     .punches-timeline { display: flex; flex-direction: column; gap: 10px; }
     .punch-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--card-sub); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
     .punch-time { font-size: 20px; font-weight: 800; font-family: var(--font-mono); color: var(--text-main); }
+    .punch-time.editavel { cursor: pointer; border-bottom: 1px dashed currentColor; }
     .punch-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
     .interval-divider { background: rgba(236, 137, 77, 0.1); border: 1px dashed rgba(236, 137, 77, 0.4); border-radius: var(--radius-sm); padding: 9px 14px; text-align: center; font-size: 11px; font-weight: 700; color: var(--c-laranja); margin: 10px 0; }
 
@@ -399,6 +400,7 @@
         </div>
 
         <p id="authMsgBox" style="font-size:12px; margin-bottom:14px; min-height:18px;"></p>
+        <button type="button" class="btn" id="btnResendConfirm" style="display:none; border:0; padding:4px; font-size:12px; color:var(--c-laranja); margin:-6px 0 12px;">Reenviar e-mail de confirmação</button>
         <button type="submit" class="btn-laranja" id="btnSubmitAuth">Entrar no RealTime</button>
       </form>
 
@@ -734,14 +736,35 @@
     </div>
   </dialog>
 
-  <!-- MODAL: SOLICITAR AJUSTE -->
+  <!-- MODAL: NOVA SENHA (link de "esqueci a senha") -->
+  <dialog id="modalNovaSenha">
+    <form id="formNovaSenha">
+      <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja); margin-bottom:8px;">Criar nova senha</h3>
+      <p class="muted" style="font-size:12px; margin-bottom:14px;">Digite a nova senha duas vezes (mínimo 6 caracteres).</p>
+      <div class="form-group">
+        <label>Nova senha</label>
+        <input type="password" id="novaSenha1" minlength="6" required autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Repita a nova senha</label>
+        <input type="password" id="novaSenha2" minlength="6" required autocomplete="new-password">
+      </div>
+      <p id="novaSenhaMsg" style="font-size:12px; min-height:18px;"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+        <button type="button" class="btn" data-close>Agora não</button>
+        <button type="submit" class="btn-laranja" id="btnSalvarNovaSenha" style="width:auto;">Salvar nova senha</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- MODAL: SOLICITAR AJUSTE (também corrige a entrada de um dia em andamento) -->
   <dialog id="modalSolicitarAjuste">
     <form id="formSolicitarAjuste">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);">Solicitar Ajuste de Ponto</h3>
+        <h3 id="ajusteTitulo" style="font-size:16px; font-weight:800; color:var(--c-laranja);">Solicitar Ajuste de Ponto</h3>
         <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
       </div>
-      <p class="muted" style="font-size:12px; margin-bottom:14px;">
+      <p id="ajusteAviso" class="muted" style="font-size:12px; margin-bottom:14px;">
         Por segurança, os horários registrados pelo PC não podem ser editados diretamente. Envie sua solicitação com a justificativa para aprovação da Danielle / Gestão.
       </p>
       <input type="hidden" id="ajusteEntryId">
@@ -749,36 +772,34 @@
         <label>Data</label>
         <input type="date" id="ajusteData" required>
       </div>
-      <p id="ajusteAndamentoAviso" hidden style="font-size:12px; padding:10px 12px; border:1px solid var(--c-laranja); border-radius:10px; margin-bottom:14px; line-height:1.5;">
-        ⏱️ <strong>Hoje está em andamento.</strong> Chegou antes de o sistema abrir? Informe só a hora em que você realmente começou. O horário corrige <strong>na hora</strong> e a gestão confere depois.
-        <br><small class="muted">Registrado pelo sistema: <span id="ajusteEntradaSistema" class="mono">—</span></small>
-      </p>
       <div class="grid-2">
         <div class="form-group">
-          <label>Horário Correto de Entrada</label>
+          <label id="ajusteLabelEntrada">Horário Correto de Entrada</label>
           <input type="time" id="ajusteEntrada" required>
         </div>
-        <div class="form-group" id="grpAjusteSaida">
+        <div class="form-group" id="ajusteGrupoSaida">
           <label>Horário Correto de Saída</label>
           <input type="time" id="ajusteSaida" required>
         </div>
       </div>
-      <div class="form-group" id="grpAjusteIntervalo">
-        <label>Intervalo de almoço (minutos)</label>
-        <input type="number" id="ajusteIntervalo" min="0" max="480" step="5" value="60" required>
-        <small class="muted" style="font-size:11px;">Ex.: 60 = 1h, 120 = 2h. É descontado do total do dia.</small>
-      </div>
-      <div class="form-group" id="grpAjusteAbono">
-        <label>Abono da gestão (minutos) — opcional</label>
-        <input type="number" id="ajusteAbono" min="0" max="480" step="1" value="0">
-        <small class="muted" style="font-size:11px;">Minutos que a gestão decidiu NÃO contar como crédito no banco (ex.: 42). Os horários reais continuam registrados.</small>
-      </div>
-      <div class="form-group" id="grpAjusteLocal">
-        <label>Local do dia</label>
-        <select id="ajusteLocal">
-          <option value="home">🏠 Home Office</option>
-          <option value="escritorio">🏢 Escritório (presencial)</option>
-        </select>
+      <div id="ajusteCamposDiaFechado">
+        <div class="form-group">
+          <label>Intervalo de almoço (minutos)</label>
+          <input type="number" id="ajusteIntervalo" min="0" max="480" step="5" value="60" required>
+          <small class="muted" style="font-size:11px;">Ex.: 60 = 1h, 120 = 2h. É descontado do total do dia.</small>
+        </div>
+        <div class="form-group">
+          <label>Abono da gestão (minutos) — opcional</label>
+          <input type="number" id="ajusteAbono" min="0" max="480" step="1" value="0">
+          <small class="muted" style="font-size:11px;">Minutos que a gestão decidiu NÃO contar como crédito no banco (ex.: 42). Os horários reais continuam registrados.</small>
+        </div>
+        <div class="form-group">
+          <label>Local do dia</label>
+          <select id="ajusteLocal">
+            <option value="home">🏠 Home Office</option>
+            <option value="escritorio">🏢 Escritório (presencial)</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label>Justificativa do Ajuste</label>
@@ -786,7 +807,7 @@
       </div>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
         <button type="button" class="btn" data-close>Cancelar</button>
-        <button type="submit" class="btn-laranja" style="width:auto;">Enviar para Aprovação</button>
+        <button type="submit" class="btn-laranja" id="btnEnviarAjuste" style="width:auto;">Enviar para Aprovação</button>
       </div>
     </form>
   </dialog>
@@ -1345,6 +1366,7 @@
       announcements: [],
       entries: [],
       removed: [],
+      notif: { read: {}, cleared: {} },
       theme: 'dark'
     };
 
@@ -1518,6 +1540,9 @@
       if (e.locManual) out.locManual = true;
       if (abono) out.abono = abono;
       if (e.lote) out.lote = String(e.lote);
+      if (e.ajusteEntrada && typeof e.ajusteEntrada === 'object') out.ajusteEntrada = e.ajusteEntrada;
+      if (typeof e.enviadaEm === 'number') out.enviadaEm = e.enviadaEm;
+      if (typeof e.sincEm === 'number') out.sincEm = e.sincEm;
       return out;
     }
 
@@ -1530,6 +1555,7 @@
           if (parsed.profile) appState.profile = { ...appState.profile, ...parsed.profile };
           if (parsed.announcements) appState.announcements = parsed.announcements;
           if (Array.isArray(parsed.removed)) appState.removed = parsed.removed;
+          if (parsed.notif && typeof parsed.notif === 'object') appState.notif = { read: parsed.notif.read || {}, cleared: parsed.notif.cleared || {} };
           recalculateExpected();
           appState.entries = Array.isArray(parsed.entries)
             ? parsed.entries.map(e => normalizeEntry(e, appState.config.expected)).filter(Boolean)
@@ -1830,7 +1856,7 @@
     // Traz para este aparelho o que estiver mais novo na nuvem. Devolve true se algo mudou.
     function mesclarEstadoDaNuvem(cloudState) {
       if (!cloudState || typeof cloudState !== 'object') return false;
-      const snap = () => JSON.stringify([appState.config, appState.profile, appState.entries, appState.removed]);
+      const snap = () => JSON.stringify([appState.config, appState.profile, appState.entries, appState.removed, appState.notif]);
       const antes = snap();
 
       // Só substitui a configuração / o perfil se a nuvem for MAIS RECENTE
@@ -1869,6 +1895,12 @@
 
       appState.entries = [...mapa.values()];
       appState.removed = [...removidos.values()].sort((a, b) => a.at - b.at).slice(-300);
+      // Notificações lidas / limpas: junta as duas listas (vale o horário mais recente de cada item)
+      const uniaoNotif = (a, b) => { const o = { ...(a || {}) }; Object.entries(b || {}).forEach(([k, v]) => { if (!o[k] || v > o[k]) o[k] = v; }); return o; };
+      appState.notif = {
+        read: uniaoNotif(appState.notif && appState.notif.read, cloudState.notif && cloudState.notif.read),
+        cleared: uniaoNotif(appState.notif && appState.notif.cleared, cloudState.notif && cloudState.notif.cleared)
+      };
       return snap() !== antes;
     }
 
@@ -1893,27 +1925,6 @@
       return removeu;
     }
 
-    // ===== Ajuste de entrada com o dia em andamento =====
-    function entradaDoDiaEmAndamento(dataStr) {
-      if (dataStr !== getLocalDateStr()) return null;
-      return appState.entries.find(e => e.date === dataStr && e.type === 'trabalhado' && e.entrada && !e.saida && e.status !== 'pendente_aprovacao') || null;
-    }
-    function atualizarModoAjuste() {
-      const andamento = !!entradaDoDiaEmAndamento(document.getElementById('ajusteData').value);
-      const e = entradaDoDiaEmAndamento(document.getElementById('ajusteData').value);
-      document.getElementById('ajusteAndamentoAviso').hidden = !andamento;
-      ['grpAjusteSaida', 'grpAjusteIntervalo', 'grpAjusteAbono', 'grpAjusteLocal'].forEach(id => { document.getElementById(id).hidden = andamento; });
-      document.getElementById('ajusteSaida').required = !andamento;
-      document.getElementById('ajusteEntradaSistema').textContent = e ? (e.entradaOriginal || e.entrada) : '—';
-      const btn = document.querySelector('#formSolicitarAjuste button[type="submit"]');
-      if (btn) btn.textContent = andamento ? 'Corrigir minha entrada' : 'Enviar para Aprovação';
-    }
-    function hhmmDeTs(ts) {
-      if (!ts) return '';
-      const d = new Date(ts);
-      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    }
-
     let checkInEmAndamento = false;
     async function executarCheckIn(forcarInicio = false) {
       // Trava: se já há um check-in rodando, não começa outro (evita registros duplicados)
@@ -1928,6 +1939,9 @@
 
     async function executarCheckInInterno(forcarInicio = false) {
       const todayStr = getLocalDateStr();
+      // A hora da entrada é a de quando o sistema abriu, não a de quando a internet terminou de responder
+      const instanteAbertura = (instanteLoginAtual && !forcarInicio) ? instanteLoginAtual : new Date();
+      instanteLoginAtual = null;
 
       const ip = await detectUserIP();
       // Procura o ponto do dia DEPOIS de esperar o IP (outro fluxo pode ter criado nesse meio tempo)
@@ -1941,7 +1955,7 @@
       atualizarBadgeLocal(locType, ip, !!(entry && entry.locManual));
 
       if (!entry || forcarInicio) {
-        const now = new Date();
+        const now = instanteAbertura;
         const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const scheduledStart = appState.config.entrada || '09:00';
         const delayMin = Math.max(0, Core.toMinutes(timeNow) - Core.toMinutes(scheduledStart));
@@ -2016,8 +2030,76 @@
         entry.obs = 'Meta líquida diária cumprida com exatidão.';
         mostrarResumoExpediente({ saldo: 0, entrada: entry.entrada, saida: timeNow, meta: Core.fromMinutes(appState.config.expected || 360), atraso: delayMin });
       }
+      if (entry.ajusteEntrada) {
+        const aj = entry.ajusteEntrada;
+        const sit = aj.status === 'confirmado' ? 'confirmada pela gestão' : (aj.status === 'revertido' ? 'revertida pela gestão' : 'aguardando conferência');
+        entry.obs = `[Entrada ajustada de ${aj.original} para ${entry.entrada} — ${sit}] ` + entry.obs;
+      }
 
       saveLocal();
+    }
+
+    // ===== ENTRADA DE DIA EM ANDAMENTO (o computador demorou para abrir o sistema) =====
+    const MAX_ADIANTAR_ENTRADA_MIN = 180; // pode corrigir até 3 h antes do horário que o sistema registrou
+    function entradaDoDiaEmAndamento() {
+      const hoje = getLocalDateStr();
+      return appState.entries.find(e => e.date === hoje && e.type === 'trabalhado' && e.status === 'ativo' && e.entrada && !e.saida) || null;
+    }
+    function abrirModalAjuste() {
+      const form = document.getElementById('formSolicitarAjuste');
+      const em = entradaDoDiaEmAndamento();
+      form.reset();
+      document.getElementById('ajusteIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+      document.getElementById('ajusteAbono').value = 0;
+      const titulo = document.getElementById('ajusteTitulo'), aviso = document.getElementById('ajusteAviso');
+      const campos = document.getElementById('ajusteCamposDiaFechado'), grupoSaida = document.getElementById('ajusteGrupoSaida');
+      const dataEl = document.getElementById('ajusteData'), saidaEl = document.getElementById('ajusteSaida');
+      const lblEntrada = document.getElementById('ajusteLabelEntrada'), btn = document.getElementById('btnEnviarAjuste');
+      if (em) {
+        form.dataset.modo = 'andamento';
+        titulo.textContent = 'Corrigir horário de entrada';
+        aviso.textContent = `Seu dia está em andamento e o sistema registrou a entrada às ${em.entrada}. Se você chegou antes e o computador demorou para abrir, informe a hora real. O horário vale agora e a gestão confere depois.`;
+        dataEl.value = em.date; dataEl.readOnly = true;
+        lblEntrada.textContent = 'Hora em que você realmente chegou';
+        grupoSaida.style.display = 'none'; campos.style.display = 'none';
+        saidaEl.required = false;
+        btn.textContent = 'Corrigir entrada';
+        document.getElementById('ajusteMotivo').placeholder = 'Ex: O computador demorou para ligar / abrir o sistema.';
+      } else {
+        delete form.dataset.modo;
+        titulo.textContent = 'Solicitar Ajuste de Ponto';
+        aviso.textContent = 'Por segurança, os horários registrados pelo PC não podem ser editados diretamente. Envie sua solicitação com a justificativa para aprovação da Danielle / Gestão.';
+        dataEl.readOnly = false;
+        lblEntrada.textContent = 'Horário Correto de Entrada';
+        grupoSaida.style.display = ''; campos.style.display = '';
+        saidaEl.required = true;
+        btn.textContent = 'Enviar para Aprovação';
+        document.getElementById('ajusteMotivo').placeholder = 'Ex: Falha na conexão ao iniciar ou esquecimento justificado...';
+      }
+      document.getElementById('modalSolicitarAjuste').showModal();
+    }
+    function enviarCorrecaoEntrada() {
+      const e = entradaDoDiaEmAndamento();
+      if (!e) { showToast('O dia já foi encerrado. Use a solicitação de ajuste com entrada e saída.'); document.getElementById('modalSolicitarAjuste').close(); return; }
+      const nova = document.getElementById('ajusteEntrada').value;
+      const motivo = document.getElementById('ajusteMotivo').value.trim();
+      if (!nova) { showToast('Informe a hora em que você chegou.', { tone: 'warn', title: 'Falta a hora' }); return; }
+      if (!motivo) { showToast('Escreva a justificativa.', { tone: 'warn', title: 'Falta a justificativa' }); return; }
+      if (e.ajusteEntrada && e.ajusteEntrada.status === 'revertido') {
+        showToast('A gestão já revisou a entrada de hoje. Se precisar, use a solicitação de ajuste ao encerrar o dia.', { tone: 'warn', title: 'Entrada já revisada' }); return;
+      }
+      const original = (e.ajusteEntrada && e.ajusteEntrada.original) || e.entrada;
+      const diff = Core.toMinutes(e.entrada) - Core.toMinutes(nova);
+      if (diff <= 0) { showToast(`A hora informada precisa ser antes das ${e.entrada}, que foi a registrada pelo sistema.`, { tone: 'warn', title: 'Confira o horário' }); return; }
+      if (diff > MAX_ADIANTAR_ENTRADA_MIN) { showToast(`Dá para corrigir até ${MAX_ADIANTAR_ENTRADA_MIN / 60} h antes do horário registrado. Para mais que isso, fale com a gestão.`, { tone: 'warn', title: 'Diferença grande' }); return; }
+      e.ajusteEntrada = { original, motivo, em: Date.now(), status: 'conferir' };
+      e.entrada = nova;
+      e.obs = `Entrada ajustada de ${original} para ${nova}. Motivo: ${motivo}. Aguardando conferência da gestão.`;
+      e.updatedAt = Date.now();
+      saveLocal();
+      registrarEvento('ajuste_entrada', currentUserId, appState.profile.name || '', { data: e.date, de: original, para: nova, motivo });
+      document.getElementById('modalSolicitarAjuste').close();
+      showToast(`Entrada corrigida para ${nova}. A gestão vai conferir.`, { title: 'Entrada ajustada', tone: 'time' });
     }
 
     function simularAtrasoParaTeste() {
@@ -2181,37 +2263,36 @@
         });
       });
 
-      // Entradas corrigidas pela própria pessoa (já valem), esperando a conferência da gestão
+      // Entradas que a própria pessoa corrigiu (dia em andamento) e que a gestão ainda não conferiu
       const allConferir = [];
       allTeamLoadedData.forEach(member => {
-        (member.entries || []).filter(e => e.conferir && e.conferir.status === 'pendente').forEach(e => {
+        (member.entries || []).filter(e => e.ajusteEntrada && e.ajusteEntrada.status === 'conferir' && e.status !== 'pendente_aprovacao').forEach(e => {
           allConferir.push({ ...e, userId: member.userId, userName: member.profile.name });
         });
       });
-      const totalAguardando = allPending.length + allConferir.length;
-
-      document.getElementById('pendingCountTab').textContent = totalAguardando;
-      document.getElementById('badgePendingCount').textContent = `${totalAguardando} pendentes`;
+      const totalPendencias = allPending.length + allConferir.length;
+      document.getElementById('pendingCountTab').textContent = totalPendencias;
+      document.getElementById('badgePendingCount').textContent = `${totalPendencias} pendentes`;
       renderBulkApproveBar(allPending);
 
-      if (totalAguardando === 0) {
+      if (totalPendencias === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;" class="muted">Nenhuma solicitação pendente.</td></tr>';
         return;
       }
 
       allConferir.forEach(e => {
-        const c = e.conferir;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+        const aj = e.ajusteEntrada;
+        const trC = document.createElement('tr');
+        trC.innerHTML = `
           <td><strong>${esc(e.date)}</strong></td>
           <td>${esc(e.userName)}</td>
-          <td><span class="tag neutral">Entrada informada</span><br><span class="mono">${esc(c.original)} → <strong>${esc(c.informado)}</strong></span></td>
-          <td><small>${esc(c.motivo)}</small>${linhaEnvioChegada(c.enviadoEm, e.chegouEm)}</td>
+          <td><span class="mono">${esc(e.entrada)}</span> <small class="muted">(sistema: ${esc(aj.original)})</small><br><span class="tag neutral">Entrada informada pela pessoa</span></td>
+          <td><small>${esc(aj.motivo)}</small><br><small class="muted">Informada às ${esc(horaCurta(aj.em))}</small></td>
           <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
-            <button class="btn" style="background:var(--pos); color:#fff; border:0; padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="conferirEntradaInformada(this.dataset.uid, this.dataset.eid, true)">✓ Confirmar</button>
-            <button class="btn" style="color:var(--neg); padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="conferirEntradaInformada(this.dataset.uid, this.dataset.eid, false)">↩ Voltar p/ ${esc(c.original)}</button>
+            <button class="btn" style="background:var(--pos); color:#fff; border:0; padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="decidirEntradaAjustada(this.dataset.uid, this.dataset.eid, true)">✓ Confirmar</button>
+            <button class="btn" style="color:var(--neg); padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="decidirEntradaAjustada(this.dataset.uid, this.dataset.eid, false)">↩ Reverter</button>
           </td>`;
-        tbody.appendChild(tr);
+        tbody.appendChild(trC);
       });
 
       const itens = [];
@@ -2245,7 +2326,7 @@
           <td><strong>${esc(e.date)}</strong></td>
           <td>${esc(e.userName)}</td>
           <td><span class="mono">${esc(e.entrada)} → ${esc(e.saida)}</span></td>
-          <td><small>${esc(e.obs)}</small>${linhaEnvioChegada(e.enviadoEm, e.chegouEm)}</td>
+          <td><small>${esc(e.obs)}</small>${textoEnvioHtml(e)}</td>
           <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
             <button class="btn" style="background:var(--pos); color:#fff; border:0; padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="aprovarSolicitacaoReal(this.dataset.uid, this.dataset.eid)">✓ Aprovar</button>
             <button class="btn" style="color:var(--neg); padding:4px 8px;" data-uid="${esc(e.userId)}" data-eid="${esc(e.id)}" onclick="recusarSolicitacaoReal(this.dataset.uid, this.dataset.eid)">✕ Recusar</button>
@@ -2253,60 +2334,6 @@
         `;
         tbody.appendChild(tr);
       });
-    }
-
-    // "enviada às HH:MM · chegou às HH:MM" (mostra aviso se demorou, ajuda a separar internet de falha do sistema)
-    function linhaEnvioChegada(enviadoEm, chegouEm) {
-      if (!enviadoEm) return '';
-      let txt = `enviada às ${hhmmDeTs(enviadoEm)}`;
-      let aviso = '';
-      if (chegouEm) {
-        txt += ` · chegou às ${hhmmDeTs(chegouEm)}`;
-        const dif = Math.round((chegouEm - enviadoEm) / 60000);
-        if (dif >= 3) aviso = ` <span class="neg">⚠ demorou ${dif} min (internet ou app fechado)</span>`;
-      } else {
-        txt += ' · ainda sem confirmação de chegada';
-      }
-      return `<br><small class="muted mono">${txt}</small>${aviso}`;
-    }
-
-    // Gestão confere uma entrada informada: confirma, ou volta ao horário que o sistema registrou
-    function aplicarConferencia(state, entryId, confirmar) {
-      const entries = Array.isArray(state.entries) ? state.entries : [];
-      const e = entries.find(x => x.id === entryId);
-      if (!e || !e.conferir || e.conferir.status !== 'pendente') return false;
-      if (confirmar) {
-        e.conferir.status = 'confirmado';
-        e.obs = '[Entrada conferida pela Gestão] ' + (e.obs || '');
-      } else {
-        e.entrada = e.conferir.original;
-        e.conferir.status = 'revertido';
-        e.obs = `[Gestão manteve a entrada do sistema ${e.conferir.original}] ` + (e.obs || '');
-        if (e.saida) { // dia já encerrado: refaz o saldo com o horário do sistema
-          const meta = e.meta || (state.config && state.config.expected) || 360;
-          const calc = Core.calcPJ(e.entrada, e.saida, e.intervalo, false, meta, e.date);
-          e.variation = calc.saldo - (e.abono || 0);
-        }
-      }
-      e.conferir.conferidoEm = Date.now();
-      e.updatedAt = Date.now();
-      return true;
-    }
-
-    async function conferirEntradaInformada(targetUserId, entryId, confirmar) {
-      const info = infoSolicitacao(targetUserId, entryId);
-      if (!confirmar && !confirm('Voltar para o horário que o sistema registrou? O saldo do dia será recalculado.')) return;
-      if (targetUserId === currentUserId) {
-        if (!aplicarConferencia(appState, entryId, confirmar)) { showToast('Essa conferência não existe mais.'); loadTeamMembersFromCloud(); return; }
-        saveLocal();
-      } else {
-        if (!sbClient) return;
-        const ok = await alterarEstadoDoColega(targetUserId, (st) => aplicarConferencia(st, entryId, confirmar));
-        if (!ok) return;
-      }
-      registrarEvento(confirmar ? 'aprovacao' : 'recusa', targetUserId, info.nome, { ...info.detalhes, tipo: 'entrada_informada' });
-      showToast(confirmar ? 'Entrada confirmada.' : 'Voltou para o horário do sistema.', { title: 'Conferência feita', tone: confirmar ? 'success' : 'info' });
-      loadTeamMembersFromCloud();
     }
 
     // Aplica a aprovação num estado (do colega ou o próprio). Devolve false se a solicitação não existe mais.
@@ -2357,6 +2384,59 @@
       }, { onConflict: 'user_id' });
       if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return false; }
       return true;
+    }
+
+    function horaCurta(ts) {
+      return ts ? new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+    }
+    // "Enviada às 08:55 · chegou 08:56": as duas horas vêm do relógio do mesmo computador, então a conta é confiável
+    function textoEnvioHtml(e) {
+      if (!e.enviadaEm) return '';
+      let s = `Enviada às ${horaCurta(e.enviadaEm)}`;
+      if (e.sincEm) {
+        const d = Math.round((e.sincEm - e.enviadaEm) / 60000);
+        s += d < 1 ? ' · chegou na hora' : ` · chegou às ${horaCurta(e.sincEm)} (ficou ${d} min só no computador da pessoa — conexão)`;
+      } else {
+        s += ' · ainda não confirmada na nuvem';
+      }
+      return `<br><small class="muted">${esc(s)}</small>`;
+    }
+    function aplicarConferenciaEntrada(state, entryId, confirmar) {
+      const e = (Array.isArray(state.entries) ? state.entries : []).find(x => x.id === entryId);
+      if (!e || !e.ajusteEntrada || e.ajusteEntrada.status !== 'conferir') return false;
+      const agora = Date.now();
+      if (confirmar) {
+        e.ajusteEntrada = { ...e.ajusteEntrada, status: 'confirmado', conferidaEm: agora };
+        e.obs = '[Entrada confirmada pela Gestão] ' + (e.obs || '');
+      } else {
+        const orig = e.ajusteEntrada.original;
+        e.entrada = orig;
+        e.ajusteEntrada = { ...e.ajusteEntrada, status: 'revertido', conferidaEm: agora };
+        e.obs = `[Entrada revertida pela Gestão: voltou para ${orig}] ` + (e.obs || '');
+        if (e.saida && e.type === 'trabalhado') {
+          const meta = typeof e.meta === 'number' ? e.meta : ((state.config && state.config.expected) || 360);
+          e.variation = Core.calcPJ(e.entrada, e.saida, e.intervalo, !!e.nextDay, meta, e.date).saldo - (e.abono || 0);
+        }
+      }
+      e.updatedAt = agora;
+      return true;
+    }
+    async function decidirEntradaAjustada(targetUserId, entryId, confirmar) {
+      const m = allTeamLoadedData.find(x => x.userId === targetUserId);
+      const e0 = m && (m.entries || []).find(x => x.id === entryId);
+      const det = (e0 && e0.ajusteEntrada) ? { data: e0.date, de: e0.ajusteEntrada.original, para: e0.entrada } : {};
+      if (!confirmar && !confirm('Voltar a entrada para o horário que o sistema registrou?')) return;
+      if (targetUserId === currentUserId) {
+        if (!aplicarConferenciaEntrada(appState, entryId, confirmar)) { showToast('Essa entrada não está mais aguardando conferência.'); loadTeamMembersFromCloud(); return; }
+        saveLocal();
+      } else {
+        if (!sbClient) return;
+        const ok = await alterarEstadoDoColega(targetUserId, (s) => aplicarConferenciaEntrada(s, entryId, confirmar));
+        if (!ok) return;
+      }
+      registrarEvento(confirmar ? 'confirmou_entrada' : 'reverteu_entrada', targetUserId, nomeDoMembro(targetUserId), det);
+      showToast(confirmar ? 'Entrada confirmada.' : 'Entrada revertida para o horário do sistema.', { title: confirmar ? 'Entrada confirmada' : 'Entrada revertida', tone: 'info' });
+      loadTeamMembersFromCloud();
     }
 
     async function aprovarSolicitacaoReal(targetUserId, entryId) {
@@ -2649,6 +2729,7 @@
           variation: min,
           obs: `[${tipo.rotulo} • saldo anterior ${Core.fromMinutes(min, true)}] ${motivo}`,
           status: 'pendente_aprovacao',
+          enviadaEm: agora,
           updatedAt: agora
         });
         saveLocal();
@@ -2675,6 +2756,7 @@
           lote,
           obs: `[${tipo.rotulo}] ${motivo}` + (l.intervalo ? ` (almoço de ${l.intervalo} min)` : ''),
           status: 'pendente_aprovacao',
+          enviadaEm: agora,
           updatedAt: agora
         });
       });
@@ -2780,6 +2862,9 @@
     const ROTULOS_EVENTO = {
       aprovacao: 'Aprovou ajuste',
       recusa: 'Recusou ajuste',
+      ajuste_entrada: 'Ajustou a própria entrada (dia em andamento)',
+      confirmou_entrada: 'Confirmou entrada ajustada',
+      reverteu_entrada: 'Reverteu entrada ajustada',
       edicao_ponto: 'Editou horários',
       exportacao_total: 'Exportou backup da equipe',
       exclusao_perfil: 'Excluiu perfil'
@@ -2955,6 +3040,14 @@
         document.getElementById('timeEntradaDisplay').textContent = todayEntry.entrada || '--:--';
         document.getElementById('timeSaidaDisplay').textContent = todayEntry.saida || '--:--';
         document.getElementById('entryDetectedLocation').textContent = todayEntry.location === 'escritorio' ? '🏢 Escritório • Conectado' : '🏠 Home Office • Conectado';
+        if (todayEntry.ajusteEntrada) {
+          const sitAj = { conferir: 'ajustada, aguardando conferência', confirmado: 'ajustada e confirmada', revertido: 'revertida pela gestão' }[todayEntry.ajusteEntrada.status] || 'ajustada';
+          document.getElementById('entryDetectedLocation').textContent += ` • Entrada ${sitAj} (sistema: ${todayEntry.ajusteEntrada.original})`;
+        }
+        const editavelHoje = todayEntry.type === 'trabalhado' && todayEntry.status === 'ativo' && !todayEntry.saida;
+        const elEnt = document.getElementById('timeEntradaDisplay');
+        elEnt.classList.toggle('editavel', editavelHoje);
+        elEnt.title = editavelHoje ? 'O computador demorou para abrir? Clique para corrigir a hora de entrada' : '';
 
         if (todayEntry.saida) {
           const calc = Core.calcPJ(todayEntry.entrada, todayEntry.saida, todayEntry.intervalo, false, appState.config.expected || 360, todayStr);
@@ -2976,6 +3069,7 @@
         }
       } else {
         document.getElementById('timeEntradaDisplay').textContent = '--:--';
+        document.getElementById('timeEntradaDisplay').classList.remove('editavel');
         document.getElementById('timeSaidaDisplay').textContent = '--:--';
         document.getElementById('statHorasHoje').textContent = '00:00';
         document.getElementById('statSaldoHoje').textContent = '+00:00';
@@ -3405,11 +3499,30 @@
 
     // ===== ESTADO DAS NOTIFICAÇÕES (lidas / histórico / limpas) — guardado por usuário neste aparelho =====
     function notifKey() { return 'realtime_notif_' + currentUserId; }
-    function lerNotifState() {
-      try { const r = JSON.parse(localStorage.getItem(notifKey()) || '{}'); return { read: r.read || {}, cleared: r.cleared || {} }; }
-      catch (e) { return { read: {}, cleared: {} }; }
+    // As notificações lidas agora ficam junto do resto dos dados (appState.notif), então vão para a nuvem
+    // e valem em todos os aparelhos. A chave antiga (só neste aparelho) é migrada na primeira leitura.
+    function migrarNotifAntigas() {
+      try {
+        const antigo = JSON.parse(localStorage.getItem(notifKey()) || 'null');
+        if (!antigo) return;
+        const n = appState.notif || (appState.notif = { read: {}, cleared: {} });
+        Object.entries(antigo.read || {}).forEach(([k, v]) => { if (!n.read[k] || v > n.read[k]) n.read[k] = v; });
+        Object.entries(antigo.cleared || {}).forEach(([k, v]) => { if (!n.cleared[k] || v > n.cleared[k]) n.cleared[k] = v; });
+        localStorage.removeItem(notifKey());
+      } catch (e) {}
     }
-    function salvarNotifState(st) { try { localStorage.setItem(notifKey(), JSON.stringify(st)); } catch (e) {} }
+    function lerNotifState() {
+      const n = appState.notif || {};
+      return { read: n.read || {}, cleared: n.cleared || {} };
+    }
+    function salvarNotifState(st) {
+      const limite = Date.now() - 120 * 86400000; // poda registros com mais de 120 dias
+      const poda = (o) => { const r = {}; Object.entries(o || {}).forEach(([k, v]) => { if (v > limite) r[k] = v; }); return r; };
+      appState.notif = { read: poda(st.read), cleared: poda(st.cleared) };
+      try { localStorage.setItem(getStorageKey(), JSON.stringify(appState)); }
+      catch (e) { showToast('Não consegui guardar neste aparelho, mas a leitura vale até fechar a página.'); }
+      syncWithCloud();
+    }
 
     function montarListaNotificacoes() {
       const itens = [];
@@ -3661,16 +3774,8 @@
       document.getElementById('formEditarPontos').addEventListener('submit', aplicarEdicaoPontos);
 
       document.getElementById('btnRegistrarAusencia').addEventListener('click', () => document.getElementById('modalFalta').showModal());
-      document.getElementById('btnSolicitarAjuste').addEventListener('click', () => {
-        document.getElementById('ajusteIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
-        document.getElementById('ajusteAbono').value = 0;
-        // Se o dia de hoje está em andamento, já abre nele (é o caso mais comum de correção)
-        const aberto = entradaDoDiaEmAndamento(getLocalDateStr());
-        if (aberto) document.getElementById('ajusteData').value = getLocalDateStr();
-        atualizarModoAjuste();
-        document.getElementById('modalSolicitarAjuste').showModal();
-      });
-      document.getElementById('ajusteData').addEventListener('change', atualizarModoAjuste);
+      document.getElementById('btnSolicitarAjuste').addEventListener('click', abrirModalAjuste);
+      document.getElementById('timeEntradaDisplay').addEventListener('click', () => { if (entradaDoDiaEmAndamento()) abrirModalAjuste(); });
       document.getElementById('btnLancarAntigos').addEventListener('click', abrirLancarAntigos);
       document.getElementById('formLancarAntigos').addEventListener('submit', enviarHorariosAntigos);
       document.getElementById('formLancarAntigos').addEventListener('input', agendarConferenciaAntigos);
@@ -3824,36 +3929,11 @@
 
       document.getElementById('formSolicitarAjuste').addEventListener('submit', (e) => {
         e.preventDefault();
+        if (e.target.dataset.modo === 'andamento') { enviarCorrecaoEntrada(); return; }
         const data = document.getElementById('ajusteData').value;
         const entrada = document.getElementById('ajusteEntrada').value;
         const saida = document.getElementById('ajusteSaida').value;
         const motivo = document.getElementById('ajusteMotivo').value.trim();
-
-        // Dia em andamento: corrige a entrada na hora e deixa para a gestão conferir
-        const aberto = entradaDoDiaEmAndamento(data);
-        if (aberto) {
-          if (!entrada || !motivo) { showToast('Informe o horário em que você chegou e a justificativa.'); return; }
-          if (Core.toMinutes(entrada) >= Core.toMinutes(aberto.entrada)) {
-            showToast(`O horário informado (${entrada}) precisa ser anterior ao registrado pelo sistema (${aberto.entrada}).`); return;
-          }
-          const original = aberto.entradaOriginal || aberto.entrada;
-          const previsto = appState.config.entrada || '09:00';
-          const atraso = Math.max(0, Core.toMinutes(entrada) - Core.toMinutes(previsto));
-          const loc = aberto.location === 'escritorio' ? 'Presencial' : 'Home Office';
-          aberto.entradaOriginal = original;
-          aberto.entrada = entrada;
-          aberto.conferir = { status: 'pendente', original, informado: entrada, motivo, enviadoEm: Date.now(), por: appState.profile.name || '' };
-          delete aberto.chegouEm;
-          aberto.obs = (atraso > 5 ? `Início com atraso de ${atraso} min (${loc})` : `Início regular (${loc})`)
-            + ` • entrada informada pela pessoa (sistema abriu às ${original}): ${motivo}`;
-          aberto.updatedAt = Date.now();
-          saveLocal();
-          document.getElementById('formSolicitarAjuste').reset();
-          document.getElementById('modalSolicitarAjuste').close();
-          showToast(`Entrada corrigida para ${entrada}. A gestão vai conferir.`, { title: 'Entrada ajustada', tone: 'time' });
-          return;
-        }
-
         let intervalo = parseInt(document.getElementById('ajusteIntervalo').value, 10);
         if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { showToast('Informe um intervalo de almoço entre 0 e 480 minutos.'); return; }
         const calc = Core.calcPJ(entrada, saida, intervalo, false, appState.config.expected || 360, data);
@@ -3877,7 +3957,7 @@
           ...(abono > 0 ? { abono: abono } : {}),
           obs: `[Solicitação] ${motivo}${notaAlmoco}${notaAbono}`,
           status: 'pendente_aprovacao',
-          enviadoEm: Date.now(),
+          enviadaEm: Date.now(),
           updatedAt: Date.now()
         });
 
@@ -4020,10 +4100,34 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxeGdmcWJna2pxZXJzcm51ZmZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4Mjc2NTMsImV4cCI6MjEwOTQwMzY1M30.kIVQx4Jel8ZryZaTnc1jtTsbvPuGh_F9-RIwPIBl9bs';
     let sbClient = null;
     let authMode = 'login';
+    // Quem chega pelo link do e-mail de confirmação traz isso na barra de endereço (o Supabase apaga depois)
+    const VEIO_DA_CONFIRMACAO = /[#&?]type=(signup|email)/.test(location.hash || '');
+    let confirmacaoAvisada = false;
+
+    function traduzirErroAuth(err) {
+      const m = String((err && err.message) || err || '').toLowerCase();
+      if (m.includes('email not confirmed')) return { texto: 'Falta confirmar seu e-mail. Abra o e-mail que enviamos (veja também o spam) ou peça um novo abaixo.', reenviar: true };
+      if (m.includes('invalid login credentials')) return { texto: 'E-mail ou senha incorretos.' };
+      if (m.includes('already registered')) return { texto: 'Esse e-mail já tem cadastro. Use "Entrar" ou "Esqueci a senha".' };
+      if (m.includes('error sending') || m.includes('unexpected_failure')) return { texto: 'Não consegui enviar o e-mail agora: o envio de e-mails do sistema ainda precisa de ajuste. Avise a gestão e tente de novo mais tarde.' };
+      if (m.includes('rate limit') || m.includes('too many') || m.includes('seconds')) return { texto: 'Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.' };
+      if (m.includes('at least') && m.includes('character')) return { texto: 'A senha precisa ter pelo menos 6 caracteres.' };
+      if (m.includes('failed to fetch') || m.includes('network')) return { texto: 'Sem conexão com a internet. Confira sua rede e tente de novo.' };
+      return { texto: (err && err.message) || 'Algo deu errado. Tente de novo.' };
+    }
+
+    function voltarParaTelaDeLogin(aviso) {
+      usuarioEntrouId = null;
+      currentUserId = 'guest'; isCloudAdmin = null;
+      appState.profile = { name: '', email: '', role: '', company: 'Real Estate São Paulo', birthDate: '', modalidade: 'custom', photo: '', updatedAt: 0 };
+      appState.entries = []; appState.removed = []; appState.notif = { read: {}, cleared: {} };
+      updateAdminStatus();
+      document.getElementById('appScreen').hidden = true;
+      document.getElementById('authScreen').hidden = false;
+      if (aviso) { const mb = document.getElementById('authMsgBox'); if (mb) mb.textContent = aviso; }
+    }
 
     function initSupabase() {
-      // Veio do link do e-mail de confirmação? (o Supabase devolve a sessão no endereço)
-      const veioDoEmail = /type=(signup|email_change|magiclink|invite)/.test(location.hash) || /[?&]code=/.test(location.search);
       try {
         if (typeof supabase !== 'undefined') {
           sbClient = supabase.createClient(SB_URL, SB_KEY);
@@ -4032,19 +4136,23 @@
           });
           sbClient.auth.onAuthStateChange((event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
-              const nova = prompt('Digite sua nova senha (mínimo 6 caracteres):');
-              if (nova && nova.length >= 6) {
-                sbClient.auth.updateUser({ password: nova }).then(({ error }) => showToast(error ? 'Erro: ' + error.message : 'Senha alterada com sucesso!'));
-              } else if (nova) { showToast('Senha muito curta. Peça o link de novo.'); }
+              document.getElementById('novaSenhaMsg').textContent = '';
+              document.getElementById('formNovaSenha').reset();
+              const dlgSenha = document.getElementById('modalNovaSenha');
+              if (!dlgSenha.open) dlgSenha.showModal();
             }
-            if (event === 'SIGNED_OUT') usuarioEntrouId = null;
-            if (session && session.user) {
-              if (event === 'SIGNED_IN' && veioDoEmail && usuarioEntrouId !== session.user.id) {
-                showToast('E-mail confirmado! Seu banco de horas já está liberado.', { title: 'Bem-vindo(a)!', tone: 'success' });
-                try { history.replaceState(null, '', location.pathname); } catch (e) {}
-              }
-              onUserSignedIn(session.user);
+            if (event === 'SIGNED_OUT') {
+              // Saiu sozinho (sessão vencida ou invalidada): volta para o login em vez de ficar "logado" sem enviar nada
+              const appAberto = !document.getElementById('appScreen').hidden;
+              if (appAberto && currentUserId !== 'guest') {
+                voltarParaTelaDeLogin('Sua sessão expirou. Entre de novo para continuar (seus dados deste aparelho continuam salvos).');
+              } else { usuarioEntrouId = null; }
             }
+            if (event === 'SIGNED_IN' && VEIO_DA_CONFIRMACAO && !confirmacaoAvisada) {
+              confirmacaoAvisada = true;
+              setTimeout(() => showToast('Seu e-mail foi confirmado e sua conta está pronta.', { title: 'Tudo certo!', tone: 'success' }), 900);
+            }
+            if (session && session.user) onUserSignedIn(session.user);
           });
         }
       } catch (e) {}
@@ -4052,17 +4160,19 @@
 
     // SINCRONIZAÇÃO BLINDADA COM TIMESTAMP (O MAIS NOVO SEMPRE VENCE)
     let usuarioEntrouId = null;
+    let instanteLoginAtual = null; // hora em que a sessão abriu (antes de esperar nuvem e IP)
     async function onUserSignedIn(user) {
       // O Supabase avisa mais de uma vez (sessão salva, login, renovação de token). Só entramos uma vez por usuário.
       if (usuarioEntrouId === user.id) return;
       usuarioEntrouId = user.id;
-      esconderAguardandoConfirmacao();
+      instanteLoginAtual = new Date();
       currentUserId = user.id;
       localStorage.setItem('realtime_current_uid', currentUserId);
       document.getElementById('authScreen').hidden = true;
       document.getElementById('appScreen').hidden = false;
 
       loadLocal();
+      migrarNotifAntigas();
 
       if (sbClient) {
         try {
@@ -4126,7 +4236,6 @@
       if (!sbClient || currentUserId === 'guest') return;
       if (syncEmAndamento) { if (!opcoes.soPuxar) syncRepetir = true; return; }
       syncEmAndamento = true;
-      let carimbados = [];
       try {
         // 1) Antes de gravar, traz o que mudou na nuvem (assim nada da gestão é sobrescrito)
         try {
@@ -4139,19 +4248,23 @@
         }
         if (opcoes.soPuxar && !syncPendente) return;
 
-        // 2) Grava (antes, carimba a hora em que cada solicitação/conferência está subindo)
-        carimbados = [];
-        appState.entries.forEach(e => {
-          const aguardando = e.status === 'pendente_aprovacao' || (e.conferir && e.conferir.status === 'pendente');
-          if (aguardando && !e.chegouEm) { e.chegouEm = Date.now(); carimbados.push(e); }
-        });
+        // 2) Grava (solicitações novas levam junto a hora em que subiram, para saber se a internet atrasou)
+        const tEnvio = Date.now();
+        const idsSemSinc = new Set((appState.entries || []).filter(x => x && x.status === 'pendente_aprovacao' && x.enviadaEm && !x.sincEm).map(x => x.id));
+        const estadoParaNuvem = idsSemSinc.size
+          ? { ...appState, entries: appState.entries.map(x => idsSemSinc.has(x.id) ? { ...x, sincEm: tEnvio } : x) }
+          : appState;
         const { error } = await sbClient.from('bh_state').upsert({
           user_id: currentUserId,
-          state: JSON.stringify(appState),
+          state: JSON.stringify(estadoParaNuvem),
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
 
-        if (error) { carimbados.forEach(e => { delete e.chegouEm; }); throw error; }
+        if (error) throw error;
+        if (idsSemSinc.size) {
+          appState.entries.forEach(x => { if (idsSemSinc.has(x.id) && !x.sincEm) x.sincEm = tEnvio; });
+          try { localStorage.setItem(getStorageKey(), JSON.stringify(appState)); } catch (e2) {}
+        }
 
         document.getElementById('syncDot').className = 'sync-dot';
         document.getElementById('syncText').textContent = 'Nuvem OK';
@@ -4161,7 +4274,6 @@
         document.getElementById('syncDot').className = 'sync-dot offline';
         document.getElementById('syncText').textContent = 'Salvo no PC';
         console.warn('Falha ao sincronizar com a nuvem:', e);
-        carimbados.forEach(x => { delete x.chegouEm; }); // não subiu: refaz o carimbo na próxima tentativa
         syncPendente = true; syncFalhas++;
         if (syncFalhas >= 2) atualizarAlertaSync(false, (e && e.message) ? e.message : '');
       } finally {
@@ -4171,7 +4283,7 @@
     }
 
     // Com o app aberto o dia todo: puxa as novidades (ex.: aprovação da gestão) a cada 5 min e ao voltar para a aba
-    setInterval(() => { if (!document.hidden) syncWithCloud({ soPuxar: true }); }, 2 * 60 * 1000);
+    setInterval(() => { if (!document.hidden) syncWithCloud({ soPuxar: true }); }, 5 * 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWithCloud({ soPuxar: true }); });
 
     // Tenta de novo sozinho a cada 1 min e quando a internet volta
@@ -4220,42 +4332,51 @@
     setInterval(() => { if (!document.hidden) atualizarSolicitacoesEmSegundoPlano(); }, 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarSolicitacoesEmSegundoPlano(); });
 
-    // Tela "confirme seu e-mail" com reenvio (aparece no cadastro e no login de quem ainda não confirmou)
-    let reenvioAte = 0;
-    function mostrarAguardandoConfirmacao(email) {
-      const msgBox = document.getElementById('authMsgBox');
-      msgBox.textContent = '';
-      let box = document.getElementById('authConfirmBox');
-      if (!box) {
-        box = document.createElement('div');
-        box.id = 'authConfirmBox';
-        box.style.cssText = 'border:1px solid var(--c-laranja); border-radius:12px; padding:14px; margin-bottom:14px; font-size:13px; line-height:1.5;';
-        msgBox.parentNode.insertBefore(box, msgBox);
-      }
-      box.innerHTML = `<strong style="font-size:15px;">📧 Confirme seu e-mail</strong><br>
-        Enviamos um link para <strong>${esc(email)}</strong>. Clique nele e você entra no RealTime já com tudo pronto.
-        <br><small class="muted">Não chegou? Veja o spam/lixo eletrônico.</small>
-        <div style="margin-top:10px;"><button type="button" class="btn" id="btnReenviarConfirm">Reenviar e-mail</button> <small id="reenvioInfo" class="muted"></small></div>`;
-      box.hidden = false;
-      document.getElementById('btnReenviarConfirm').onclick = async () => {
-        const info = document.getElementById('reenvioInfo');
-        if (Date.now() < reenvioAte) { info.textContent = 'Aguarde alguns segundos para reenviar.'; return; }
-        reenvioAte = Date.now() + 60000;
-        const { error } = await sbClient.auth.resend({ type: 'signup', email, options: { emailRedirectTo: location.origin + location.pathname } });
-        info.textContent = error ? ('Não deu para reenviar: ' + error.message) : 'Reenviado! Confira sua caixa de entrada.';
-      };
-    }
-    function esconderAguardandoConfirmacao() {
-      const box = document.getElementById('authConfirmBox');
-      if (box) box.hidden = true;
-    }
-
     function setupAuthForm() {
       const tabLogin = document.getElementById('tabAuthLogin');
       const tabSignup = document.getElementById('tabAuthSignup');
       const btnSubmit = document.getElementById('btnSubmitAuth');
       const boxSignup = document.getElementById('boxSignupFields');
       const msgBox = document.getElementById('authMsgBox');
+      const btnResend = document.getElementById('btnResendConfirm');
+      let cooldown = null;
+      function mostrarReenvio(sim) { btnResend.style.display = sim ? '' : 'none'; }
+
+      btnResend.onclick = async () => {
+        const email = (document.getElementById('authEmail').value || '').trim();
+        if (!email) { msgBox.textContent = 'Digite seu e-mail no campo acima.'; return; }
+        btnResend.disabled = true;
+        try {
+          if (!sbClient) throw new Error('Serviço não iniciado.');
+          const { error } = await sbClient.auth.resend({ type: 'signup', email, options: { emailRedirectTo: location.origin + location.pathname } });
+          if (error) throw error;
+          msgBox.textContent = 'Reenviamos o e-mail de confirmação. Pode levar alguns minutos; veja também o spam.';
+        } catch (err) { msgBox.textContent = traduzirErroAuth(err).texto; }
+        let resta = 60;
+        clearInterval(cooldown);
+        cooldown = setInterval(() => {
+          resta--;
+          btnResend.textContent = resta > 0 ? `Reenviar em ${resta}s` : 'Reenviar e-mail de confirmação';
+          if (resta <= 0) { clearInterval(cooldown); btnResend.disabled = false; }
+        }, 1000);
+      };
+
+      document.getElementById('formNovaSenha').onsubmit = async (ev) => {
+        ev.preventDefault();
+        const s1 = document.getElementById('novaSenha1').value, s2 = document.getElementById('novaSenha2').value;
+        const msg = document.getElementById('novaSenhaMsg');
+        if (s1.length < 6) { msg.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
+        if (s1 !== s2) { msg.textContent = 'As duas senhas não são iguais.'; return; }
+        const btn = document.getElementById('btnSalvarNovaSenha');
+        btn.disabled = true;
+        try {
+          const { error } = await sbClient.auth.updateUser({ password: s1 });
+          if (error) throw error;
+          document.getElementById('modalNovaSenha').close();
+          showToast('Senha alterada com sucesso!', { title: 'Pronto', tone: 'success' });
+        } catch (err) { msg.textContent = traduzirErroAuth(err).texto; }
+        finally { btn.disabled = false; }
+      };
 
       tabLogin.onclick = () => {
         authMode = 'login';
@@ -4303,8 +4424,8 @@
           if (!sbClient) throw new Error('Serviço não iniciado.');
           const { error } = await sbClient.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
           if (error) throw error;
-          msgBox.textContent = 'Enviamos um link para redefinir a senha no seu e-mail.';
-        } catch (err) { msgBox.textContent = err.message; }
+          msgBox.textContent = 'Enviamos um link para redefinir a senha no seu e-mail. Veja também o spam.';
+        } catch (err) { msgBox.textContent = traduzirErroAuth(err).texto; }
       };
 
       document.getElementById('formAuth').onsubmit = async (e) => {
@@ -4317,16 +4438,15 @@
 
         btnSubmit.disabled = true;
         btnSubmit.textContent = 'Aguarde...';
+        msgBox.textContent = '';
+        mostrarReenvio(false);
 
         try {
           if (!sbClient) throw new Error('Serviço Supabase não iniciado.');
 
           if (authMode === 'login') {
             const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
-            if (error) {
-              if (/not confirmed/i.test(error.message || '')) { mostrarAguardandoConfirmacao(email); return; }
-              throw error;
-            }
+            if (error) throw error;
             onUserSignedIn(data.user);
           } else {
             const { data, error } = await sbClient.auth.signUp({
@@ -4334,16 +4454,23 @@
               options: { data: { name, role, birthDate }, emailRedirectTo: location.origin + location.pathname }
             });
             if (error) throw error;
-            if (data.session && data.user) {
-              onUserSignedIn(data.user);               // confirmação desligada: já entra logado
-            } else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-              msgBox.textContent = 'Este e-mail já tem cadastro. Use a aba Entrar (ou \"Esqueci a senha\").';
-            } else {
-              mostrarAguardandoConfirmacao(email);     // sem sessão ainda: NÃO entra no app, espera o clique no e-mail
+            // E-mail que já tem cadastro volta "sem erro" mas sem identidade: não é uma conta nova
+            if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+              msgBox.textContent = 'Esse e-mail já tem cadastro. Use "Entrar" ou "Esqueci a senha".';
+              return;
             }
+            // Sem sessão = falta confirmar o e-mail. Só entra no sistema depois do clique no link.
+            if (!data.session) {
+              msgBox.textContent = `Quase lá! Enviamos um link de confirmação para ${email}. Clique nele para ativar sua conta: você entra no sistema automaticamente. Veja também o spam.`;
+              mostrarReenvio(true);
+              return;
+            }
+            onUserSignedIn(data.user);
           }
         } catch (err) {
-          msgBox.textContent = err.message;
+          const t = traduzirErroAuth(err);
+          msgBox.textContent = t.texto;
+          if (t.reenviar) mostrarReenvio(true);
         } finally {
           btnSubmit.disabled = false;
           btnSubmit.textContent = authMode === 'login' ? 'Entrar no RealTime' : 'Cadastrar e Começar';
