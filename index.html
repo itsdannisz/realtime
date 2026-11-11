@@ -255,6 +255,9 @@
     .bm-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border-color); }
     .bm-head > svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
     .bm-head strong { font-size: 14px; font-weight: 700; flex: 1; }
+    .bm-pub { display: inline-flex; align-items: center; gap: 4px; background: var(--c-laranja); color: #fff; border: 0; border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .bm-pub:hover { background: var(--c-laranja-hover); }
+    .bm-pub[hidden] { display: none; }
     .bm-all { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 0; color: var(--text-muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
     .bm-all:hover { color: var(--c-laranja); }
     .bm-all svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1186,10 +1189,23 @@
     </div>
   </dialog>
 
+  <dialog id="modalPublicar">
+    <h3 style="font-size:16px; font-weight:800; margin-bottom:14px;">Publicar comunicado</h3>
+    <form id="formPublicar">
+      <div class="form-group"><input type="text" id="pubTitulo" placeholder="Título (Ex: Reunião geral)" maxlength="120" required></div>
+      <div class="form-group"><textarea id="pubMsg" placeholder="Mensagem para toda a equipe..." rows="4" maxlength="1000" required></textarea></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn-laranja" id="pubEnviar" style="width:auto; padding:8px 18px;">Publicar</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="bellMenu" class="bell-menu" role="dialog" aria-label="Notificações" hidden>
     <div class="bm-head">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 1112 0v5.5l1.5 2h-15z"/><path d="M10 21h4"/></svg>
       <strong>Notificações</strong>
+      <button type="button" class="bm-pub" id="bmPublicar" hidden>+ Publicar</button>
       <button type="button" class="bm-all" id="bmVerTodas">Ver todas <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
     <div class="bm-list" id="bmList"></div>
@@ -1642,6 +1658,21 @@
       try { if (stack.matches(':popover-open')) stack.hidePopover(); stack.showPopover(); } catch (e) {}
     }
 
+    // Publica um comunicado para a equipe (usado pela Central e pelo botão do sino)
+    async function publicarComunicado(inTitulo, inMsg) {
+      const title = inTitulo.value.trim().slice(0, 120);
+      const message = inMsg.value.trim().slice(0, 1000);
+      if (!title || !message) return false;
+      if (!isAdminUser) { showToast('Só a gestão pode publicar comunicados.'); return false; }
+      if (!sbClient || currentUserId === 'guest') { showToast('Entre com a sua conta para publicar comunicados.'); return false; }
+      const { error } = await sbClient.from('bh_announcements').insert({ title, message });
+      if (error) { showToast('Não consegui publicar: ' + (error.message || 'sem permissão')); return false; }
+      inTitulo.value = ''; inMsg.value = '';
+      await loadAnnouncements();
+      showToast('Toda a equipe já pode ver na lista de notificações.', { title: 'Comunicado publicado!' });
+      return true;
+    }
+
     // ===== LISTA DO SINO =====
     const ICON_BELL_ITEM = { aviso: TOAST_ICONES.notice, bday: TOAST_ICONES.bday };
     const _semEmoji = (s) => String(s || '').replace(/^(\p{Extended_Pictographic}\uFE0F?)\s*/u, '');
@@ -1666,6 +1697,7 @@
         .sort((a, b) => ((st.read[a.key] ? 1 : 0) - (st.read[b.key] ? 1 : 0)) || (b.ts - a.ts))
         .slice(0, 6);
       box.textContent = '';
+      document.getElementById('bmPublicar').hidden = !isAdminUser;
       document.getElementById('bmMarcarTodas').style.display = itens.some(n => !st.read[n.key]) ? '' : 'none';
       if (!itens.length) { const v = document.createElement('div'); v.className = 'bm-vazio'; v.textContent = 'Nenhuma notificação por enquanto.'; box.appendChild(v); return; }
       itens.forEach(n => {
@@ -3563,20 +3595,23 @@
         reader.readAsDataURL(file);
       });
 
-      document.getElementById('formAdminNotice').addEventListener('submit', async (e) => {
+      document.getElementById('formAdminNotice').addEventListener('submit', (e) => {
         e.preventDefault();
-        const title = document.getElementById('noticeTitleInput').value.trim().slice(0, 120);
-        const message = document.getElementById('noticeMsgInput').value.trim().slice(0, 1000);
-        if (!title || !message) return;
-        if (!sbClient || currentUserId === 'guest') { showToast('Entre com a sua conta para publicar comunicados.'); return; }
-
-        const { error } = await sbClient.from('bh_announcements').insert({ title, message });
-        if (error) { showToast('Não consegui publicar: ' + (error.message || 'sem permissão')); return; }
-
-        document.getElementById('noticeTitleInput').value = '';
-        document.getElementById('noticeMsgInput').value = '';
-        await loadAnnouncements();
-        showToast('Toda a equipe já pode ver na lista de notificações.', { title: 'Comunicado publicado!' });
+        publicarComunicado(document.getElementById('noticeTitleInput'), document.getElementById('noticeMsgInput'));
+      });
+      document.getElementById('bmPublicar').addEventListener('click', () => {
+        fecharBellMenu();
+        const m = document.getElementById('modalPublicar');
+        if (!m.open) m.showModal();
+        document.getElementById('pubTitulo').focus();
+      });
+      document.getElementById('formPublicar').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('pubEnviar');
+        btn.disabled = true;
+        const ok = await publicarComunicado(document.getElementById('pubTitulo'), document.getElementById('pubMsg'));
+        btn.disabled = false;
+        if (ok) document.getElementById('modalPublicar').close();
       });
 
       // SALVAR PERFIL (SINCRONIZA MODALIDADE E JORNADA)
