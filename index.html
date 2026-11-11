@@ -125,20 +125,6 @@
 
     .container { max-width: 1260px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
-    /* ===== AVISOS NO TOPO (cartão de notificação fixo na página) ===== */
-    .notice-card { --notice-color: var(--c-laranja); --notice-bg: rgba(236, 137, 77, 0.16); position: relative; display: flex; align-items: flex-start; gap: 12px; background: var(--card-white); border: 1px solid var(--border-color); border-left: 4px solid var(--notice-color); border-radius: var(--radius-md); padding: 12px 12px 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow-card); animation: noticeIn 0.25s ease-out both; }
-    .notice-bday { --notice-color: var(--pos); --notice-bg: var(--pos-bg); }
-    .notice-ico { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--notice-bg); }
-    .notice-body { flex: 1 1 auto; min-width: 0; }
-    .notice-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--notice-color); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .notice-count { font-size: 10px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--notice-bg); color: var(--notice-color); letter-spacing: 0; text-transform: none; }
-    .notice-title { font-size: 14px; font-weight: 800; line-height: 1.3; color: var(--text-main); overflow-wrap: anywhere; }
-    .notice-msg { font-size: 12.5px; line-height: 1.5; color: var(--text-muted); margin-top: 3px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .notice-msg:empty { display: none; }
-    .notice-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
-    @keyframes noticeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-    @media (max-width: 560px) { .notice-card { flex-wrap: wrap; } .notice-body { flex: 1 1 0; } .notice-actions { flex: 0 0 calc(100% - 50px); margin-left: 50px; } }
-
     .hero-banner { background: var(--hero-bg); color: #ffffff; border-radius: var(--radius-lg); padding: 26px 30px; margin-bottom: 24px; border: 1px solid var(--border-color); border-top: 3px solid var(--hero-border); box-shadow: var(--shadow-card); }
     .hero-top-wrap { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
     .hero-greeting { font-size: 12px; font-weight: 600; color: var(--c-laranja); }
@@ -227,30 +213,67 @@
     input:focus, select:focus, textarea:focus { border-color: var(--c-laranja); }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* ===== NOTIFICAÇÕES (cartões no canto da tela) ===== */
-    #toastStack { position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); right: 16px; width: min(380px, calc(100vw - 32px)); display: flex; flex-direction: column-reverse; gap: 10px; z-index: 10000; pointer-events: none; }
-    .toast-card { --tc: var(--c-laranja); --tc-bg: rgba(236, 137, 77, 0.16); position: relative; overflow: hidden; pointer-events: auto; display: flex; align-items: flex-start; gap: 12px; background: var(--card-white); color: var(--text-main); border: 1px solid var(--border-color); border-left: 4px solid var(--tc); border-radius: 14px; padding: 12px 10px 15px 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); animation: toastIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    /* ===== NOTIFICAÇÕES (cartões curtos no canto superior direito) ===== */
+    :root { --t-time: #f5a142; --t-info: #3b82f6; --t-absence: #e2c39b; --t-bday: #10b981; }
+    [data-theme="light"] { --t-time: #d9822b; --t-info: #2563eb; --t-absence: #a9783f; --t-bday: #059669; }
+    #toastStack { position: fixed; top: 84px; right: 16px; left: auto; bottom: auto; width: min(400px, calc(100vw - 32px)); height: auto; margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; display: flex; flex-direction: column; gap: 10px; z-index: 10000; pointer-events: none; }
+    .toast-card { --tc: var(--c-laranja); position: relative; overflow: hidden; pointer-events: auto; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 14px; min-height: 62px; padding: 10px 8px 10px 22px; background: var(--card-white); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32); animation: toastIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    .toast-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tc); }
     .toast-card.clicavel { cursor: pointer; }
-    .toast-card.clicavel:hover { border-color: var(--tc); }
-    .toast-card.saindo { animation: toastOut 0.2s ease-in both; pointer-events: none; }
-    .toast-card.t-success { --tc: var(--pos); --tc-bg: var(--pos-bg); }
-    .toast-card.t-error { --tc: var(--neg); --tc-bg: var(--neg-bg); }
-    .toast-card.t-warn { --tc: var(--warn); --tc-bg: var(--warn-bg); }
-    .toast-ico { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: var(--tc); background: var(--tc-bg); }
-    .toast-body { flex: 1 1 auto; min-width: 0; }
-    .toast-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--tc); margin-bottom: 1px; }
-    .toast-title { font-size: 13px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
-    .toast-msg { font-size: 12.5px; line-height: 1.45; color: var(--text-muted); margin-top: 2px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .toast-card.saindo { animation: toastOut 0.18s ease-in both; pointer-events: none; }
+    .toast-card.t-success { --tc: var(--pos); }
+    .toast-card.t-error { --tc: var(--neg); }
+    .toast-card.t-warn { --tc: var(--warn); }
+    .toast-card.t-time { --tc: var(--t-time); }
+    .toast-card.t-info { --tc: var(--t-info); }
+    .toast-card.t-absence { --tc: var(--t-absence); }
+    .toast-card.t-bday { --tc: var(--t-bday); }
+    .toast-ico { display: flex; color: var(--tc); }
+    .toast-ico svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .toast-ico svg .fill { fill: currentColor; stroke: none; }
+    .toast-ico svg .on-fill { stroke: #fff; stroke-width: 2.2; }
+    .toast-body { min-width: 0; }
+    .toast-title { font-size: 14px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast-msg { font-size: 12.5px; line-height: 1.4; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .toast-msg:empty { display: none; }
-    .toast-x { flex: 0 0 auto; background: transparent; border: 0; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; padding: 4px 6px; border-radius: 6px; font-family: inherit; }
-    .toast-x:hover { color: var(--text-main); background: var(--card-sub); }
-    .toast-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--tc); opacity: 0.75; transform-origin: left; animation: toastBar var(--dur, 4000ms) linear forwards; }
+    .toast-card:hover .toast-msg, .toast-card:focus-within .toast-msg { white-space: normal; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
+    .toast-card:hover .toast-title, .toast-card:focus-within .toast-title { white-space: normal; }
+    .toast-x { align-self: center; height: 38px; display: flex; align-items: center; background: transparent; border: 0; border-left: 1px solid var(--border-color); color: var(--text-dim); cursor: pointer; padding: 0 12px 0 14px; font-family: inherit; }
+    .toast-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+    .toast-x:hover { color: var(--text-main); }
+    .toast-bar { position: absolute; left: 5px; right: 0; bottom: 0; height: 2px; background: var(--tc); opacity: 0.55; transform-origin: left; animation: toastBar var(--dur, 4000ms) linear forwards; }
     .toast-card:hover .toast-bar, .toast-card:focus-within .toast-bar { animation-play-state: paused; }
-    @keyframes toastIn { from { opacity: 0; transform: translateX(26px) scale(0.98); } to { opacity: 1; transform: none; } }
-    @keyframes toastOut { to { opacity: 0; transform: translateX(26px); } }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+    @keyframes toastOut { to { opacity: 0; transform: translateX(24px); } }
     @keyframes toastBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-    @media (max-width: 560px) { #toastStack { bottom: max(10px, env(safe-area-inset-bottom)); right: 10px; left: 10px; width: auto; } }
-    @media (prefers-reduced-motion: reduce) { .toast-card, .toast-card.saindo, .notice-card { animation: none; } }
+    @media (max-width: 560px) { #toastStack { right: 10px; left: 10px; width: auto; } .toast-title, .toast-msg { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; } }
+    @media (prefers-reduced-motion: reduce) { .toast-card, .toast-card.saindo { animation: none; } .toast-bar { animation: none; display: none; } }
+
+    /* ===== LISTA DO SINO ===== */
+    .bell-menu { position: fixed; z-index: 60; width: min(380px, calc(100vw - 16px)); display: flex; flex-direction: column; background: var(--card-white); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38); overflow: hidden; }
+    .bell-menu[hidden] { display: none; }
+    .bm-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border-color); }
+    .bm-head > svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .bm-head strong { font-size: 14px; font-weight: 700; flex: 1; }
+    .bm-all { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 0; color: var(--text-muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .bm-all:hover { color: var(--c-laranja); }
+    .bm-all svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .bm-list { max-height: 330px; overflow-y: auto; }
+    .bm-item { --tc: var(--c-laranja); display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--border-subtle); color: inherit; font: inherit; padding: 12px 16px; cursor: pointer; }
+    .bm-item:hover, .bm-item:focus-visible { background: var(--card-sub); outline: none; }
+    .bm-item.k-bday { --tc: var(--t-bday); }
+    .bm-ico { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: var(--tc); background: color-mix(in srgb, var(--tc) 16%, transparent); }
+    .bm-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .bm-txt { flex: 1; min-width: 0; }
+    .bm-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bm-item.novo .bm-title { font-weight: 800; }
+    .bm-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bm-pill { flex: 0 0 auto; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--c-laranja); color: #fff; }
+    .bm-chev { flex: 0 0 auto; width: 16px; height: 16px; fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .bm-vazio { padding: 24px 16px; text-align: center; font-size: 12.5px; color: var(--text-muted); }
+    .bm-foot { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: transparent; border: 0; border-top: 1px solid var(--border-color); padding: 12px; color: var(--text-muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .bm-foot:hover { color: var(--text-main); background: var(--card-sub); }
+    .bm-foot svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
     /* ===== RESUMO AO ENCERRAR O EXPEDIENTE ===== */
     #modalResumoDia { max-width: 400px; text-align: center; border-top: 4px solid var(--rs, var(--pos)); }
@@ -404,8 +427,8 @@
         </a>
 
         <div class="header-actions">
-          <button class="btn" id="btnNotificationBell" title="Notificações e Comunicados" style="position:relative; padding:8px 12px;">
-            🔔 <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--c-laranja); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
+          <button class="btn" id="btnNotificationBell" title="Notificações e Comunicados" aria-haspopup="true" aria-expanded="false" aria-label="Notificações" style="position:relative; padding:8px 12px;">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;" aria-hidden="true"><path d="M6 16.5V11a6 6 0 1112 0v5.5l1.5 2h-15z"/><path d="M10 21h4"/></svg> <span id="bellCountBadge" style="position:absolute; top:-4px; right:-4px; background:var(--c-laranja); color:#fff; border-radius:50%; font-size:9px; padding:2px 5px; font-weight:800; display:none;">0</span>
           </button>
 
           <button class="profile-chip-btn" id="btnOpenProfile" title="Meu Perfil">
@@ -440,31 +463,6 @@
     </header>
 
     <main class="container">
-      <div id="companyAnnouncementBanner" class="notice-card notice-aviso" role="status" style="display:none;">
-        <div class="notice-ico">📢</div>
-        <div class="notice-body">
-          <div class="notice-kicker"><span>Aviso da Gestão</span><span class="notice-count" id="bannerAnnounceCount" style="display:none;"></span></div>
-          <div class="notice-title" id="bannerAnnounceTitle"></div>
-          <div class="notice-msg" id="bannerAnnounceMsg"></div>
-        </div>
-        <div class="notice-actions">
-          <button type="button" class="btn" style="padding:4px 10px; font-size:11px;" onclick="abrirCentralNotificacoes()">Ver na central</button>
-          <button type="button" class="btn" style="padding:4px 8px; font-size:11px;" title="Dispensar" aria-label="Dispensar aviso" onclick="dispensarBannerAviso()">✕</button>
-        </div>
-      </div>
-
-      <div id="birthdayAlertBox" class="notice-card notice-bday" role="status" style="display:none;">
-        <div class="notice-ico" id="birthdayAlertIco">🎂</div>
-        <div class="notice-body">
-          <div class="notice-kicker"><span>Aniversário</span><span class="notice-count" id="birthdayAlertCount" style="display:none;"></span></div>
-          <div class="notice-title" id="birthdayAlertTitle"></div>
-          <div class="notice-msg" id="birthdayAlertText"></div>
-        </div>
-        <div class="notice-actions">
-          <button type="button" class="btn" style="padding:4px 8px; font-size:11px;" title="Dispensar" aria-label="Dispensar aviso" onclick="dispensarBannerNiver()">✕</button>
-        </div>
-      </div>
-
       <!-- BARRA DE NAVEGAÇÃO -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
         <div class="main-nav-tabs">
@@ -1188,7 +1186,17 @@
     </div>
   </dialog>
 
-  <div id="toastStack" aria-live="polite" aria-atomic="false"></div>
+  <div id="bellMenu" class="bell-menu" role="dialog" aria-label="Notificações" hidden>
+    <div class="bm-head">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 1112 0v5.5l1.5 2h-15z"/><path d="M10 21h4"/></svg>
+      <strong>Notificações</strong>
+      <button type="button" class="bm-all" id="bmVerTodas">Ver todas <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="bm-list" id="bmList"></div>
+    <button type="button" class="bm-foot" id="bmMarcarTodas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> Marcar todas como lidas</button>
+  </div>
+
+  <div id="toastStack" popover="manual" aria-live="polite" aria-atomic="false"></div>
 
   <!-- RESUMO AO ENCERRAR O EXPEDIENTE -->
   <dialog id="modalResumoDia">
@@ -1527,13 +1535,25 @@
       }
     }
 
-    // ===== NOTIFICAÇÕES (cartões no canto da tela) =====
+    // ===== NOTIFICAÇÕES (cartões curtos no canto superior direito) =====
     // showToast(msg)                       -> tom é deduzido pelo texto (sucesso / atenção / erro)
-    // showToast(msg, { tone, title, kicker, icon, duration, onClick })
+    // showToast(msg, { tone, title, icon, duration, onClick })
+    // tons: success, time (entrada/saída), error, info, absence (falta/atestado), warn, notice (comunicado), bday
     const TOAST_MAX = 3;
-    const TOAST_ICONES = { success: '✓', warn: '!', error: '✕', info: 'i', notice: '🔔' };
-    const TOAST_TITULOS = { success: 'Tudo certo', warn: 'Atenção', error: 'Algo não funcionou', info: 'Aviso', notice: 'Novidade' };
-    const TOAST_DURACAO = { success: 4000, warn: 6500, error: 9000, info: 6000, notice: 9000 };
+    const _svg = (inner) => `<svg viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
+    const TOAST_ICONES = {
+      success: _svg('<circle class="fill" cx="12" cy="12" r="10"/><path class="on-fill" d="M7.6 12.4l3 3 5.8-6.2"/>'),
+      time: _svg('<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5.2l3.3 2"/>'),
+      error: _svg('<circle cx="12" cy="12" r="9.5"/><path d="M9 9l6 6M15 9l-6 6"/>'),
+      info: _svg('<circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5"/><path d="M12 7.6h.01" stroke-width="2.4"/>'),
+      absence: _svg('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M8.5 14h.01M12 14h.01M15.5 14h.01M8.5 17.2h.01M12 17.2h.01" stroke-width="2.2"/>'),
+      warn: _svg('<path d="M12 3.6l9.4 16.4H2.6z"/><path d="M12 10v4.4"/><path d="M12 17.3h.01" stroke-width="2.4"/>'),
+      notice: _svg('<path d="M3.5 10.5v3a1 1 0 001 1H7l7.5 4.5v-14L7 9.5H4.5a1 1 0 00-1 1z"/><path d="M18 9.3a4.2 4.2 0 010 5.4"/>'),
+      bday: _svg('<path d="M4 20.5h16"/><path d="M5.5 20.5v-7a1.5 1.5 0 011.5-1.5h10a1.5 1.5 0 011.5 1.5v7"/><path d="M5.5 16.6c2 1.6 4 1.6 6.5 0s4.5-1.6 6.5 0"/><path d="M12 12V9.2"/><path d="M12 5.8c.9 1 .9 1.9 0 2.6-.9-.7-.9-1.6 0-2.6z"/>')
+    };
+    const ICON_X = _svg('<path d="M6 6l12 12M18 6L6 18"/>');
+    const TOAST_TITULOS = { success: 'Tudo certo', time: 'Horário registrado', warn: 'Atenção', error: 'Algo não funcionou', info: 'Aviso', absence: 'Ausência registrada', notice: 'Novo comunicado', bday: 'Aniversário' };
+    const TOAST_DURACAO = { success: 4000, time: 4000, absence: 4500, info: 5000, warn: 6500, error: 9000, notice: 8000, bday: 8000 };
 
     function _toastTom(msg) {
       if (/^N[aã]o consegui/i.test(msg)) return 'error';
@@ -1546,7 +1566,7 @@
       card._fechando = true;
       clearTimeout(card._t);
       card.classList.add('saindo');
-      setTimeout(() => card.remove(), rapido ? 0 : 200);
+      setTimeout(() => card.remove(), rapido ? 0 : 180);
     }
 
     function showToast(msg, opts) {
@@ -1559,7 +1579,9 @@
       let titulo = opts.title, corpo = msg;
       if (titulo === undefined) {
         const m = (tom === 'error') ? msg.match(/^(.{4,80}?):\s+([\s\S]+)$/) : null;
-        if (m) { titulo = m[1]; corpo = m[2]; } else { titulo = TOAST_TITULOS[tom]; }
+        if (m) { titulo = m[1]; corpo = m[2]; }
+        else if (tom !== 'error' && msg.length <= 48 && msg.indexOf('\n') < 0) { titulo = msg; corpo = ''; }   // frase curta: vira só o título
+        else { titulo = TOAST_TITULOS[tom]; }
       }
 
       // Mesmo aviso repetido: troca o antigo pelo novo (não empilha igual)
@@ -1576,15 +1598,18 @@
       card.dataset.k = chave;
       card.setAttribute('role', tom === 'error' ? 'alert' : 'status');
       card.style.setProperty('--dur', dur + 'ms');
+      card.title = corpo ? (titulo + ' — ' + corpo) : titulo;
 
-      card.appendChild(el('div', 'toast-ico', opts.icon || TOAST_ICONES[tom] || 'i'));
+      const ico = el('div', 'toast-ico');
+      if (opts.icon) ico.textContent = opts.icon; else ico.innerHTML = TOAST_ICONES[tom] || TOAST_ICONES.info;
+      card.appendChild(ico);
       const body = el('div', 'toast-body');
-      if (opts.kicker) body.appendChild(el('div', 'toast-kicker', opts.kicker));
-      if (titulo) body.appendChild(el('div', 'toast-title', titulo));
+      body.appendChild(el('div', 'toast-title', titulo || ''));
       body.appendChild(el('div', 'toast-msg', corpo));
       card.appendChild(body);
 
-      const x = el('button', 'toast-x', '✕');
+      const x = el('button', 'toast-x');
+      x.innerHTML = ICON_X;
       x.type = 'button'; x.title = 'Fechar'; x.setAttribute('aria-label', 'Fechar notificação');
       x.addEventListener('click', (e) => { e.stopPropagation(); _toastFechar(card); });
       card.appendChild(x);
@@ -1608,10 +1633,84 @@
       card.addEventListener('focusout', agendar);
       agendar();
 
+      // Fica logo abaixo do cabeçalho, sem cobrir os botões
+      const hdr = document.querySelector('header');
+      const baixo = hdr ? Math.max(0, hdr.getBoundingClientRect().bottom) : 0;
+      stack.style.top = (baixo + 10) + 'px';
       stack.prepend(card);
+      // Camada superior do navegador: o aviso aparece mesmo com uma janela (modal) aberta
+      try { if (stack.matches(':popover-open')) stack.hidePopover(); stack.showPopover(); } catch (e) {}
     }
 
+    // ===== LISTA DO SINO =====
+    const ICON_BELL_ITEM = { aviso: TOAST_ICONES.notice, bday: TOAST_ICONES.bday };
+    const _semEmoji = (s) => String(s || '').replace(/^(\p{Extended_Pictographic}\uFE0F?)\s*/u, '');
+    function _haQuanto(ts) {
+      if (!ts) return '';
+      const min = Math.floor((Date.now() - ts) / 60000);
+      if (min < 1) return 'Agora';
+      if (min < 60) return `Há ${min} min`;
+      const h = Math.floor(min / 60);
+      if (h < 24) return `Há ${h} h`;
+      const d = Math.floor(h / 24);
+      if (d === 1) return 'Ontem';
+      if (d < 7) return `Há ${d} dias`;
+      return new Date(ts).toLocaleDateString('pt-BR');
+    }
+    function bellMenuAberto() { const m = document.getElementById('bellMenu'); return !!(m && !m.hidden); }
+    function renderBellMenu() {
+      const box = document.getElementById('bmList');
+      if (!box) return;
+      const st = lerNotifState();
+      const itens = montarListaNotificacoes().filter(n => !st.cleared[n.key])
+        .sort((a, b) => ((st.read[a.key] ? 1 : 0) - (st.read[b.key] ? 1 : 0)) || (b.ts - a.ts))
+        .slice(0, 6);
+      box.textContent = '';
+      document.getElementById('bmMarcarTodas').style.display = itens.some(n => !st.read[n.key]) ? '' : 'none';
+      if (!itens.length) { const v = document.createElement('div'); v.className = 'bm-vazio'; v.textContent = 'Nenhuma notificação por enquanto.'; box.appendChild(v); return; }
+      itens.forEach(n => {
+        const novo = !st.read[n.key];
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'bm-item k-' + n.tipo + (novo ? ' novo' : '');
+        b.innerHTML = `<span class="bm-ico">${ICON_BELL_ITEM[n.tipo] || TOAST_ICONES.info}</span><span class="bm-txt"><div class="bm-title"></div><div class="bm-sub"></div></span>` +
+          (novo ? '<span class="bm-pill">Novo</span>' : _svg('<path d="M9 6l6 6-6 6"/>').replace('<svg', '<svg class="bm-chev"'));
+        b.querySelector('.bm-title').textContent = _semEmoji(n.title);
+        b.querySelector('.bm-sub').textContent = n.tipo === 'bday' ? 'Aniversário • Hoje' : `Aviso da gestão • ${_haQuanto(n.ts)}`;
+        b.addEventListener('click', () => { if (novo) marcarNotifLida(n.key); fecharBellMenu(); abrirCentralNotificacoes(); });
+        box.appendChild(b);
+      });
+    }
+    function posicionarBellMenu() {
+      const m = document.getElementById('bellMenu'), bt = document.getElementById('btnNotificationBell');
+      const r = bt.getBoundingClientRect();
+      const w = m.offsetWidth;
+      m.style.top = (r.bottom + 8) + 'px';
+      m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+    }
+    function fecharBellMenu() {
+      const m = document.getElementById('bellMenu');
+      if (m) m.hidden = true;
+      const bt = document.getElementById('btnNotificationBell');
+      if (bt) bt.setAttribute('aria-expanded', 'false');
+    }
+    function alternarBellMenu() {
+      if (bellMenuAberto()) { fecharBellMenu(); return; }
+      renderBellMenu();
+      document.getElementById('bellMenu').hidden = false;
+      posicionarBellMenu();
+      document.getElementById('btnNotificationBell').setAttribute('aria-expanded', 'true');
+    }
+    document.addEventListener('click', (e) => {
+      if (!bellMenuAberto()) return;
+      if (e.target.closest('#bellMenu') || e.target.closest('#btnNotificationBell')) return;
+      fecharBellMenu();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bellMenuAberto()) { fecharBellMenu(); document.getElementById('btnNotificationBell').focus(); } });
+    window.addEventListener('resize', () => { if (bellMenuAberto()) posicionarBellMenu(); });
+    window.addEventListener('scroll', () => { if (bellMenuAberto()) fecharBellMenu(); }, { passive: true });
+
     function abrirCentralNotificacoes() {
+      fecharBellMenu();
       loadAnnouncements();
       renderNotificationsModalContent();
       const m = document.getElementById('modalNotificacoes');
@@ -1812,7 +1911,7 @@
         });
 
         saveLocal();
-        showToast(`Início às ${timeNow} · ${locType === 'escritorio' ? 'Escritório' : 'Home Office'}`, { title: 'Entrada registrada', tone: 'success' });
+        showToast(`Início às ${timeNow} · ${locType === 'escritorio' ? 'Escritório' : 'Home Office'}`, { title: 'Entrada registrada', tone: 'time' });
       } else {
         if (!entry.ip || entry.ip === 'Offline/Local' || entry.ip === 'Rede Conectada') {
           entry.ip = ip;
@@ -1882,7 +1981,7 @@
         updatedAt: Date.now()
       });
       saveLocal();
-      showToast('Entrada às 09:30 (30 min de atraso). Agora clique em "Encerrar Expediente" para testar o desconto no banco de horas.', { title: 'Simulação ativa', tone: 'warn', icon: '🧪', duration: 12000 });
+      showToast('Entrada às 09:30 (30 min de atraso). Agora clique em "Encerrar Expediente" para testar o desconto no banco de horas.', { title: 'Simulação ativa', tone: 'warn', duration: 12000 });
     }
 
     let allTeamLoadedData = [];
@@ -2136,7 +2235,7 @@
         if (!ok) return;
       }
       registrarEvento('aprovacao', targetUserId, info.nome, info.detalhes);
-      showToast('Solicitação aprovada!');
+      showToast('A solicitação foi aprovada com sucesso.', { title: 'Solicitação aprovada!' });
       loadTeamMembersFromCloud();
     }
 
@@ -2152,7 +2251,7 @@
         if (!ok) return;
       }
       registrarEvento('recusa', targetUserId, info.nome, info.detalhes);
-      showToast('Solicitação recusada.');
+      showToast('', { title: 'Solicitação recusada', tone: 'info' });
       loadTeamMembersFromCloud();
     }
 
@@ -3154,7 +3253,7 @@
         const novos = sharedAnnouncements.filter(a => !idsComunicadosConhecidos.has(String(a.id)) && !st.read['a:' + a.id]);
         if (novos.length) {
           tocarSomNotificacao();
-          showToast(novos[0].message, { tone: 'notice', kicker: novos.length > 1 ? `${novos.length} novos comunicados` : 'Novo comunicado', title: novos[0].title, onClick: abrirCentralNotificacoes });
+          showToast(novos.length > 1 ? novos[0].title : (novos[0].title + (novos[0].message ? ' · ' + novos[0].message : '')), { tone: 'notice', title: novos.length > 1 ? `${novos.length} novos comunicados` : 'Novo comunicado', onClick: abrirCentralNotificacoes });
         }
       }
       idsComunicadosConhecidos = idsAgora;
@@ -3210,16 +3309,6 @@
     function marcarNotifLida(key) {
       const st = lerNotifState(); st.read[key] = Date.now(); salvarNotifState(st); checkBirthdaysNotification();
     }
-    function dispensarBannerAviso() {
-      const st = lerNotifState();
-      const prox = montarListaNotificacoes().find(n => n.tipo === 'aviso' && !st.read[n.key]);
-      if (prox) marcarNotifLida(prox.key); else document.getElementById('companyAnnouncementBanner').style.display = 'none';
-    }
-    function dispensarBannerNiver() {
-      const st = lerNotifState();
-      const prox = montarListaNotificacoes().find(n => n.tipo === 'bday' && !st.read[n.key]);
-      if (prox) marcarNotifLida(prox.key); else document.getElementById('birthdayAlertBox').style.display = 'none';
-    }
     function marcarTodasLidas() {
       const st = lerNotifState(); const t = Date.now();
       montarListaNotificacoes().forEach(n => { if (!st.read[n.key]) st.read[n.key] = t; });
@@ -3232,39 +3321,23 @@
       salvarNotifState(st); renderNotificationsModalContent();
     }
 
+    const _bdayAvisados = new Set();
     function checkBirthdaysNotification() {
       const st = lerNotifState();
       const todas = montarListaNotificacoes();
       const novas = todas.filter(n => !st.read[n.key]);
 
-      const alertBox = document.getElementById('birthdayAlertBox');
-      const bds = novas.filter(n => n.tipo === 'bday');
-      const bd = bds[0];
-      if (bd) {
-        const mi = /^(\p{Extended_Pictographic}\uFE0F?)\s*/u.exec(bd.title || '');
-        document.getElementById('birthdayAlertIco').textContent = mi ? mi[1] : '🎂';
-        document.getElementById('birthdayAlertTitle').textContent = mi ? bd.title.slice(mi[0].length) : bd.title;
-        document.getElementById('birthdayAlertText').textContent = bd.message;
-        const cb = document.getElementById('birthdayAlertCount');
-        cb.textContent = bds.length > 1 ? `+${bds.length - 1}` : ''; cb.style.display = bds.length > 1 ? '' : 'none';
-        alertBox.style.display = 'flex';
-      } else { alertBox.style.display = 'none'; }
-
-      const bannerBox = document.getElementById('companyAnnouncementBanner');
-      const avs = novas.filter(n => n.tipo === 'aviso');
-      const av = avs[0];
-      if (av) {
-        document.getElementById('bannerAnnounceTitle').textContent = av.title;
-        document.getElementById('bannerAnnounceMsg').textContent = av.message;
-        const ca = document.getElementById('bannerAnnounceCount');
-        ca.textContent = avs.length > 1 ? `+${avs.length - 1} ${avs.length - 1 === 1 ? 'aviso' : 'avisos'}` : ''; ca.style.display = avs.length > 1 ? '' : 'none';
-        bannerBox.style.display = 'flex';
-      } else { bannerBox.style.display = 'none'; }
+      // Aniversário novo: um cartão curto (uma vez por sessão); continua na lista do sino
+      const bdsNovos = novas.filter(n => n.tipo === 'bday' && !_bdayAvisados.has(n.key));
+      bdsNovos.forEach(n => _bdayAvisados.add(n.key));
+      if (bdsNovos.length === 1) showToast(bdsNovos[0].message, { tone: 'bday', title: _semEmoji(bdsNovos[0].title) });
+      else if (bdsNovos.length > 1) showToast('Veja quem são na lista de notificações.', { tone: 'bday', title: `${bdsNovos.length} aniversários hoje`, onClick: alternarBellMenu });
 
       const bellBadge = document.getElementById('bellCountBadge');
       if (novas.length > 0) { bellBadge.textContent = novas.length; bellBadge.style.display = 'inline-block'; }
       else { bellBadge.style.display = 'none'; }
 
+      if (bellMenuAberto()) renderBellMenu();
       renderNotificationsModalContent();
     }
 
@@ -3472,7 +3545,9 @@
         document.getElementById('estagioBoxSaldo').hidden = !saldo;
       }));
       document.getElementById('btnUseHours').addEventListener('click', () => document.getElementById('modalUso').showModal());
-      document.getElementById('btnNotificationBell').addEventListener('click', abrirCentralNotificacoes);
+      document.getElementById('btnNotificationBell').addEventListener('click', alternarBellMenu);
+      document.getElementById('bmVerTodas').addEventListener('click', abrirCentralNotificacoes);
+      document.getElementById('bmMarcarTodas').addEventListener('click', () => { marcarTodasLidas(); });
 
       document.getElementById('btnTrocarFoto').addEventListener('click', () => document.getElementById('profilePhotoInput').click());
       document.getElementById('profilePhotoInput').addEventListener('change', (e) => {
@@ -3501,7 +3576,7 @@
         document.getElementById('noticeTitleInput').value = '';
         document.getElementById('noticeMsgInput').value = '';
         await loadAnnouncements();
-        showToast('Comunicado publicado para toda a equipe!');
+        showToast('Toda a equipe já pode ver na lista de notificações.', { title: 'Comunicado publicado!' });
       });
 
       // SALVAR PERFIL (SINCRONIZA MODALIDADE E JORNADA)
@@ -3601,7 +3676,7 @@
 
         saveLocal();
         document.getElementById('modalFalta').close();
-        showToast('Ausência registrada com sucesso.');
+        showToast('Sua ausência foi salva.', { title: 'Ausência registrada', tone: 'absence' });
       });
 
       document.getElementById('formSolicitarAjuste').addEventListener('submit', (e) => {
