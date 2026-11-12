@@ -162,6 +162,8 @@
     .btn-verde:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--card-sub); color: var(--text-main); cursor: pointer; }
     .btn:hover { border-color: var(--c-laranja); }
+    :focus-visible { outline: 2px solid var(--c-laranja); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
     .more-actions { position: relative; }
     .more-actions > summary { list-style: none; cursor: pointer; }
     .more-actions > summary::-webkit-details-marker { display: none; }
@@ -401,7 +403,7 @@
 
         <div class="form-group">
           <label>Senha</label>
-          <input type="password" id="authPassword" required placeholder="Mínimo 6 caracteres" minlength="6">
+          <input type="password" id="authPassword" required placeholder="Sua senha (no cadastro, mínimo 8 caracteres)">
         </div>
 
         <p id="authMsgBox" style="font-size:12px; margin-bottom:14px; min-height:18px;"></p>
@@ -451,11 +453,11 @@
             <span id="syncText">Sincronizado</span>
           </div>
 
-          <button class="btn" id="btnThemeToggle" title="Alternar tema">
+          <button class="btn" id="btnThemeToggle" title="Alternar tema" aria-label="Alternar tema">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           </button>
 
-          <button class="btn" id="btnSettings" title="Configurações">
+          <button class="btn" id="btnSettings" title="Configurações" aria-label="Configurações">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
           </button>
 
@@ -468,19 +470,19 @@
       <!-- BARRA DE NAVEGAÇÃO -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
         <div class="main-nav-tabs">
-          <button class="active" data-view="v-banco">⏱️ Meu Banco de Horas</button>
-          <button id="tabTeamAdmin" data-view="v-equipe" style="display:none;">👥 Gestão da equipe</button>
-          <button id="tabApprovals" data-view="v-aprovacoes" style="display:none;">⏳ Solicitações (<span id="pendingCountTab">0</span>)</button>
+          <button class="active" data-view="v-banco">Meu Banco de Horas</button>
+          <button id="tabTeamAdmin" data-view="v-equipe" style="display:none;">Gestão da equipe</button>
+          <button id="tabApprovals" data-view="v-aprovacoes" style="display:none;">Solicitações (<span id="pendingCountTab">0</span>)</button>
         </div>
 
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <button class="btn-laranja" id="btnFinalizarDiaHero" style="display:none;">⏹️ Encerrar Expediente</button>
+          <button class="btn-laranja" id="btnFinalizarDiaHero" style="display:none;">Encerrar expediente</button>
           <details class="more-actions" id="moreActions">
             <summary class="btn">Mais ações ▾</summary>
             <div class="more-actions-menu">
               <button class="btn" id="btnRegistrarAusencia" style="color:var(--neg);">Registrar falta / atestado</button>
               <button class="btn" id="btnExportCSV">Exportar extrato (CSV)</button>
-              <button class="btn" id="btnSimularAtraso" title="Ferramenta de teste da gestão" style="display:none;">🧪 Simular atraso (30 min)</button>
+              <button class="btn" id="btnSimularAtraso" title="Ferramenta de teste da gestão" style="display:none;">Simular atraso (30 min)</button>
             </div>
           </details>
         </div>
@@ -551,13 +553,13 @@
 
               <div class="punch-actions-wrap" style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
                 <button class="btn-laranja" id="btnFinalizarDiaInstantaneo">
-                  ⏹️ Encerrar Expediente Agora
+                  Encerrar expediente agora
                 </button>
                 <button class="btn" id="btnSolicitarAjuste" style="width:100%;">
-                  ✏️ Solicitar Ajuste / Justificativa
+                  Solicitar ajuste / justificativa
                 </button>
                 <button class="btn" id="btnLancarAntigos" style="width:100%;">
-                  📋 Adicionar horas anteriores
+                  Adicionar horas anteriores
                 </button>
               </div>
             </div>
@@ -612,8 +614,8 @@
                 <strong><span id="bulkCount">0</span> selecionado(s)</strong>
                 <button type="button" class="btn" id="btnBulkHome">🏠 Marcar Home</button>
                 <button type="button" class="btn" id="btnBulkEscritorio">🏢 Marcar Escritório</button>
-                <button type="button" class="btn" id="btnBulkEditar">✏️ Editar horários</button>
-                <button type="button" class="btn" id="btnBulkExcluir" style="color:var(--neg);">🗑️ Excluir</button>
+                <button type="button" class="btn" id="btnBulkEditar">Editar horários</button>
+                <button type="button" class="btn" id="btnBulkExcluir" style="color:var(--neg);">Excluir</button>
                 <button type="button" class="btn" id="btnBulkLimpar" style="margin-left:auto;">Limpar seleção</button>
               </div>
 
@@ -736,14 +738,14 @@
   <dialog id="modalNovaSenha">
     <form id="formNovaSenha">
       <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja); margin-bottom:8px;">Criar nova senha</h3>
-      <p class="muted" style="font-size:12px; margin-bottom:14px;">Digite a nova senha duas vezes (mínimo 6 caracteres).</p>
+      <p class="muted" style="font-size:12px; margin-bottom:14px;">Digite a nova senha duas vezes (mínimo 8 caracteres).</p>
       <div class="form-group">
         <label>Nova senha</label>
-        <input type="password" id="novaSenha1" minlength="6" required autocomplete="new-password">
+        <input type="password" id="novaSenha1" minlength="8" required autocomplete="new-password">
       </div>
       <div class="form-group">
         <label>Repita a nova senha</label>
-        <input type="password" id="novaSenha2" minlength="6" required autocomplete="new-password">
+        <input type="password" id="novaSenha2" minlength="8" required autocomplete="new-password">
       </div>
       <p id="novaSenhaMsg" style="font-size:12px; min-height:18px;"></p>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
@@ -1112,6 +1114,17 @@
   </dialog>
 
   <!-- MODAL: CONFIGURAÇÕES GERAIS -->
+  <dialog id="modalConfirmar">
+    <form method="dialog">
+      <h3 id="confTitulo" style="font-size:16px; font-weight:800; margin-bottom:10px;">Confirmar</h3>
+      <p id="confTexto" style="font-size:13px; color:var(--text-muted); white-space:pre-line; margin-bottom:18px;"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn" value="cancel" id="confCancelar" autofocus>Cancelar</button>
+        <button class="btn-laranja" value="ok" id="confOk" style="width:auto;">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="modalSettings">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
       <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Configurações da Jornada</h3>
@@ -1153,8 +1166,8 @@
     <div class="form-group" style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
       <label>Backup dos dados</label>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button type="button" class="btn" id="btnExportJSONQuick" title="Baixar backup completo (JSON)">📤 Exportar backup (JSON)</button>
-        <button type="button" class="btn" id="btnImportJSONQuick" title="Restaurar backup JSON">📥 Importar backup (JSON)</button>
+        <button type="button" class="btn" id="btnExportJSONQuick" title="Baixar backup completo (JSON)">Exportar backup (JSON)</button>
+        <button type="button" class="btn" id="btnImportJSONQuick" title="Restaurar backup JSON">Importar backup (JSON)</button>
         <input type="file" id="jsonQuickInput" accept=".json" style="display:none">
       </div>
     </div>
@@ -1264,6 +1277,24 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <script>
+    // Janela de confirmação do próprio app (no lugar do confirm/alert do navegador)
+    function pedirConfirmacao(texto, semCancelar) {
+      return new Promise((resolve) => {
+        const d = document.getElementById('modalConfirmar');
+        if (!d || typeof d.showModal !== 'function') { resolve(window.confirm(texto)); return; }
+        const t = String(texto || '');
+        const rotulo = /excluir|remover/i.test(t) ? 'Excluir' : /recusar/i.test(t) ? 'Recusar' : /limpar/i.test(t) ? 'Limpar' : /sair/i.test(t) ? 'Sair' : /aprovar/i.test(t) ? 'Aprovar' : /atualizar/i.test(t) ? 'Atualizar' : 'Confirmar';
+        document.getElementById('confTitulo').textContent = semCancelar ? 'Aviso' : 'Confirmar ação';
+        document.getElementById('confTexto').textContent = t;
+        document.getElementById('confOk').textContent = semCancelar ? 'Entendi' : rotulo;
+        document.getElementById('confCancelar').style.display = semCancelar ? 'none' : '';
+        d.returnValue = '';
+        d.addEventListener('close', () => resolve(d.returnValue === 'ok'), { once: true });
+        d.showModal();
+      });
+    }
+    function mostrarAviso(texto) { return pedirConfirmacao(texto, true); }
+
     const BRAZIL_HOLIDAYS = [
       { d: '01/01', name: 'Confraternização Universal' },
       { d: '21/04', name: 'Tiradentes' },
@@ -1997,7 +2028,7 @@
       }
     }
 
-    function finalizarDiaInstantaneo() {
+    async function finalizarDiaInstantaneo() {
       const now = new Date();
       const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const todayStr = getLocalDateStr();
@@ -2010,7 +2041,7 @@
         return;
       }
 
-      if (entry.saida && !confirm(`O expediente de hoje já foi encerrado às ${entry.saida}. Deseja atualizar o horário de encerramento para agora (${timeNow})?`)) {
+      if (entry.saida && !await pedirConfirmacao(`O expediente de hoje já foi encerrado às ${entry.saida}. Deseja atualizar o horário de encerramento para agora (${timeNow})?`)) {
         return;
       }
 
@@ -2430,7 +2461,7 @@
       const m = allTeamLoadedData.find(x => x.userId === targetUserId);
       const e0 = m && (m.entries || []).find(x => x.id === entryId);
       const det = (e0 && e0.ajusteEntrada) ? { data: e0.date, de: e0.ajusteEntrada.original, para: e0.entrada } : {};
-      if (!confirmar && !confirm('Voltar a entrada para o horário que o sistema registrou?')) return;
+      if (!confirmar && !await pedirConfirmacao('Voltar a entrada para o horário que o sistema registrou?')) return;
       if (targetUserId === currentUserId) {
         if (!aplicarConferenciaEntrada(appState, entryId, confirmar)) { showToast('Essa entrada não está mais aguardando conferência.'); loadTeamMembersFromCloud(); return; }
         saveLocal();
@@ -2461,7 +2492,7 @@
 
     async function recusarSolicitacaoReal(targetUserId, entryId) {
       const info = infoSolicitacao(targetUserId, entryId);
-      if (!confirm('Recusar esta solicitação e descartar o registro?')) return;
+      if (!await pedirConfirmacao('Recusar esta solicitação e descartar o registro?')) return;
       if (targetUserId === currentUserId) {
         if (!aplicarRecusa(appState, entryId)) { showToast('Essa solicitação não existe mais.'); loadTeamMembersFromCloud(); return; }
         saveLocal();
@@ -2815,7 +2846,7 @@
       const ids = m ? (m.entries || []).filter(e => e.lote === lote && e.status === 'pendente_aprovacao').map(e => e.id) : [];
       if (ids.length === 0) return;
       const nome = nomeDoMembro(uid);
-      if (!confirm(`${aprovar ? 'Aprovar' : 'Recusar e descartar'} o lote de ${ids.length} dia(s) de ${nome}?`)) return;
+      if (!await pedirConfirmacao(`${aprovar ? 'Aprovar' : 'Recusar e descartar'} o lote de ${ids.length} dia(s) de ${nome}?`)) return;
       const fn = aprovar ? aplicarAprovacao : aplicarRecusa;
       const aplicar = (st) => { let alguma = false; ids.forEach(id => { if (fn(st, id)) alguma = true; }); return alguma; };
       if (uid === currentUserId) {
@@ -2836,7 +2867,7 @@
       const ids = m ? (m.entries || []).filter(e => e.status === 'pendente_aprovacao').map(e => e.id) : [];
       if (ids.length === 0) return;
       const nome = nomeDoMembro(uid);
-      if (!confirm(`Aprovar TODAS as ${ids.length} solicitações pendentes de ${nome}?\n\nConfira a lista abaixo antes: isso aprova tudo de uma vez.`)) return;
+      if (!await pedirConfirmacao(`Aprovar TODAS as ${ids.length} solicitações pendentes de ${nome}?\n\nConfira a lista abaixo antes: isso aprova tudo de uma vez.`)) return;
       const aplicar = (st) => { let alguma = false; ids.forEach(id => { if (aplicarAprovacao(st, id)) alguma = true; }); return alguma; };
       if (uid === currentUserId) {
         if (!aplicar(appState)) { showToast('Essas solicitações não existem mais.'); loadTeamMembersFromCloud(); return; }
@@ -3288,10 +3319,10 @@
       showToast(`${n} ponto(s) marcados como ${local === 'escritorio' ? 'Escritório' : 'Home Office'}.`);
     }
 
-    function excluirSelecionados() {
+    async function excluirSelecionados() {
       const n = selectedEntryIds.size;
       if (n === 0) return;
-      if (!confirm(`Excluir ${n} lançamento(s) do banco de horas? Essa ação não pode ser desfeita.`)) return;
+      if (!await pedirConfirmacao(`Excluir ${n} lançamento(s) do banco de horas? Essa ação não pode ser desfeita.`)) return;
       const ids = new Set(selectedEntryIds);
       ids.forEach(id => marcarRemovido(id));
       appState.entries = appState.entries.filter(x => !ids.has(x.id));
@@ -3300,8 +3331,8 @@
       showToast(`${n} lançamento(s) removido(s).`);
     }
 
-    function excluirLinha(id) {
-      if (confirm('Excluir este lançamento do banco de horas?')) {
+    async function excluirLinha(id) {
+      if (await pedirConfirmacao('Excluir este lançamento do banco de horas?')) {
         marcarRemovido(id);
         appState.entries = appState.entries.filter(e => e.id !== id);
         saveLocal();
@@ -3567,8 +3598,8 @@
       montarListaNotificacoes().forEach(n => { if (!st.read[n.key]) st.read[n.key] = t; });
       salvarNotifState(st); checkBirthdaysNotification();
     }
-    function limparHistoricoNotif() {
-      if (!confirm('Limpar o histórico de notificações? Isso não apaga os comunicados da equipe, só some da sua lista.')) return;
+    async function limparHistoricoNotif() {
+      if (!await pedirConfirmacao('Limpar o histórico de notificações? Isso não apaga os comunicados da equipe, só some da sua lista.')) return;
       const st = lerNotifState(); const t = Date.now();
       Object.keys(st.read).forEach(k => { st.cleared[k] = t; });
       salvarNotifState(st); renderNotificationsModalContent();
@@ -3649,7 +3680,7 @@
         }
 
     async function deleteAnnouncement(id) {
-      if (!confirm('Remover este comunicado da equipe?')) return;
+      if (!await pedirConfirmacao('Remover este comunicado da equipe?')) return;
       const { error } = await sbClient.from('bh_announcements').delete().eq('id', id);
       if (error) { showToast('Não consegui remover: ' + (error.message || 'sem permissão')); return; }
       await loadAnnouncements();
@@ -4041,7 +4072,7 @@
                     return `${k}: ${tipo}${extra}`;
                   }).join('\n')
                 : typeof parsed;
-              alert('Não consegui reconhecer os registros deste arquivo.\n\nEstrutura encontrada:\n' + resumo + '\n\nMande esse texto (ou um trecho do arquivo) para ajustarmos a importação.');
+              mostrarAviso('Não consegui reconhecer os registros deste arquivo.\n\nEstrutura encontrada:\n' + resumo + '\n\nMande esse texto (ou um trecho do arquivo) para ajustarmos a importação.');
               return;
             }
 
@@ -4086,7 +4117,7 @@
       });
 
       document.getElementById('btnTopLogout').addEventListener('click', async () => {
-        if (confirm('Deseja realmente sair da sua conta?')) {
+        if (await pedirConfirmacao('Deseja realmente sair da sua conta?')) {
           if (sbClient) await sbClient.auth.signOut();
           usuarioEntrouId = null;
           currentUserId = 'guest'; isCloudAdmin = null;
@@ -4114,9 +4145,9 @@
       if (m.includes('email not confirmed')) return { texto: 'Falta confirmar seu e-mail. Abra o e-mail que enviamos (veja também o spam) ou peça um novo abaixo.', reenviar: true };
       if (m.includes('invalid login credentials')) return { texto: 'E-mail ou senha incorretos.' };
       if (m.includes('already registered')) return { texto: 'Esse e-mail já tem cadastro. Use "Entrar" ou "Esqueci a senha".' };
-      if (m.includes('error sending') || m.includes('unexpected_failure')) return { texto: 'Não consegui enviar o e-mail agora: o envio de e-mails do sistema ainda precisa de ajuste. Avise a gestão e tente de novo mais tarde.' };
+      if (m.includes('error sending') || m.includes('unexpected_failure')) return { texto: 'Não consegui enviar o e-mail agora. O envio tem limite por hora, então aguarde alguns minutos e tente de novo. Se continuar, avise a gestão.' };
       if (m.includes('rate limit') || m.includes('too many') || m.includes('seconds')) return { texto: 'Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.' };
-      if (m.includes('at least') && m.includes('character')) return { texto: 'A senha precisa ter pelo menos 6 caracteres.' };
+      if (m.includes('at least') && m.includes('character')) return { texto: 'A senha precisa ter pelo menos 8 caracteres.' };
       if (m.includes('failed to fetch') || m.includes('network')) return { texto: 'Sem conexão com a internet. Confira sua rede e tente de novo.' };
       return { texto: (err && err.message) || 'Algo deu errado. Tente de novo.' };
     }
@@ -4370,7 +4401,7 @@
         ev.preventDefault();
         const s1 = document.getElementById('novaSenha1').value, s2 = document.getElementById('novaSenha2').value;
         const msg = document.getElementById('novaSenhaMsg');
-        if (s1.length < 6) { msg.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
+        if (s1.length < 8) { msg.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
         if (s1 !== s2) { msg.textContent = 'As duas senhas não são iguais.'; return; }
         const btn = document.getElementById('btnSalvarNovaSenha');
         btn.disabled = true;
@@ -4402,9 +4433,9 @@
         loadLocal();
         if (!appState.profile.name) {
           appState.profile = {
-            name: 'Danielle Silva (Gestão)',
-            email: 'danielle@realestatesp.com.br',
-            role: 'Marketing / Gestão',
+            name: 'Colaborador',
+            email: '',
+            role: '',
             company: 'Real Estate São Paulo',
             birthDate: '',
             modalidade: 'custom',
@@ -4454,6 +4485,7 @@
             if (error) throw error;
             onUserSignedIn(data.user);
           } else {
+            if (password.length < 8) throw new Error('Password should be at least 8 characters.');
             const { data, error } = await sbClient.auth.signUp({
               email, password,
               options: { data: { name, role, birthDate }, emailRedirectTo: location.origin + location.pathname }
