@@ -162,6 +162,11 @@
     .btn-verde:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--card-sub); color: var(--text-main); cursor: pointer; }
     .btn:hover { border-color: var(--c-laranja); }
+    .more-actions { position: relative; }
+    .more-actions > summary { list-style: none; cursor: pointer; }
+    .more-actions > summary::-webkit-details-marker { display: none; }
+    .more-actions-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 230px; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--card-white); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+    .more-actions-menu .btn { width: 100%; justify-content: flex-start; }
 
     .chart-box { width: 100%; height: 130px; margin-top: 10px; }
 
@@ -446,14 +451,6 @@
             <span id="syncText">Sincronizado</span>
           </div>
 
-          <button class="btn" id="btnImportJSONQuick" title="Restaurar backup JSON" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">
-            📥 Importar JSON
-          </button>
-          <button class="btn" id="btnExportJSONQuick" title="Baixar backup completo (JSON)" style="border-color:var(--c-laranja); color:var(--c-laranja); font-weight:700;">
-            📤 Exportar JSON
-          </button>
-          <input type="file" id="jsonQuickInput" accept=".json" style="display:none">
-
           <button class="btn" id="btnThemeToggle" title="Alternar tema">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           </button>
@@ -472,21 +469,20 @@
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
         <div class="main-nav-tabs">
           <button class="active" data-view="v-banco">⏱️ Meu Banco de Horas</button>
-          <button id="tabTeamAdmin" data-view="v-equipe" style="display:none;">👥 Gestão da Equipe (Danielle)</button>
+          <button id="tabTeamAdmin" data-view="v-equipe" style="display:none;">👥 Gestão da equipe</button>
           <button id="tabApprovals" data-view="v-aprovacoes" style="display:none;">⏳ Solicitações (<span id="pendingCountTab">0</span>)</button>
         </div>
 
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn-laranja" id="btnFinalizarDiaHero" style="width:auto; padding:9px 18px;">
-            ⏹️ Encerrar Expediente
-          </button>
-          <button class="btn" id="btnSimularAtraso" title="Ferramenta de Teste da Gestão" style="display:none; border-color:var(--c-laranja); color:var(--c-laranja);">
-            🧪 Simular Atraso (30m)
-          </button>
-          <button class="btn" id="btnRegistrarAusencia" style="border-color:rgba(239, 68, 68, 0.4); color:var(--neg);">
-            Registrar Falta / Atestado
-          </button>
-          <button class="btn" id="btnExportCSV">Exportar Extrato (CSV)</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button class="btn-laranja" id="btnFinalizarDiaHero" style="display:none;">⏹️ Encerrar Expediente</button>
+          <details class="more-actions" id="moreActions">
+            <summary class="btn">Mais ações ▾</summary>
+            <div class="more-actions-menu">
+              <button class="btn" id="btnRegistrarAusencia" style="color:var(--neg);">Registrar falta / atestado</button>
+              <button class="btn" id="btnExportCSV">Exportar extrato (CSV)</button>
+              <button class="btn" id="btnSimularAtraso" title="Ferramenta de teste da gestão" style="display:none;">🧪 Simular atraso (30 min)</button>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -606,7 +602,7 @@
                   <select id="filterMonth" style="width:auto; padding:6px 10px; font-size:12px;">
                     <option value="">Todo o Período</option>
                   </select>
-                  <button class="btn" id="btnUseHours" style="font-size:11px; border-color:var(--c-laranja); color:var(--c-laranja);">
+                  <button class="btn" id="btnUseHours" style="font-size:11px;">
                     Compensar Horas
                   </button>
                 </div>
@@ -616,7 +612,7 @@
                 <strong><span id="bulkCount">0</span> selecionado(s)</strong>
                 <button type="button" class="btn" id="btnBulkHome">🏠 Marcar Home</button>
                 <button type="button" class="btn" id="btnBulkEscritorio">🏢 Marcar Escritório</button>
-                <button type="button" class="btn" id="btnBulkEditar" style="border-color:var(--c-laranja); color:var(--c-laranja);">✏️ Editar horários</button>
+                <button type="button" class="btn" id="btnBulkEditar">✏️ Editar horários</button>
                 <button type="button" class="btn" id="btnBulkExcluir" style="color:var(--neg);">🗑️ Excluir</button>
                 <button type="button" class="btn" id="btnBulkLimpar" style="margin-left:auto;">Limpar seleção</button>
               </div>
@@ -1152,6 +1148,15 @@
       <small class="muted" style="font-size:11px;">
         Quem abrir o sistema por este IP será registrado automaticamente como <strong>🏢 Escritório</strong>. Outros IPs serão marcados como <strong>🏠 Home Office</strong>.
       </small>
+    </div>
+
+    <div class="form-group" style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
+      <label>Backup dos dados</label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="btn" id="btnExportJSONQuick" title="Baixar backup completo (JSON)">📤 Exportar backup (JSON)</button>
+        <button type="button" class="btn" id="btnImportJSONQuick" title="Restaurar backup JSON">📥 Importar backup (JSON)</button>
+        <input type="file" id="jsonQuickInput" accept=".json" style="display:none">
+      </div>
     </div>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
@@ -4488,6 +4493,13 @@
       initSupabase();
 
       setInterval(renderDashboard, 60000);
+    });
+  </script>
+  <script>
+    // Menu "Mais ações": fecha ao escolher uma ação ou clicar fora
+    document.addEventListener('click', (e) => {
+      const d = document.getElementById('moreActions');
+      if (d && d.open && (!d.contains(e.target) || e.target.closest('.more-actions-menu button'))) d.open = false;
     });
   </script>
   <script>
