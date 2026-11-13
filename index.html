@@ -1952,7 +1952,9 @@
       let removeu = false;
       grupos.forEach(lista => {
         if (lista.length < 2) return;
-        lista.sort((a, b) => (b.locManual ? 1 : 0) - (a.locManual ? 1 : 0) || (b.updatedAt || 0) - (a.updatedAt || 0));
+        // Prioridade: local escolhido à mão > entrada ajustada > entrada MAIS CEDO (é a chegada real) > edição mais recente > id (desempate igual em todo aparelho)
+        const minEnt = (x) => (x.entrada ? Core.toMinutes(x.entrada) : 99999);
+        lista.sort((a, b) => (b.locManual ? 1 : 0) - (a.locManual ? 1 : 0) || (b.ajusteEntrada ? 1 : 0) - (a.ajusteEntrada ? 1 : 0) || minEnt(a) - minEnt(b) || (b.updatedAt || 0) - (a.updatedAt || 0) || String(a.id).localeCompare(String(b.id)));
         const descartar = new Set(lista.slice(1).map(e => e.id));
         lista.slice(1).forEach(e => marcarRemovido(e.id));
         appState.entries = appState.entries.filter(e => !descartar.has(e.id));
@@ -4277,7 +4279,13 @@
         try {
           const { data: row, error: errLer } = await sbClient.from('bh_state').select('state').eq('user_id', currentUserId).maybeSingle();
           if (errLer) throw errLer;
-          if (row && row.state && mesclarEstadoDaNuvem(stateFromRow(row.state))) renderTudoAposMescla();
+          if (row && row.state) {
+            const mudou = mesclarEstadoDaNuvem(stateFromRow(row.state));
+            // Dois aparelhos podem ter aberto o dia ao mesmo tempo: depois de juntar, limpa o duplicado e manda a limpeza para a nuvem
+            const limpou = deduplicarEntradasAbertas();
+            if (limpou) syncPendente = true;
+            if (mudou || limpou) renderTudoAposMescla();
+          }
         } catch (e) {
           console.warn('Não consegui ler a nuvem antes de gravar:', e);
           if (opcoes.soPuxar) return;
