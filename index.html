@@ -1728,7 +1728,7 @@
         date, type, entrada: entrada || '--:--', saida, location,
         obs: r.obs || r.observacao || r.observação || '',
         status: r.status === 'pendente_aprovacao' ? 'pendente_aprovacao' : 'ativo',
-        updatedAt: r.updatedAt || Date.now()
+        updatedAt: tsNum(r.updatedAt) || Date.now()
       };
       if (intervalo !== undefined) bruto.intervalo = intervalo;
       if (variation !== undefined) bruto.variation = variation;
@@ -1749,7 +1749,7 @@
       const obs = e.obs || '';
       const status = e.status || 'ativo';
       const id = e.id || 'id_' + Math.random().toString(36).slice(2);
-      const updatedAt = e.updatedAt || Date.now();
+      const updatedAt = tsNum(e.updatedAt) || Date.now();
 
       let variation = 0;
       let meta = typeof e.meta === 'number' ? e.meta : null;
@@ -2069,6 +2069,19 @@
 
     // ===== MESCLAGEM COM A NUVEM =====
     // Lê o estado salvo no Supabase (pode vir como texto ou objeto)
+    // Carimbo de tempo sempre como NÚMERO (ms). Pontos importados antigos trazem texto ISO ("2026-11-06T14:05:03.524Z"),
+    // e comparar número com texto dá sempre "falso": a edição da gestão perdia para a cópia velha do colaborador.
+    function tsNum(v) {
+      if (typeof v === 'number') return isFinite(v) ? v : 0;
+      if (typeof v === 'string' && v) {
+        const n = Number(v);
+        if (isFinite(n)) return n;
+        const d = Date.parse(v);
+        if (!isNaN(d)) return d;
+      }
+      return 0;
+    }
+
     function stateFromRow(raw) {
       if (!raw) return null;
       try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { return null; }
@@ -2095,14 +2108,14 @@
       const antes = snap();
 
       // Só substitui a configuração / o perfil se a nuvem for MAIS RECENTE
-      const cloudCfgTime = cloudState.config?.updatedAt || 0;
-      const localCfgTime = appState.config?.updatedAt || 0;
+      const cloudCfgTime = tsNum(cloudState.config?.updatedAt);
+      const localCfgTime = tsNum(appState.config?.updatedAt);
       if (cloudCfgTime > localCfgTime) {
         appState.config = { ...appState.config, ...cloudState.config };
         recalculateExpected();
       }
-      const cloudProfTime = cloudState.profile?.updatedAt || 0;
-      const localProfTime = appState.profile?.updatedAt || 0;
+      const cloudProfTime = tsNum(cloudState.profile?.updatedAt);
+      const localProfTime = tsNum(appState.profile?.updatedAt);
       if (cloudProfTime > localProfTime) {
         appState.profile = { ...appState.profile, ...cloudState.profile };
       }
@@ -2120,12 +2133,12 @@
       (Array.isArray(cloudState.entries) ? cloudState.entries : []).forEach(ce => {
         if (!ce || !ce.id) return;
         const le = mapa.get(ce.id);
-        if (!le || (ce.updatedAt || 0) >= (le.updatedAt || 0)) mapa.set(ce.id, ce);
+        if (!le || tsNum(ce.updatedAt) >= tsNum(le.updatedAt)) mapa.set(ce.id, ce);
       });
       // Aplica as lápides (só apaga se o ponto não foi editado depois da remoção)
       removidos.forEach((r, id) => {
         const e = mapa.get(id);
-        if (e && (e.updatedAt || 0) <= r.at) mapa.delete(id);
+        if (e && tsNum(e.updatedAt) <= tsNum(r.at)) mapa.delete(id);
       });
 
       appState.entries = [...mapa.values()];
@@ -2153,7 +2166,7 @@
         if (lista.length < 2) return;
         // Prioridade: local escolhido à mão > entrada ajustada > entrada MAIS CEDO (é a chegada real) > edição mais recente > id (desempate igual em todo aparelho)
         const minEnt = (x) => (x.entrada ? Core.toMinutes(x.entrada) : 99999);
-        lista.sort((a, b) => (b.locManual ? 1 : 0) - (a.locManual ? 1 : 0) || (b.ajusteEntrada ? 1 : 0) - (a.ajusteEntrada ? 1 : 0) || minEnt(a) - minEnt(b) || (b.updatedAt || 0) - (a.updatedAt || 0) || String(a.id).localeCompare(String(b.id)));
+        lista.sort((a, b) => (b.locManual ? 1 : 0) - (a.locManual ? 1 : 0) || (b.ajusteEntrada ? 1 : 0) - (a.ajusteEntrada ? 1 : 0) || minEnt(a) - minEnt(b) || tsNum(b.updatedAt) - tsNum(a.updatedAt) || String(a.id).localeCompare(String(b.id)));
         const descartar = new Set(lista.slice(1).map(e => e.id));
         lista.slice(1).forEach(e => marcarRemovido(e.id));
         appState.entries = appState.entries.filter(e => !descartar.has(e.id));
@@ -2478,7 +2491,7 @@
       const sorted = [...(member.entries || [])].sort((a, b) => {
         const dDiff = new Date(b.date) - new Date(a.date);
         if (dDiff !== 0) return dDiff;
-        return (b.updatedAt || 0) - (a.updatedAt || 0);
+        return tsNum(b.updatedAt) - tsNum(a.updatedAt);
       });
 
       sorted.forEach(e => {
@@ -2769,7 +2782,7 @@
       const novos = itens.filter(i => !idsPendentesConhecidos.has(i.chave));
       idsPendentesConhecidos = agora;
       if (novos.length === 0) return;
-      tocarSomNotificacao();
+      tocarSomSolicitacao();
       const abrir = () => { const aba = document.querySelector('.main-nav-tabs button[data-view="v-aprovacoes"]'); if (aba) aba.click(); };
       showToast(
         novos.length === 1 ? `${novos[0].nome} enviou uma solicitação${novos[0].data ? ' (' + novos[0].data + ')' : ''}.` : `${novos.length} solicitações novas para você analisar.`,
@@ -3702,7 +3715,7 @@
       const sortedChronological = [...appState.entries].sort((a, b) => {
         const dDiff = new Date(a.date) - new Date(b.date);
         if (dDiff !== 0) return dDiff;
-        return (a.updatedAt || 0) - (b.updatedAt || 0);
+        return tsNum(a.updatedAt) - tsNum(b.updatedAt);
       });
 
       let runningSum = 0;
@@ -3740,7 +3753,7 @@
       const sortedDescending = [...appState.entries].sort((a, b) => {
         const dDiff = new Date(b.date) - new Date(a.date);
         if (dDiff !== 0) return dDiff;
-        return (b.updatedAt || 0) - (a.updatedAt || 0);
+        return tsNum(b.updatedAt) - tsNum(a.updatedAt);
       });
 
       const filtered = sortedDescending.filter(e => {
@@ -4051,6 +4064,26 @@
           osc.connect(gain); gain.connect(audioCtx.destination);
           osc.start(t0 + delay); osc.stop(t0 + delay + dur + 0.05);
         });
+      } catch (e) {}
+    }
+    // Som exclusivo de SOLICITAÇÃO nova: três toques graves e secos (diferente do "ding-ding" agudo dos comunicados)
+    function tocarSomSolicitacao() {
+      if (!somLigado()) return;
+      try {
+        destravarAudio();
+        if (!audioCtx) return;
+        const t0 = audioCtx.currentTime;
+        [[523.25, 0], [523.25, 0.22], [392, 0.44]].forEach(([freq, delay]) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle'; osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, t0 + delay);
+          gain.gain.exponentialRampToValueAtTime(0.3, t0 + delay + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + delay + 0.18);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(t0 + delay); osc.stop(t0 + delay + 0.22);
+        });
+        if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 300]);
       } catch (e) {}
     }
     function tocarSomSucesso() { tocarTons([[784, 0, 0.18], [1046.5, 0.12, 0.3]], 'sine', 0.22); }
