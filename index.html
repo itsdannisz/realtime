@@ -526,6 +526,11 @@
           </div>
         </div>
 
+        <div id="avisoSemSaida" class="content-card" hidden style="border-left:4px solid var(--c-laranja); margin-bottom:16px;">
+          <div class="card-title"><span>⚠️ Dia anterior sem saída</span></div>
+          <p id="avisoSemSaidaTexto" style="font-size:13px; margin:0;"></p>
+        </div>
+
         <div class="dashboard-grid">
           <div>
             <div class="content-card">
@@ -726,6 +731,7 @@
             <th>Local / IP</th>
             <th>Atraso / Observação</th>
             <th style="text-align:right;">Variação</th>
+            <th id="dossieThAcoes" style="text-align:center;">Gestão</th>
           </tr>
         </thead>
         <tbody id="dossieEntriesTableBody"></tbody>
@@ -735,6 +741,31 @@
     <div style="display:flex; justify-content:flex-end; margin-top:20px;">
       <button type="button" class="btn" data-close>Fechar Extrato</button>
     </div>
+  </dialog>
+
+  <!-- MODAL: CORRIGIR PONTO DE COLEGA (GESTÃO) -->
+  <dialog id="modalEditarPontoColega">
+    <form id="formEditarPontoColega">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-size:16px; font-weight:800; color:var(--c-laranja);" id="editColegaTitulo">Corrigir ponto</h3>
+        <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+      </div>
+      <p class="muted" style="font-size:12px; margin-bottom:14px;" id="editColegaInfo"></p>
+      <div class="grid-2">
+        <div class="form-group"><label>Entrada</label><input type="time" id="editColegaEntrada" required></div>
+        <div class="form-group"><label>Saída</label><input type="time" id="editColegaSaida"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Intervalo (min)</label><input type="number" id="editColegaIntervalo" min="0" max="480" step="5"></div>
+        <div class="form-group"><label>Meta do dia (horas líquidas)</label><input type="number" id="editColegaMeta" min="0" max="12" step="0.25"></div>
+      </div>
+      <p class="muted" style="font-size:11px; margin:-4px 0 12px;">A meta vem do próprio ponto. Em pontos da época de estágio, mantenha a meta daquela época (ex.: 6h).</p>
+      <div class="form-group"><label>Motivo da correção</label><input type="text" id="editColegaMotivo" maxlength="200" placeholder="Ex: saída informada pelo colaborador" required></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn-laranja" style="width:auto;">Salvar correção</button>
+      </div>
+    </form>
   </dialog>
 
   <!-- MODAL: NOVA SENHA (link de "esqueci a senha") -->
@@ -2356,6 +2387,8 @@
 
       document.getElementById('dossieColabNome').textContent = `Extrato: ${member.profile.name || 'Colaborador'}`;
       document.getElementById('dossieColabEmail').textContent = `${member.profile.email} • Jornada: ${Core.fromMinutes(member.expectedMins)}/dia`;
+      const podeGerir = isAdminUser && userId !== currentUserId;
+      document.getElementById('dossieThAcoes').style.display = podeGerir ? '' : 'none';
 
       const tbody = document.getElementById('dossieEntriesTableBody');
       tbody.innerHTML = '';
@@ -2375,11 +2408,103 @@
           <td>${locBadge} <br><small class="mono muted">${esc(e.ip || '—')}</small></td>
           <td><small>${esc(e.obs || '—')}</small></td>
           <td style="text-align:right;" class="mono ${e.variation >= 0 ? 'pos' : 'neg'}"><strong>${Core.fromMinutes(e.variation, true)}</strong></td>
+          <td style="text-align:center; white-space:nowrap;">${podeGerir ? `${(e.type === 'trabalhado' && e.status !== 'pendente_aprovacao') ? `<button class="btn" style="padding:4px 8px; margin-right:4px;" title="Corrigir horários" data-uid="${esc(userId)}" data-id="${esc(e.id)}" onclick="abrirEdicaoPontoColega(this.dataset.uid, this.dataset.id)">✏️</button>` : ''}<button class="btn" style="padding:4px 8px;" title="Excluir ponto" data-uid="${esc(userId)}" data-id="${esc(e.id)}" onclick="excluirPontoColega(this.dataset.uid, this.dataset.id)">✕</button>` : ''}</td>
         `;
         tbody.appendChild(tr);
       });
 
-      document.getElementById('modalDossieColaborador').showModal();
+      const dlgDossie = document.getElementById('modalDossieColaborador');
+      if (!dlgDossie.open) dlgDossie.showModal();
+    }
+
+    // ===== GESTÃO: CORRIGIR / EXCLUIR PONTO DE COLABORADOR (com registro no histórico) =====
+    let editColegaAlvo = null;
+    function abrirEdicaoPontoColega(userId, entryId) {
+      if (!isAdminUser) { showToast('Só a gestão pode corrigir o ponto de colaboradores.'); return; }
+      const m = allTeamLoadedData.find(x => x.userId === userId);
+      const e = m && (m.entries || []).find(x => x.id === entryId);
+      if (!e) { showToast('Não encontrei esse ponto. Atualize a lista da equipe.'); return; }
+      editColegaAlvo = { userId, entryId };
+      const metaMin = typeof e.meta === 'number' ? e.meta : (m.expectedMins || 360);
+      document.getElementById('editColegaTitulo').textContent = `Corrigir ponto de ${e.date}`;
+      document.getElementById('editColegaInfo').textContent = `${nomeDoMembro(userId) || 'Colaborador'} • a correção fica registrada no histórico da gestão.`;
+      document.getElementById('editColegaEntrada').value = /^\d{2}:\d{2}$/.test(e.entrada || '') ? e.entrada : '';
+      document.getElementById('editColegaSaida').value = /^\d{2}:\d{2}$/.test(e.saida || '') ? e.saida : '';
+      document.getElementById('editColegaIntervalo').value = e.intervalo !== undefined ? e.intervalo : 60;
+      document.getElementById('editColegaMeta').value = metaMin / 60;
+      document.getElementById('editColegaMotivo').value = '';
+      document.getElementById('modalEditarPontoColega').showModal();
+    }
+
+    async function salvarEdicaoPontoColega(ev) {
+      ev.preventDefault();
+      if (!isAdminUser || !editColegaAlvo) return;
+      const { userId, entryId } = editColegaAlvo;
+      const entrada = document.getElementById('editColegaEntrada').value;
+      const saida = document.getElementById('editColegaSaida').value;
+      const intervalo = parseInt(document.getElementById('editColegaIntervalo').value, 10);
+      const metaH = parseFloat(String(document.getElementById('editColegaMeta').value).replace(',', '.'));
+      const motivo = document.getElementById('editColegaMotivo').value.trim();
+      if (!entrada) { showToast('Informe a entrada.'); return; }
+      if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { showToast('Informe um intervalo entre 0 e 480 minutos.'); return; }
+      if (isNaN(metaH) || metaH < 0 || metaH > 12) { showToast('Informe uma meta entre 0 e 12 horas.'); return; }
+      if (!motivo) { showToast('Escreva o motivo da correção.'); return; }
+      const metaMin = Math.round(metaH * 60);
+      let datado = '';
+      const ok = await alterarEstadoDoColega(userId, (st) => {
+        const p = (st.entries || []).find(x => x.id === entryId);
+        if (!p || p.type !== 'trabalhado' || p.status === 'pendente_aprovacao') return false;
+        datado = p.date;
+        p.entrada = entrada;
+        p.intervalo = intervalo;
+        p.meta = metaMin;
+        if (saida) {
+          p.saida = saida;
+          const calc = Core.calcPJ(entrada, saida, intervalo, !!p.nextDay, metaMin, p.date);
+          const abonoAtual = (typeof p.abono === 'number' && p.abono > 0) ? p.abono : 0;
+          const abono = Math.min(abonoAtual, Math.max(0, calc.saldo));
+          if (abonoAtual > 0) { if (abono > 0) p.abono = abono; else delete p.abono; }
+          p.variation = calc.saldo - abono;
+        } else {
+          p.saida = '';
+          p.variation = 0;
+        }
+        const marca = '[Editado pela Gestão]';
+        let obs = p.obs || '';
+        if (!obs.startsWith(marca)) obs = `${marca} ${obs}`.trim();
+        p.obs = obs + ` • ${motivo}`;
+        p.updatedAt = Date.now();
+        return true;
+      });
+      if (!ok) return;
+      document.getElementById('modalEditarPontoColega').close();
+      registrarEvento('edicao_ponto_colega', userId, nomeDoMembro(userId), { data: datado, entrada, saida: saida || '', meta: metaMin, motivo });
+      showToast('Ponto corrigido no registro do colaborador.');
+      await loadTeamMembersFromCloud();
+      openColaboradorDossie(userId);
+    }
+
+    async function excluirPontoColega(userId, entryId) {
+      if (!isAdminUser) return;
+      const m = allTeamLoadedData.find(x => x.userId === userId);
+      const e = m && (m.entries || []).find(x => x.id === entryId);
+      if (!e) { showToast('Não encontrei esse ponto. Atualize a lista da equipe.'); return; }
+      const nome = nomeDoMembro(userId) || 'colaborador';
+      if (!await pedirConfirmacao(`Excluir o ponto de ${e.date} (${e.entrada || '--:--'} → ${e.saida || 'sem saída'}) de ${nome}? O saldo dele será recalculado.`)) return;
+      const detalhes = { data: e.date, entrada: e.entrada || '', saida: e.saida || '', variacao: e.variation || 0 };
+      const ok = await alterarEstadoDoColega(userId, (st) => {
+        const lista = Array.isArray(st.entries) ? st.entries : [];
+        if (!lista.some(x => x.id === entryId)) return false;
+        st.entries = lista.filter(x => x.id !== entryId);
+        st.removed = (Array.isArray(st.removed) ? st.removed : []).filter(r => r.id !== entryId).concat({ id: entryId, at: Date.now() });
+        if (st.removed.length > 300) st.removed = st.removed.slice(-300);
+        return true;
+      });
+      if (!ok) return;
+      registrarEvento('exclusao_ponto_colega', userId, nome, detalhes);
+      showToast('Ponto excluído.');
+      await loadTeamMembersFromCloud();
+      openColaboradorDossie(userId);
     }
 
     function renderPendingApprovals() {
@@ -3008,6 +3133,8 @@
       confirmou_entrada: 'Confirmou entrada ajustada',
       reverteu_entrada: 'Reverteu entrada ajustada',
       edicao_ponto: 'Editou horários',
+      edicao_ponto_colega: 'Corrigiu ponto de colaborador',
+      exclusao_ponto_colega: 'Excluiu ponto de colaborador',
       exportacao_total: 'Exportou backup da equipe',
       exclusao_perfil: 'Excluiu perfil'
     };
@@ -3338,7 +3465,23 @@
       statBalanceEl.className = `metric-value ${runningSum >= 0 ? 'pos' : 'neg'}`;
 
       // Solicitações (gestão): atualiza lista e contador junto, sem precisar de F5
+      try { atualizarAvisoSemSaida(); } catch (e) { console.warn(e); }
       if (isAdminUser) { try { renderPendingApprovals(); } catch (e) { console.warn(e); } }
+    }
+
+    // Avisa quando um dia anterior ficou com entrada e sem saída (o saldo desse dia vale 0)
+    function atualizarAvisoSemSaida() {
+      const box = document.getElementById('avisoSemSaida');
+      if (!box) return;
+      const hoje = getLocalDateStr();
+      const dias = [...new Set((appState.entries || [])
+        .filter(e => e.type === 'trabalhado' && e.date < hoje && e.status !== 'pendente_aprovacao' && !/^\d{2}:\d{2}$/.test(e.saida || ''))
+        .map(e => e.date))].sort();
+      if (dias.length === 0) { box.hidden = true; return; }
+      const fmt = (d) => d.split('-').reverse().slice(0, 2).join('/');
+      document.getElementById('avisoSemSaidaTexto').textContent =
+        `${dias.length === 1 ? 'O dia' : 'Os dias'} ${dias.map(fmt).join(', ')} ${dias.length === 1 ? 'tem' : 'têm'} entrada e nenhuma saída, então o saldo ${dias.length === 1 ? 'dele' : 'deles'} vale 0. Use "Solicitar ajuste" para informar o horário em que você saiu.`;
+      box.hidden = false;
     }
 
     // ===== SELEÇÃO EM MASSA / EDIÇÃO (GESTÃO) =====
@@ -3834,6 +3977,8 @@
 
     /* TODOS OS LISTENERS 100% REGISTRADOS E CONECTADOS */
     function setupEventListeners() {
+      const fColega = document.getElementById('formEditarPontoColega');
+      if (fColega) fColega.addEventListener('submit', salvarEdicaoPontoColega);
       document.querySelectorAll('dialog [data-close]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const dialog = e.target.closest('dialog');
@@ -4240,14 +4385,17 @@
             const chave = (x) => `${x.date}|${x.type}|${x.entrada}`;
             const existentes = new Set(appState.entries.map(chave));
             const ids = new Set(appState.entries.map(x => x.id));
+            // Não traz de volta pontos que já foram substituídos/apagados, nem dias que já têm ponto
+            const removidosIds = new Set((appState.removed || []).map(r => String(r.id)));
+            const diasComPonto = new Set(appState.entries.filter(x => x.type === 'trabalhado' && x.status !== 'pendente_aprovacao').map(x => x.date));
             let novos = 0, repetidos = 0;
             convertidos.forEach(c => {
-              if (ids.has(c.id) || existentes.has(chave(c))) { repetidos++; return; }
+              if (ids.has(c.id) || removidosIds.has(String(c.id)) || existentes.has(chave(c)) || (c.type === 'trabalhado' && diasComPonto.has(c.date))) { repetidos++; return; }
               appState.entries.push(c); ids.add(c.id); existentes.add(chave(c)); novos++;
             });
 
             saveLocal();
-            showToast(`Importação concluída: ${novos} novo(s), ${repetidos} já existia(m).`);
+            showToast(`Importação concluída: ${novos} novo(s), ${repetidos} ignorado(s) (já existia(m), foi(ram) apagado(s) ou o dia já tinha ponto).`);
           } catch (err) {
             showToast('Confira se é o arquivo JSON exportado pelo próprio sistema.', { title: 'Arquivo JSON inválido', tone: 'error' });
           }
