@@ -754,6 +754,7 @@
     </div>
     <div style="max-height:72vh; overflow-y:auto; padding-right:4px;">
 
+      <div id="gestaoStatus" hidden style="padding:8px 12px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:10px; font-size:12px; font-weight:700;"></div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:14px;">
         <div><span class="muted" style="font-size:11px; text-transform:uppercase;">Saldo atual</span><br><strong class="mono" id="gestaoSaldo" style="font-size:18px;">--</strong></div>
         <button type="button" class="btn" id="btnGestaoExtrato" style="font-size:12px;">👁️ Abrir extrato (corrigir ou excluir pontos)</button>
@@ -2536,6 +2537,7 @@
       if (userId === currentUserId) { showToast('Para o seu próprio perfil, use as configurações normais.'); return; }
       if (!allTeamLoadedData.some(x => x.userId === userId)) { showToast('Não encontrei o colaborador. Atualize a lista da equipe.'); return; }
       gestaoColabId = userId;
+      const stBox = document.getElementById('gestaoStatus'); if (stBox) stBox.hidden = true;
       preencherGestaoColab(userId, false);
       const dlg = document.getElementById('modalGerirColab');
       if (!dlg.open) dlg.showModal();
@@ -2570,9 +2572,10 @@
         st.profile = { ...(st.profile || {}), name: nome, role: cargo, updatedAt: agora };
         return true;
       });
-      if (!ok) return;
+      if (!ok) { avisoGravacao(false, ultimoErroGravacao); return; }
       registrarEvento('edicao_perfil_colega', userId, nome, detalhes);
       showToast('Dados e jornada atualizados. Valem para os próximos pontos.');
+      avisoGravacao(true, 'Dados e jornada salvos e conferidos no banco');
       await atualizarGestaoColab();
     }
 
@@ -2610,9 +2613,10 @@
         st.entries.push(novo);
         return true;
       });
-      if (!ok) return;
+      if (!ok) { avisoGravacao(false, ultimoErroGravacao); return; }
       registrarEvento('lancamento_manual_colega', userId, nomeDoMembro(userId), { data: date, entrada, saida, meta: metaMin, variacao: calc.saldo, motivo });
       showToast(`Ponto de ${date} lançado (${Core.fromMinutes(calc.saldo, true)}).`);
+      avisoGravacao(true, `Ponto de ${date} lançado e conferido no banco`);
       document.getElementById('gestaoPontoData').value = '';
       document.getElementById('gestaoPontoMotivo').value = '';
       await atualizarGestaoColab();
@@ -2646,9 +2650,10 @@
         });
         return true;
       });
-      if (!ok) return;
+      if (!ok) { avisoGravacao(false, ultimoErroGravacao); return; }
       registrarEvento('ajuste_saldo_colega', userId, nomeDoMembro(userId), { data: date, minutos: variation, motivo });
       showToast(`Saldo ajustado em ${Core.fromMinutes(variation, true)}.`);
+      avisoGravacao(true, `Saldo ajustado em ${Core.fromMinutes(variation, true)}, conferido no banco`);
       document.getElementById('gestaoSaldoHoras').value = 0;
       document.getElementById('gestaoSaldoMin').value = 0;
       document.getElementById('gestaoSaldoMotivo').value = '';
@@ -2714,10 +2719,11 @@
         p.updatedAt = Date.now();
         return true;
       });
-      if (!ok) return;
+      if (!ok) { avisoGravacao(false, ultimoErroGravacao); return; }
       document.getElementById('modalEditarPontoColega').close();
       registrarEvento('edicao_ponto_colega', userId, nomeDoMembro(userId), { data: datado, entrada, saida: saida || '', meta: metaMin, motivo });
       showToast('Ponto corrigido no registro do colaborador.');
+      avisoGravacao(true, 'Ponto corrigido e conferido no banco');
       await loadTeamMembersFromCloud();
       openColaboradorDossie(userId);
     }
@@ -2738,9 +2744,10 @@
         if (st.removed.length > 300) st.removed = st.removed.slice(-300);
         return true;
       });
-      if (!ok) return;
+      if (!ok) { avisoGravacao(false, ultimoErroGravacao); return; }
       registrarEvento('exclusao_ponto_colega', userId, nome, detalhes);
       showToast('Ponto excluído.');
+      avisoGravacao(true, 'Ponto excluído e conferido no banco');
       await loadTeamMembersFromCloud();
       openColaboradorDossie(userId);
     }
@@ -2899,22 +2906,61 @@
     }
 
     // Lê o estado ATUAL do colega, aplica a mudança só nele e grava (evita sobrescrever com cópia velha)
+    let ultimoErroGravacao = '';
+    function detalheErro(err) {
+      if (!err) return 'erro desconhecido';
+      return [err.message, err.details, err.hint, err.code ? '(código ' + err.code + ')' : ''].filter(Boolean).join(' · ');
+    }
     async function alterarEstadoDoColega(targetUserId, aplicar) {
+      ultimoErroGravacao = '';
       const { data: row, error: errLer } = await sbClient.from('bh_state').select('state').eq('user_id', targetUserId).maybeSingle();
-      if (errLer || !row) { showToast('Não consegui ler o registro do colega: ' + ((errLer && errLer.message) || 'não encontrado')); return false; }
+      if (errLer || !row) {
+        ultimoErroGravacao = 'Não consegui ler o registro do colaborador: ' + (errLer ? detalheErro(errLer) : 'não encontrado');
+        console.error(ultimoErroGravacao, errLer);
+        showToast(ultimoErroGravacao, { tone: 'error', title: 'Não salvou' });
+        return false;
+      }
       const fresco = stateFromRow(row.state);
       if (!fresco || !aplicar(fresco)) {
-        showToast('Essa solicitação não existe mais (o colaborador pode ter alterado). Atualizando a lista.');
+        ultimoErroGravacao = 'Esse item não existe mais (o colaborador pode ter alterado). Atualize a lista.';
+        showToast(ultimoErroGravacao, { tone: 'error', title: 'Não salvou' });
         loadTeamMembersFromCloud();
         return false;
       }
-      const { error: errGravar } = await sbClient.from('bh_state').upsert({
+      const agoraIso = new Date().toISOString();
+      const { data: gravado, error: errGravar } = await sbClient.from('bh_state').upsert({
         user_id: targetUserId,
         state: JSON.stringify(fresco),
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-      if (errGravar) { showToast('Não consegui gravar no banco do colega: ' + (errGravar.message || 'erro')); return false; }
+        updated_at: agoraIso
+      }, { onConflict: 'user_id' }).select('user_id');
+      if (errGravar) {
+        ultimoErroGravacao = 'O banco recusou a gravação: ' + detalheErro(errGravar);
+        console.error(ultimoErroGravacao, errGravar);
+        showToast(ultimoErroGravacao, { tone: 'error', title: 'Não salvou' });
+        return false;
+      }
+      if (!gravado || gravado.length === 0) {
+        ultimoErroGravacao = 'O banco não aplicou a alteração (provável falta de permissão da gestão para gravar no registro do colaborador).';
+        console.error(ultimoErroGravacao);
+        showToast(ultimoErroGravacao, { tone: 'error', title: 'Não salvou' });
+        return false;
+      }
+      // O .select() acima já confirma que o banco devolveu a linha gravada (sem permissão, volta vazio ou com erro)
       return true;
+    }
+
+    // Retorno visível dentro da janela de gestão + barulho (sucesso e erro têm sons diferentes)
+    function avisoGravacao(ok, msg) {
+      const box = document.getElementById('gestaoStatus');
+      const dlg = document.getElementById('modalGerirColab');
+      if (box && dlg && dlg.open) {
+        const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        box.hidden = false;
+        box.style.borderColor = ok ? 'var(--pos)' : 'var(--neg)';
+        box.style.color = ok ? 'var(--pos)' : 'var(--neg)';
+        box.textContent = (ok ? '✅ ' : '❌ ') + (msg || '') + ' • ' + hora;
+      }
+      if (ok) tocarSomSucesso(); else tocarSomErro();
     }
 
     function horaCurta(ts) {
@@ -3989,6 +4035,26 @@
         if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
       } catch (e) {}
     }
+    function tocarTons(tons, tipo, volume) {
+      if (!somLigado()) return;
+      try {
+        destravarAudio();
+        if (!audioCtx) return;
+        const t0 = audioCtx.currentTime;
+        tons.forEach(([freq, delay, dur]) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = tipo; osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, t0 + delay);
+          gain.gain.exponentialRampToValueAtTime(volume, t0 + delay + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + delay + dur);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(t0 + delay); osc.stop(t0 + delay + dur + 0.05);
+        });
+      } catch (e) {}
+    }
+    function tocarSomSucesso() { tocarTons([[784, 0, 0.18], [1046.5, 0.12, 0.3]], 'sine', 0.22); }
+    function tocarSomErro() { tocarTons([[330, 0, 0.25], [247, 0.2, 0.4]], 'square', 0.12); }
     function atualizarBotaoSom() {
       const btn = document.getElementById('btnSomNotif');
       if (btn) btn.textContent = somLigado() ? '🔊 Som: ligado' : '🔇 Som: desligado';
