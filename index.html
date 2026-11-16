@@ -180,6 +180,8 @@
     .cal-cell:hover { border-color: var(--c-laranja); }
     .cal-cell.today { background: var(--border-color); color: var(--text-main); border-color: var(--c-laranja); }
     .cal-cell.holiday { color: var(--c-laranja); font-weight: 800; }
+    .cal-cell.weekend { color: var(--text-dim); font-weight: 500; }
+    .cal-cell.facultativo { color: var(--c-laranja); font-weight: 600; opacity: .75; }
     .cal-cell.birthday { border-color: #f43f5e; color: #f43f5e; font-weight: 800; }
     .cal-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pos); position: absolute; bottom: 2px; }
 
@@ -477,6 +479,7 @@
 
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <button class="btn-laranja" id="btnFinalizarDiaHero" style="display:none;">Encerrar expediente</button>
+          <button class="btn" id="btnTrabalharFolga" style="display:none;" title="Hoje é folga: o ponto não abre sozinho. Clique se for trabalhar.">Trabalhar hoje mesmo assim</button>
           <details class="more-actions" id="moreActions">
             <summary class="btn">Mais ações ▾</summary>
             <div class="more-actions-menu">
@@ -572,7 +575,7 @@
               </div>
               <div class="cal-grid" id="calGridBox"></div>
               <small class="muted" style="display:block; text-align:center; font-size:10px; margin-top:10px;">
-                🟢 Dia trabalhado &nbsp;|&nbsp; 🎂 Aniversariante &nbsp;|&nbsp; 🟠 Feriado
+                🟢 Dia trabalhado &nbsp;|&nbsp; 🎂 Aniversariante &nbsp;|&nbsp; 🟠 Feriado/folga &nbsp;|&nbsp; ⚪ Fim de semana
               </small>
             </div>
 
@@ -1164,6 +1167,21 @@
     </div>
 
     <div class="form-group" style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
+      <label>Folga automática</label>
+      <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer; text-transform:none; letter-spacing:0; font-size:12px; font-weight:500; color:var(--text-main);">
+        <input type="checkbox" class="chk" id="cfgFolgaAuto" style="margin-top:2px; flex:0 0 16px;">
+        <span>Não abrir o ponto sozinho em fins de semana, feriados e folgas extras.<br>
+          <small class="muted" style="font-size:11px;">Se for trabalhar nesses dias, use "Trabalhar hoje mesmo assim": as horas entram como crédito. Desligado, o sistema registra todos os dias.</small></span>
+      </label>
+      <label style="margin-top:10px;">Folgas extras (ponte, recesso, compensação)</label>
+      <div style="display:flex; gap:8px;">
+        <input type="date" id="cfgFolgaExtraData">
+        <button type="button" class="btn" id="btnAddFolgaExtra" style="white-space:nowrap;">Adicionar</button>
+      </div>
+      <div class="holiday-list" id="cfgFolgasExtrasLista" style="max-height:120px;"></div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
       <label>Backup dos dados</label>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button type="button" class="btn" id="btnExportJSONQuick" title="Baixar backup completo (JSON)">Exportar backup (JSON)</button>
@@ -1307,18 +1325,75 @@
       { d: '25/12', name: 'Natal' }
     ];
 
+    // Feriados do ano: os fixos + os que mudam de data (Sexta-feira Santa, Carnaval, Corpus Christi).
+    // "facultativo" = ponto facultativo: aparece na lista e no calendário, mas NÃO vira folga sozinho.
+    function pascoaDoAno(ano) {
+      const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100;
+      const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const hh = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4), k = c % 4;
+      const l = (32 + 2 * e + 2 * i - hh - k) % 7;
+      const m = Math.floor((a + 11 * hh + 22 * l) / 451);
+      const mes = Math.floor((hh + l - 7 * m + 114) / 31);
+      const dia = ((hh + l - 7 * m + 114) % 31) + 1;
+      return new Date(ano, mes - 1, dia);
+    }
+    const _feriadosCache = {};
+    function feriadosDoAno(ano) {
+      if (_feriadosCache[ano]) return _feriadosCache[ano];
+      const p2 = (n) => String(n).padStart(2, '0');
+      const pas = pascoaDoAno(ano);
+      const desloc = (n) => { const x = new Date(ano, pas.getMonth(), pas.getDate() + n); return `${p2(x.getDate())}/${p2(x.getMonth() + 1)}`; };
+      const lista = BRAZIL_HOLIDAYS.map(x => ({ d: x.d, name: x.name, facultativo: false }));
+      lista.push({ d: desloc(-48), name: 'Carnaval (segunda)', facultativo: true });
+      lista.push({ d: desloc(-47), name: 'Carnaval (terça)', facultativo: true });
+      lista.push({ d: desloc(-2), name: 'Sexta-feira Santa', facultativo: false });
+      lista.push({ d: desloc(60), name: 'Corpus Christi', facultativo: true });
+      const chave = (x) => { const [dd, mm] = x.d.split('/').map(Number); return mm * 100 + dd; };
+      lista.sort((a, b) => chave(a) - chave(b));
+      _feriadosCache[ano] = lista;
+      return lista;
+    }
+
     function renderHolidaysList() {
       const box = document.getElementById('holidayListBox');
       if (!box) return;
       box.innerHTML = '';
-      BRAZIL_HOLIDAYS.forEach(h => {
+      const ano = new Date().getFullYear();
+      const lista = feriadosDoAno(ano);
+      lista.forEach(h => {
         const item = document.createElement('div');
         item.className = 'holiday-item';
-        item.innerHTML = `<span class="holiday-name">${h.name}</span><span class="holiday-date mono" style="color:var(--c-laranja); font-weight:700;">${h.d}</span>`;
+        item.innerHTML = `<span class="holiday-name">${h.name}${h.facultativo ? ' <span class="muted" style="font-size:10px;">(facultativo)</span>' : ''}</span><span class="holiday-date mono" style="color:var(--c-laranja); font-weight:700;">${h.d}</span>`;
         box.appendChild(item);
       });
       const badge = document.getElementById('holidayCountBadge');
-      if (badge) badge.textContent = `${BRAZIL_HOLIDAYS.length}`;
+      if (badge) badge.textContent = `${lista.length}`;
+    }
+
+    // Folgas extras escolhidas nas Configurações (só valem depois de "Salvar Configurações")
+    let cfgFolgasTemp = [];
+    function renderCfgFolgasExtras() {
+      const box = document.getElementById('cfgFolgasExtrasLista');
+      if (!box) return;
+      box.innerHTML = '';
+      if (!cfgFolgasTemp.length) {
+        box.innerHTML = '<small class="muted" style="font-size:11px;">Nenhuma folga extra.</small>';
+        return;
+      }
+      [...cfgFolgasTemp].sort().forEach(d => {
+        const [y, m, dd] = d.split('-');
+        const item = document.createElement('div');
+        item.className = 'holiday-item';
+        item.innerHTML = `<span class="mono">${dd}/${m}/${y}</span>`;
+        const bt = document.createElement('button');
+        bt.type = 'button'; bt.className = 'btn'; bt.style.padding = '2px 8px'; bt.textContent = '✕';
+        bt.title = 'Remover esta folga';
+        bt.addEventListener('click', () => { cfgFolgasTemp = cfgFolgasTemp.filter(x => x !== d); renderCfgFolgasExtras(); });
+        item.appendChild(bt);
+        box.appendChild(item);
+      });
     }
 
     function getLocalDateStr(d = new Date()) {
@@ -1344,13 +1419,24 @@
         return `${sign}${h}:${m}`;
       },
 
-      isWeekendOrHoliday(dateStr) {
+      // Descreve o dia: { folga, tipo: 'fds' | 'feriado' | 'extra' | 'facultativo' | '', nome }
+      infoDia(dateStr) {
+        if (!dateStr || typeof dateStr !== 'string') return { folga: false, tipo: '', nome: '' };
         const [y, m, d] = dateStr.split('-').map(Number);
         const dayOfWeek = new Date(y, m - 1, d).getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        if (dayOfWeek === 0 || dayOfWeek === 6) return { folga: true, tipo: 'fds', nome: dayOfWeek === 0 ? 'Domingo' : 'Sábado' };
         const dayMonth = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
-        const isHoliday = BRAZIL_HOLIDAYS.some(h => h.d === dayMonth);
-        return isWeekend || isHoliday;
+        const fer = feriadosDoAno(y).find(h => h.d === dayMonth);
+        if (fer && !fer.facultativo) return { folga: true, tipo: 'feriado', nome: fer.name };
+        let extras = [];
+        try { extras = (appState && appState.config && appState.config.folgasExtras) || []; } catch (e) {}
+        if (extras.includes(dateStr)) return { folga: true, tipo: 'extra', nome: 'Folga extra' };
+        if (fer && fer.facultativo) return { folga: false, tipo: 'facultativo', nome: fer.name };
+        return { folga: false, tipo: '', nome: '' };
+      },
+
+      isWeekendOrHoliday(dateStr) {
+        return Core.infoDia(dateStr).folga;
       },
 
       calcPJ(entrada, saida, intervaloMin = 60, nextDay = false, expectedMinutes = 360, dateStr = '') {
@@ -1387,6 +1473,8 @@
         intervalo: 60, 
         expected: 360,
         officeIp: '',
+        folgaAuto: true,
+        folgasExtras: [],
         updatedAt: 0
       },
       profile: {
@@ -1977,6 +2065,14 @@
 
     async function executarCheckInInterno(forcarInicio = false) {
       const todayStr = getLocalDateStr();
+      // Folga automática: em fim de semana, feriado ou folga extra o sistema NÃO abre o ponto sozinho.
+      // Para trabalhar mesmo assim, é só usar "Trabalhar hoje mesmo assim" (forcarInicio).
+      if (!forcarInicio && appState.config.folgaAuto !== false && Core.isWeekendOrHoliday(todayStr)
+          && !appState.entries.some(e => e.date === todayStr)) {
+        instanteLoginAtual = null;
+        renderDashboard();
+        return;
+      }
       // A hora da entrada é a de quando o sistema abriu, não a de quando a internet terminou de responder
       const instanteAbertura = (instanteLoginAtual && !forcarInicio) ? instanteLoginAtual : new Date();
       instanteLoginAtual = null;
@@ -1996,11 +2092,15 @@
         const now = instanteAbertura;
         const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const scheduledStart = appState.config.entrada || '09:00';
-        const delayMin = Math.max(0, Core.toMinutes(timeNow) - Core.toMinutes(scheduledStart));
+        const ehFolgaHoje = Core.isWeekendOrHoliday(todayStr);
+        const delayMin = ehFolgaHoje ? 0 : Math.max(0, Core.toMinutes(timeNow) - Core.toMinutes(scheduledStart));
+        const rotuloLocal = locType === 'escritorio' ? 'Presencial' : 'Home Office';
 
-        let obs = delayMin > 5 
-          ? `Início com atraso de ${delayMin} min (${locType === 'escritorio' ? 'Presencial' : 'Home Office'})` 
-          : `Início regular (${locType === 'escritorio' ? 'Presencial' : 'Home Office'})`;
+        let obs = ehFolgaHoje
+          ? `Trabalho em dia de folga (${Core.infoDia(todayStr).nome}) — as horas viram crédito (${rotuloLocal})`
+          : (delayMin > 5
+            ? `Início com atraso de ${delayMin} min (${rotuloLocal})`
+            : `Início regular (${rotuloLocal})`);
 
         if (entry) removerEntradasDoDia(todayStr);
 
@@ -2038,6 +2138,10 @@
       let entry = appState.entries.find(e => e.date === todayStr);
 
       if (!entry || !entry.entrada) {
+        if (appState.config.folgaAuto !== false && Core.isWeekendOrHoliday(todayStr)) {
+          const okFolga = await pedirConfirmacao(`Hoje é folga (${Core.infoDia(todayStr).nome}). Quer registrar trabalho hoje mesmo assim? As horas entram como crédito no banco.`);
+          if (!okFolga) return;
+        }
         showToast('Vamos iniciar agora para você!', { title: 'O expediente não estava iniciado', tone: 'info' });
         executarCheckIn(true);
         return;
@@ -2048,7 +2152,7 @@
       }
 
       const scheduledStart = appState.config.entrada || '09:00';
-      const delayMin = Math.max(0, Core.toMinutes(entry.entrada) - Core.toMinutes(scheduledStart));
+      const delayMin = Core.isWeekendOrHoliday(todayStr) ? 0 : Math.max(0, Core.toMinutes(entry.entrada) - Core.toMinutes(scheduledStart));
       const calc = Core.calcPJ(entry.entrada, timeNow, entry.intervalo, false, appState.config.expected || 360, todayStr);
 
       entry.saida = timeNow;
@@ -3029,6 +3133,10 @@
         const dateKey = `${year}-${monthFmt}-${dayFmt}`;
 
         if (dateKey === todayStr) cell.classList.add('today');
+        const infoCal = Core.infoDia(dateKey);
+        if (infoCal.tipo === 'fds') cell.classList.add('weekend');
+        else if (infoCal.tipo) cell.classList.add(infoCal.tipo === 'facultativo' ? 'facultativo' : 'holiday');
+        if (infoCal.nome) cell.title = infoCal.tipo === 'fds' ? infoCal.nome : (infoCal.tipo === 'facultativo' ? `Ponto facultativo: ${infoCal.nome}` : infoCal.nome);
         if (appState.entries.some(e => e.date === dateKey)) {
           const dot = document.createElement('div');
           dot.className = 'cal-dot';
@@ -3041,19 +3149,44 @@
     function renderMonthlyChart() {
       const box = document.getElementById('chartMonthlyBox');
       if (!box) return;
-      const chartWidth = box.clientWidth || 340;
-      const chartHeight = 120;
-      box.innerHTML = `
-        <svg viewBox="0 0 ${chartWidth} ${chartHeight}" style="width:100%;height:100%">
-          <line x1="0" y1="60" x2="${chartWidth}" y2="60" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="3,3"/>
-          <rect x="40" y="30" width="28" height="30" rx="3" fill="var(--pos)" opacity="0.85"/>
-          <text x="54" y="115" text-anchor="middle" font-size="9" fill="var(--text-muted)">Set</text>
-          <rect x="120" y="60" width="28" height="25" rx="3" fill="var(--neg)" opacity="0.85"/>
-          <text x="134" y="115" text-anchor="middle" font-size="9" fill="var(--text-muted)">Out</text>
-          <rect x="200" y="20" width="28" height="40" rx="3" fill="var(--pos)" opacity="0.85"/>
-          <text x="214" y="115" text-anchor="middle" font-size="9" fill="var(--text-muted)">Nov</text>
-        </svg>
-      `;
+      const W = box.clientWidth || 340, H = 124, topPad = 14, botPad = 18;
+      const mesesAbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const hoje = new Date();
+      const meses = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        meses.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: mesesAbr[d.getMonth()], soma: 0, tem: false });
+      }
+      (appState.entries || []).forEach(e => {
+        if (!e || !e.date || e.status === 'pendente_aprovacao') return;
+        const m = meses.find(x => e.date.startsWith(x.key));
+        if (m) { m.soma += Number(e.variation) || 0; m.tem = true; }
+      });
+      if (!meses.some(m => m.tem)) {
+        box.innerHTML = `<div class="muted" style="height:100%; display:flex; align-items:center; justify-content:center; font-size:12px;">Ainda não há registros nos últimos 6 meses</div>`;
+        return;
+      }
+      const maxAbs = Math.max(60, ...meses.map(m => Math.abs(m.soma)));
+      const areaH = H - topPad - botPad;
+      const zero = topPad + areaH / 2;
+      const escala = (areaH / 2 - 2) / maxAbs;
+      const slot = W / meses.length;
+      const larg = Math.min(30, slot * 0.5);
+      let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%" role="img" aria-label="Saldo do banco de horas por mês">`;
+      svg += `<line x1="0" y1="${zero}" x2="${W}" y2="${zero}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="3,3"/>`;
+      meses.forEach((m, i) => {
+        const cx = slot * i + slot / 2;
+        const alt = Math.max(m.tem ? 2 : 0, Math.abs(m.soma) * escala);
+        const pos = m.soma >= 0;
+        const y = pos ? zero - alt : zero;
+        if (m.tem) {
+          svg += `<rect x="${cx - larg / 2}" y="${y}" width="${larg}" height="${alt}" rx="3" fill="${pos ? 'var(--pos)' : 'var(--neg)'}" opacity="0.85"/>`;
+          svg += `<text x="${cx}" y="${pos ? y - 3 : y + alt + 9}" text-anchor="middle" font-size="9" fill="var(--text-muted)">${Core.fromMinutes(m.soma, true)}</text>`;
+        }
+        svg += `<text x="${cx}" y="${H - 4}" text-anchor="middle" font-size="9" fill="var(--text-muted)">${m.label}</text>`;
+      });
+      svg += `</svg>`;
+      box.innerHTML = svg;
     }
 
     function renderDashboard() {
@@ -3067,8 +3200,10 @@
       renderProfile();
 
       const expHours = Core.fromMinutes(appState.config.expected || 360);
-      document.getElementById('labelSaldoDiaMeta').textContent = `Saldo do Dia (Meta: ${expHours})`;
-      document.getElementById('tagContratoHoje').textContent = `Meta: ${expHours}/dia líquido`;
+      const infoHoje = Core.infoDia(todayStr);
+      const folgaHojeAuto = infoHoje.folga && appState.config.folgaAuto !== false;
+      document.getElementById('labelSaldoDiaMeta').textContent = infoHoje.folga ? 'Saldo do Dia (folga: sem meta)' : `Saldo do Dia (Meta: ${expHours})`;
+      document.getElementById('tagContratoHoje').textContent = infoHoje.folga ? `Hoje: folga • ${infoHoje.nome}` : `Meta: ${expHours}/dia líquido`;
 
       const todayEntry = appState.entries.find(e => e.date === todayStr);
       const liveDot = document.getElementById('liveStatusDot');
@@ -3111,10 +3246,18 @@
         document.getElementById('timeSaidaDisplay').textContent = '--:--';
         document.getElementById('statHorasHoje').textContent = '00:00';
         document.getElementById('statSaldoHoje').textContent = '+00:00';
-        liveText.textContent = 'Iniciando expediente...';
+        if (folgaHojeAuto) {
+          liveText.textContent = `Hoje é folga • ${infoHoje.nome}`;
+          document.getElementById('entrySaidaLocation').textContent = 'Folga: o ponto não abre sozinho';
+          document.getElementById('entryDetectedLocation').textContent = 'Sem registro automático hoje';
+        } else {
+          liveText.textContent = 'Iniciando expediente...';
+          document.getElementById('entrySaidaLocation').textContent = 'Aguardando início';
+        }
         liveDot.className = 'live-dot idle';
-        document.getElementById('entrySaidaLocation').textContent = 'Aguardando início';
       }
+      const btnFolga = document.getElementById('btnTrabalharFolga');
+      if (btnFolga) btnFolga.style.display = (folgaHojeAuto && !todayEntry) ? '' : 'none';
 
       const sortedChronological = [...appState.entries].sort((a, b) => {
         const dDiff = new Date(a.date) - new Date(b.date);
@@ -3709,6 +3852,7 @@
       document.getElementById('btnLimparHistoricoNotif').addEventListener('click', limparHistoricoNotif);
       document.getElementById('btnFinalizarDiaInstantaneo').addEventListener('click', finalizarDiaInstantaneo);
       document.getElementById('btnFinalizarDiaHero').addEventListener('click', finalizarDiaInstantaneo);
+      document.getElementById('btnTrabalharFolga').addEventListener('click', () => executarCheckIn(true));
       document.getElementById('btnSimularAtraso').addEventListener('click', simularAtrasoParaTeste);
       document.getElementById('btnRefreshTeam').addEventListener('click', loadTeamMembersFromCloud);
       document.getElementById('btnHistorico').addEventListener('click', abrirHistorico);
@@ -3740,8 +3884,20 @@
         document.getElementById('cfgSaida').value = appState.config.saida || '16:00';
         document.getElementById('cfgIntervalo').value = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
         document.getElementById('cfgOfficeIp').value = appState.config.officeIp || '';
+        document.getElementById('cfgFolgaAuto').checked = appState.config.folgaAuto !== false;
+        cfgFolgasTemp = [...(appState.config.folgasExtras || [])];
+        renderCfgFolgasExtras();
         atualizarTextoCalculoMeta();
         document.getElementById('modalSettings').showModal();
+      });
+
+      document.getElementById('btnAddFolgaExtra').addEventListener('click', () => {
+        const el = document.getElementById('cfgFolgaExtraData');
+        const v = el.value;
+        if (!v) { showToast('Informe a data da folga.'); return; }
+        if (!cfgFolgasTemp.includes(v)) cfgFolgasTemp.push(v);
+        el.value = '';
+        renderCfgFolgasExtras();
       });
 
       document.getElementById('cfgEntrada').addEventListener('input', atualizarTextoCalculoMeta);
@@ -3929,6 +4085,8 @@
         recalculateExpected();
 
         appState.config.officeIp = document.getElementById('cfgOfficeIp').value.trim();
+        appState.config.folgaAuto = document.getElementById('cfgFolgaAuto').checked;
+        appState.config.folgasExtras = [...new Set(cfgFolgasTemp)].sort();
         appState.config.updatedAt = Date.now();
         appState.profile.updatedAt = Date.now();
 
