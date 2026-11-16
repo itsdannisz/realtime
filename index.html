@@ -3189,23 +3189,8 @@
       box.innerHTML = svg;
     }
 
-    // Avisa (uma vez por abertura do sistema) quando um dia anterior ficou com entrada e sem saída
-    let avisoDiaSemSaidaMostrado = false;
-    function avisarDiasSemSaida() {
-      if (avisoDiaSemSaidaMostrado) return;
-      const hoje = getLocalDateStr();
-      const abertos = (appState.entries || [])
-        .filter(e => e && e.type === 'trabalhado' && e.status === 'ativo' && e.entrada && e.entrada !== '--:--' && !e.saida && e.date < hoje)
-        .map(e => e.date).sort();
-      if (!abertos.length) return;
-      avisoDiaSemSaidaMostrado = true;
-      const fmt = (d) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
-      showToast(`Dia(s) sem saída: ${abertos.map(fmt).join(', ')}. Use "Solicitar ajuste" para informar o horário de saída.`, { tone: 'warn', title: 'Ponto sem saída', duration: 9000 });
-    }
-
     function renderDashboard() {
       const todayStr = getLocalDateStr();
-      avisarDiasSemSaida();
       const diasSemanaExt = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
       const mesesExt = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
       
@@ -4255,16 +4240,10 @@
             const chave = (x) => `${x.date}|${x.type}|${x.entrada}`;
             const existentes = new Set(appState.entries.map(chave));
             const ids = new Set(appState.entries.map(x => x.id));
-            // Dias que já têm ponto trabalhado: a importação não cria um segundo ponto no mesmo dia
-            const diasComPonto = new Set(appState.entries
-              .filter(x => x && x.type === 'trabalhado' && x.status !== 'rejeitado')
-              .map(x => x.date));
             let novos = 0, repetidos = 0;
             convertidos.forEach(c => {
               if (ids.has(c.id) || existentes.has(chave(c))) { repetidos++; return; }
-              if (c.type === 'trabalhado' && diasComPonto.has(c.date)) { repetidos++; return; }
               appState.entries.push(c); ids.add(c.id); existentes.add(chave(c)); novos++;
-              if (c.type === 'trabalhado') diasComPonto.add(c.date);
             });
 
             saveLocal();
