@@ -743,6 +743,85 @@
     </div>
   </dialog>
 
+  <!-- MODAL: GERENCIAR PERFIL DE COLABORADOR (GESTÃO) -->
+  <dialog id="modalGerirColab" style="max-width:680px; width:94vw;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div>
+        <h3 style="font-size:17px; font-weight:800; color:var(--c-laranja);" id="gestaoNome">Gerenciar colaborador</h3>
+        <span class="muted" id="gestaoSub" style="font-size:12px;"></span>
+      </div>
+      <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
+    </div>
+    <div style="max-height:72vh; overflow-y:auto; padding-right:4px;">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:14px;">
+        <div><span class="muted" style="font-size:11px; text-transform:uppercase;">Saldo atual</span><br><strong class="mono" id="gestaoSaldo" style="font-size:18px;">--</strong></div>
+        <button type="button" class="btn" id="btnGestaoExtrato" style="font-size:12px;">👁️ Abrir extrato (corrigir ou excluir pontos)</button>
+      </div>
+
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">1. Dados e jornada</h4>
+      <form id="formGestaoPerfil">
+        <div class="grid-2">
+          <div class="form-group"><label>Nome</label><input type="text" id="gestaoPerfilNome" maxlength="80"></div>
+          <div class="form-group"><label>Cargo</label><input type="text" id="gestaoPerfilCargo" maxlength="80"></div>
+        </div>
+        <div class="form-group">
+          <label>Modalidade</label>
+          <select id="gestaoModalidade">
+            <option value="custom">Personalizado</option>
+            <option value="pj8">Prestador PJ (8h líquidas)</option>
+            <option value="estagio6">Estágio (6h líquidas)</option>
+            <option value="estagio4">Estágio meio período (4h)</option>
+          </select>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Entrada padrão</label><input type="time" id="gestaoCfgEntrada"></div>
+          <div class="form-group"><label>Saída padrão</label><input type="time" id="gestaoCfgSaida"></div>
+        </div>
+        <div class="form-group"><label>Intervalo (min)</label><input type="number" id="gestaoCfgIntervalo" min="0" max="480" step="5"></div>
+        <p class="muted" style="font-size:11px; margin:-4px 0 10px;">A nova jornada vale daqui pra frente. Os pontos já lançados mantêm a meta da época em que foram feitos (por exemplo, o estágio continua com 6h).</p>
+        <div style="display:flex; justify-content:flex-end;"><button type="submit" class="btn-laranja" style="width:auto;">Salvar dados e jornada</button></div>
+      </form>
+
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin:20px 0 8px; padding-top:14px; border-top:1px solid var(--border-color);">2. Lançar ponto manual</h4>
+      <form id="formGestaoPonto">
+        <div class="grid-2">
+          <div class="form-group"><label>Data</label><input type="date" id="gestaoPontoData" required></div>
+          <div class="form-group"><label>Local</label>
+            <select id="gestaoPontoLocal"><option value="home">🏠 Home Office</option><option value="escritorio">🏢 Escritório</option></select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Entrada</label><input type="time" id="gestaoPontoEntrada" required></div>
+          <div class="form-group"><label>Saída</label><input type="time" id="gestaoPontoSaida" required></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Intervalo (min)</label><input type="number" id="gestaoPontoIntervalo" min="0" max="480" step="5" value="60"></div>
+          <div class="form-group"><label>Meta do dia (horas líquidas)</label><input type="number" id="gestaoPontoMeta" min="0" max="12" step="0.25"></div>
+        </div>
+        <div class="form-group"><label>Motivo</label><input type="text" id="gestaoPontoMotivo" maxlength="200" placeholder="Ex: esqueceu de bater o ponto" required></div>
+        <div style="display:flex; justify-content:flex-end;"><button type="submit" class="btn-laranja" style="width:auto;">Lançar ponto</button></div>
+      </form>
+
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin:20px 0 8px; padding-top:14px; border-top:1px solid var(--border-color);">3. Ajuste de saldo (+ ou −)</h4>
+      <form id="formGestaoSaldo">
+        <div class="grid-2">
+          <div class="form-group"><label>Data de referência</label><input type="date" id="gestaoSaldoData" required></div>
+          <div class="form-group"><label>Tipo</label>
+            <select id="gestaoSaldoSinal"><option value="1">Somar ao saldo</option><option value="-1">Descontar do saldo</option></select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Horas</label><input type="number" id="gestaoSaldoHoras" min="0" max="999" step="1" value="0"></div>
+          <div class="form-group"><label>Minutos</label><input type="number" id="gestaoSaldoMin" min="0" max="59" step="1" value="0"></div>
+        </div>
+        <div class="form-group"><label>Motivo</label><input type="text" id="gestaoSaldoMotivo" maxlength="200" placeholder="Ex: saldo acumulado no estágio" required></div>
+        <div style="display:flex; justify-content:flex-end;"><button type="submit" class="btn-laranja" style="width:auto;">Aplicar ajuste</button></div>
+      </form>
+    </div>
+    <div style="display:flex; justify-content:flex-end; margin-top:14px;"><button type="button" class="btn" data-close>Fechar</button></div>
+  </dialog>
+
   <!-- MODAL: CORRIGIR PONTO DE COLEGA (GESTÃO) -->
   <dialog id="modalEditarPontoColega">
     <form id="formEditarPontoColega">
@@ -2372,6 +2451,7 @@
           <td style="text-align:right;" class="mono ${balance >= 0 ? 'pos' : 'neg'}"><strong>${Core.fromMinutes(balance, true)}</strong></td>
           <td style="text-align:center;">
             <button class="btn" style="padding:4px 8px; font-size:11px;" data-uid="${esc(member.userId)}" onclick="openColaboradorDossie(this.dataset.uid)">👁️ Extrato</button>
+            ${member.userId !== currentUserId && isAdminUser ? `<button class="btn" style="padding:4px 8px; font-size:11px; margin-left:4px;" title="Gerenciar perfil, jornada e lançamentos" data-uid="${esc(member.userId)}" onclick="abrirGestaoColab(this.dataset.uid)">⚙️ Gerenciar</button>` : ''}
             ${member.userId !== currentUserId ? `<button class="btn" style="padding:4px 8px; font-size:11px; color:var(--neg); margin-left:4px;" title="Excluir perfil" data-uid="${esc(member.userId)}" onclick="abrirExclusaoPerfil(this.dataset.uid)">🗑️</button>` : ''}
           </td>
         `;
@@ -2415,6 +2495,163 @@
 
       const dlgDossie = document.getElementById('modalDossieColaborador');
       if (!dlgDossie.open) dlgDossie.showModal();
+    }
+
+    // ===== GESTÃO: GERENCIAR PERFIL DE COLABORADOR (jornada, ponto manual, ajuste de saldo) =====
+    let gestaoColabId = null;
+    function preencherGestaoColab(userId, manterCampos) {
+      const m = allTeamLoadedData.find(x => x.userId === userId);
+      if (!m) return;
+      const st = stateFromRow(m.state) || {};
+      const cfg = st.config || {};
+      const prof = m.profile || {};
+      const saldo = (m.entries || []).filter(e => e.status !== 'pendente_aprovacao').reduce((a, e) => a + (e.variation || 0), 0);
+      document.getElementById('gestaoNome').textContent = `Gerenciar: ${prof.name || 'Colaborador'}`;
+      document.getElementById('gestaoSub').textContent = `${prof.email || ''} • Jornada atual: ${Core.fromMinutes(m.expectedMins)}/dia`;
+      const elSaldo = document.getElementById('gestaoSaldo');
+      elSaldo.textContent = Core.fromMinutes(saldo, true);
+      elSaldo.className = `mono ${saldo >= 0 ? 'pos' : 'neg'}`;
+      if (manterCampos) return;
+      document.getElementById('gestaoPerfilNome').value = prof.name || '';
+      document.getElementById('gestaoPerfilCargo').value = prof.role || '';
+      document.getElementById('gestaoModalidade').value = cfg.modalidade || 'custom';
+      document.getElementById('gestaoCfgEntrada').value = cfg.entrada || '09:00';
+      document.getElementById('gestaoCfgSaida').value = cfg.saida || '16:00';
+      document.getElementById('gestaoCfgIntervalo').value = cfg.intervalo !== undefined ? cfg.intervalo : 60;
+      document.getElementById('gestaoPontoData').value = '';
+      document.getElementById('gestaoPontoEntrada').value = cfg.entrada || '09:00';
+      document.getElementById('gestaoPontoSaida').value = cfg.saida || '18:00';
+      document.getElementById('gestaoPontoIntervalo').value = cfg.intervalo !== undefined ? cfg.intervalo : 60;
+      document.getElementById('gestaoPontoMeta').value = (m.expectedMins || 360) / 60;
+      document.getElementById('gestaoPontoMotivo').value = '';
+      document.getElementById('gestaoSaldoData').value = getLocalDateStr();
+      document.getElementById('gestaoSaldoHoras').value = 0;
+      document.getElementById('gestaoSaldoMin').value = 0;
+      document.getElementById('gestaoSaldoMotivo').value = '';
+    }
+
+    function abrirGestaoColab(userId) {
+      if (!isAdminUser) { showToast('Só a gestão pode gerenciar colaboradores.'); return; }
+      if (userId === currentUserId) { showToast('Para o seu próprio perfil, use as configurações normais.'); return; }
+      if (!allTeamLoadedData.some(x => x.userId === userId)) { showToast('Não encontrei o colaborador. Atualize a lista da equipe.'); return; }
+      gestaoColabId = userId;
+      preencherGestaoColab(userId, false);
+      const dlg = document.getElementById('modalGerirColab');
+      if (!dlg.open) dlg.showModal();
+    }
+
+    async function atualizarGestaoColab() {
+      await loadTeamMembersFromCloud();
+      if (gestaoColabId) preencherGestaoColab(gestaoColabId, true);
+    }
+
+    async function salvarPerfilColab(ev) {
+      ev.preventDefault();
+      if (!isAdminUser || !gestaoColabId) return;
+      const userId = gestaoColabId;
+      const nome = document.getElementById('gestaoPerfilNome').value.trim();
+      const cargo = document.getElementById('gestaoPerfilCargo').value.trim();
+      const modalidade = document.getElementById('gestaoModalidade').value;
+      const entrada = document.getElementById('gestaoCfgEntrada').value;
+      const saida = document.getElementById('gestaoCfgSaida').value;
+      const intervalo = parseInt(document.getElementById('gestaoCfgIntervalo').value, 10);
+      if (!nome) { showToast('O nome não pode ficar vazio.'); return; }
+      if (!entrada || !saida) { showToast('Informe entrada e saída padrão.'); return; }
+      if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { showToast('Informe um intervalo entre 0 e 480 minutos.'); return; }
+      let span = Core.toMinutes(saida) - Core.toMinutes(entrada);
+      if (span < 0) span += 1440;
+      const expected = Math.max(0, span - intervalo);
+      const antes = allTeamLoadedData.find(x => x.userId === userId);
+      const detalhes = { jornada_antes: antes ? antes.expectedMins : null, jornada_depois: expected, modalidade, entrada, saida, intervalo };
+      const ok = await alterarEstadoDoColega(userId, (st) => {
+        const agora = Date.now();
+        st.config = { ...(st.config || {}), modalidade, entrada, saida, intervalo, expected, updatedAt: agora };
+        st.profile = { ...(st.profile || {}), name: nome, role: cargo, updatedAt: agora };
+        return true;
+      });
+      if (!ok) return;
+      registrarEvento('edicao_perfil_colega', userId, nome, detalhes);
+      showToast('Dados e jornada atualizados. Valem para os próximos pontos.');
+      await atualizarGestaoColab();
+    }
+
+    async function lancarPontoManualColab(ev) {
+      ev.preventDefault();
+      if (!isAdminUser || !gestaoColabId) return;
+      const userId = gestaoColabId;
+      const date = document.getElementById('gestaoPontoData').value;
+      const entrada = document.getElementById('gestaoPontoEntrada').value;
+      const saida = document.getElementById('gestaoPontoSaida').value;
+      const local = document.getElementById('gestaoPontoLocal').value;
+      const intervalo = parseInt(document.getElementById('gestaoPontoIntervalo').value, 10);
+      const metaH = parseFloat(String(document.getElementById('gestaoPontoMeta').value).replace(',', '.'));
+      const motivo = document.getElementById('gestaoPontoMotivo').value.trim();
+      if (!date || !entrada || !saida) { showToast('Informe data, entrada e saída.'); return; }
+      if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { showToast('Informe um intervalo entre 0 e 480 minutos.'); return; }
+      if (isNaN(metaH) || metaH < 0 || metaH > 12) { showToast('Informe uma meta entre 0 e 12 horas.'); return; }
+      if (!motivo) { showToast('Escreva o motivo do lançamento.'); return; }
+      const m = allTeamLoadedData.find(x => x.userId === userId);
+      const jaTem = m && (m.entries || []).some(e => e.date === date && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
+      if (jaTem && !await pedirConfirmacao(`${nomeDoMembro(userId) || 'O colaborador'} já tem ponto em ${date}. Lançar mais um nesse dia mesmo assim? (Para corrigir o existente, use o extrato.)`)) return;
+      const metaMin = Math.round(metaH * 60);
+      const calc = Core.calcPJ(entrada, saida, intervalo, false, metaMin, date);
+      const agora = Date.now();
+      const novo = {
+        id: 'gestao_' + agora + '_' + Math.random().toString(36).slice(2, 6),
+        date, type: 'trabalhado', entrada, saida, intervalo,
+        ip: '—', location: local, locManual: true,
+        variation: calc.saldo, meta: metaMin,
+        obs: `[Lançado pela Gestão] ${motivo}`,
+        status: 'ativo', updatedAt: agora
+      };
+      const ok = await alterarEstadoDoColega(userId, (st) => {
+        if (!Array.isArray(st.entries)) st.entries = [];
+        st.entries.push(novo);
+        return true;
+      });
+      if (!ok) return;
+      registrarEvento('lancamento_manual_colega', userId, nomeDoMembro(userId), { data: date, entrada, saida, meta: metaMin, variacao: calc.saldo, motivo });
+      showToast(`Ponto de ${date} lançado (${Core.fromMinutes(calc.saldo, true)}).`);
+      document.getElementById('gestaoPontoData').value = '';
+      document.getElementById('gestaoPontoMotivo').value = '';
+      await atualizarGestaoColab();
+    }
+
+    async function ajustarSaldoColab(ev) {
+      ev.preventDefault();
+      if (!isAdminUser || !gestaoColabId) return;
+      const userId = gestaoColabId;
+      const date = document.getElementById('gestaoSaldoData').value;
+      const sinal = parseInt(document.getElementById('gestaoSaldoSinal').value, 10) === -1 ? -1 : 1;
+      const horas = Number(document.getElementById('gestaoSaldoHoras').value) || 0;
+      const mins = Number(document.getElementById('gestaoSaldoMin').value) || 0;
+      const total = Math.round(horas * 60 + mins);
+      const motivo = document.getElementById('gestaoSaldoMotivo').value.trim();
+      if (!date) { showToast('Informe a data de referência.'); return; }
+      if (total <= 0) { showToast('Informe horas e/ou minutos maiores que zero.'); return; }
+      if (!motivo) { showToast('Escreva o motivo do ajuste.'); return; }
+      const variation = sinal * total;
+      const nome = nomeDoMembro(userId) || 'o colaborador';
+      if (!await pedirConfirmacao(`${sinal > 0 ? 'Somar' : 'Descontar'} ${Core.fromMinutes(total)} ${sinal > 0 ? 'ao' : 'do'} saldo de ${nome}?`)) return;
+      const agora = Date.now();
+      const ok = await alterarEstadoDoColega(userId, (st) => {
+        if (!Array.isArray(st.entries)) st.entries = [];
+        st.entries.push({
+          id: 'ajuste_' + agora + '_' + Math.random().toString(36).slice(2, 6),
+          date, type: 'uso', entrada: '--:--', saida: '--:--', intervalo: 0,
+          variation,
+          obs: `[Ajuste de saldo pela Gestão] ${motivo}`,
+          status: 'ativo', updatedAt: agora
+        });
+        return true;
+      });
+      if (!ok) return;
+      registrarEvento('ajuste_saldo_colega', userId, nomeDoMembro(userId), { data: date, minutos: variation, motivo });
+      showToast(`Saldo ajustado em ${Core.fromMinutes(variation, true)}.`);
+      document.getElementById('gestaoSaldoHoras').value = 0;
+      document.getElementById('gestaoSaldoMin').value = 0;
+      document.getElementById('gestaoSaldoMotivo').value = '';
+      await atualizarGestaoColab();
     }
 
     // ===== GESTÃO: CORRIGIR / EXCLUIR PONTO DE COLABORADOR (com registro no histórico) =====
@@ -3134,6 +3371,9 @@
       reverteu_entrada: 'Reverteu entrada ajustada',
       edicao_ponto: 'Editou horários',
       edicao_ponto_colega: 'Corrigiu ponto de colaborador',
+      edicao_perfil_colega: 'Alterou perfil/jornada de colaborador',
+      lancamento_manual_colega: 'Lançou ponto manual para colaborador',
+      ajuste_saldo_colega: 'Ajustou saldo de colaborador',
       exclusao_ponto_colega: 'Excluiu ponto de colaborador',
       exportacao_total: 'Exportou backup da equipe',
       exclusao_perfil: 'Excluiu perfil'
@@ -3977,6 +4217,22 @@
 
     /* TODOS OS LISTENERS 100% REGISTRADOS E CONECTADOS */
     function setupEventListeners() {
+      const fPerfilC = document.getElementById('formGestaoPerfil');
+      if (fPerfilC) fPerfilC.addEventListener('submit', salvarPerfilColab);
+      const fPontoC = document.getElementById('formGestaoPonto');
+      if (fPontoC) fPontoC.addEventListener('submit', lancarPontoManualColab);
+      const fSaldoC = document.getElementById('formGestaoSaldo');
+      if (fSaldoC) fSaldoC.addEventListener('submit', ajustarSaldoColab);
+      const bExtratoC = document.getElementById('btnGestaoExtrato');
+      if (bExtratoC) bExtratoC.addEventListener('click', () => { if (gestaoColabId) openColaboradorDossie(gestaoColabId); });
+      const selModC = document.getElementById('gestaoModalidade');
+      if (selModC) selModC.addEventListener('change', () => {
+        const pr = MODALIDADE_PRESETS[selModC.value];
+        if (!pr) return;
+        document.getElementById('gestaoCfgEntrada').value = pr.entrada;
+        document.getElementById('gestaoCfgSaida').value = pr.saida;
+        document.getElementById('gestaoCfgIntervalo').value = pr.intervalo;
+      });
       const fColega = document.getElementById('formEditarPontoColega');
       if (fColega) fColega.addEventListener('submit', salvarEdicaoPontoColega);
       document.querySelectorAll('dialog [data-close]').forEach(btn => {
