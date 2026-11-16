@@ -2458,6 +2458,7 @@
         tbody.appendChild(tr);
       });
 
+      if (allTeamLoadedData.length > 1) equipeJaCarregada = true;
       renderPendingApprovals();
     }
 
@@ -2744,6 +2745,31 @@
       openColaboradorDossie(userId);
     }
 
+    // ===== SOM + AVISO QUANDO CHEGA SOLICITAÇÃO NOVA (só para a gestão) =====
+    let idsPendentesConhecidos = null; // null = ainda não carregou a equipe (a primeira carga não toca som)
+    let equipeJaCarregada = false;
+    const TITULO_BASE_PAGINA = document.title;
+    function avisarNovasSolicitacoes(allPending, allConferir, total) {
+      if (!isAdminUser) return;
+      // Contador no título da aba, para enxergar mesmo com a aba em segundo plano
+      document.title = total > 0 ? `(${total}) ${TITULO_BASE_PAGINA}` : TITULO_BASE_PAGINA;
+      if (!equipeJaCarregada) return;
+      const itens = [];
+      allPending.forEach(e => { if (e.userId !== currentUserId) itens.push({ chave: 'p:' + e.userId + '|' + e.id, nome: e.userName || 'Colaborador', data: e.date }); });
+      allConferir.forEach(e => { if (e.userId !== currentUserId) itens.push({ chave: 'c:' + e.userId + '|' + e.id, nome: e.userName || 'Colaborador', data: e.date }); });
+      const agora = new Set(itens.map(i => i.chave));
+      if (idsPendentesConhecidos === null) { idsPendentesConhecidos = agora; return; }
+      const novos = itens.filter(i => !idsPendentesConhecidos.has(i.chave));
+      idsPendentesConhecidos = agora;
+      if (novos.length === 0) return;
+      tocarSomNotificacao();
+      const abrir = () => { const aba = document.querySelector('.main-nav-tabs button[data-view="v-aprovacoes"]'); if (aba) aba.click(); };
+      showToast(
+        novos.length === 1 ? `${novos[0].nome} enviou uma solicitação${novos[0].data ? ' (' + novos[0].data + ')' : ''}.` : `${novos.length} solicitações novas para você analisar.`,
+        { tone: 'notice', title: novos.length === 1 ? 'Nova solicitação' : 'Novas solicitações', onClick: abrir }
+      );
+    }
+
     function renderPendingApprovals() {
       const tbody = document.getElementById('pendingApprovalsTableBody');
       if (!tbody) return;
@@ -2775,6 +2801,7 @@
         });
       });
       const totalPendencias = allPending.length + allConferir.length;
+      try { avisarNovasSolicitacoes(allPending, allConferir, totalPendencias); } catch (e) { console.warn(e); }
       document.getElementById('pendingCountTab').textContent = totalPendencias;
       document.getElementById('badgePendingCount').textContent = `${totalPendencias} pendentes`;
       renderBulkApproveBar(allPending);
@@ -4930,12 +4957,13 @@
           expectedMins: appState.config.expected || 360,
           state: appState
         }, ...outros];
+        equipeJaCarregada = true;
         renderPendingApprovals();
       } catch (e) {
         console.warn('Não consegui atualizar as solicitações em segundo plano:', e);
       }
     }
-    setInterval(() => { if (!document.hidden) atualizarSolicitacoesEmSegundoPlano(); }, 60 * 1000);
+    setInterval(() => { atualizarSolicitacoesEmSegundoPlano(); }, 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarSolicitacoesEmSegundoPlano(); });
 
     function setupAuthForm() {
