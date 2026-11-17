@@ -353,6 +353,72 @@
       .punch-time { font-size: 18px; }
       .table-actions-bar > * { flex: 1 1 100%; }
     }
+
+    /* ===== POLIMENTO VISUAL (somente aparência) ===== */
+    :root { --radius-lg: 20px; --radius-md: 14px; --radius-sm: 10px; }
+    :root[data-theme="dark"] {
+      --bg-page: #0a0f19;
+      --card-white: #101929;
+      --card-sub: #0d1524;
+      --border-color: #1c2941;
+      --border-subtle: #16223a;
+      --hero-bg: #121b2d;
+      --shadow-card: none;
+    }
+
+    /* Calculadora de saída removida da tela (o código continua no arquivo, só fica oculta) */
+    #cardCalcSaida { display: none !important; }
+
+    /* Card principal */
+    .hero-banner { border-top: 1px solid var(--border-color); }
+    .hero-banner::before { content: ''; display: block; width: 28px; height: 3px; border-radius: 2px; background: var(--c-laranja); margin-bottom: 12px; }
+    .hero-username { font-weight: 700; }
+    .hero-metrics-grid { border-top: 0; padding-top: 0; gap: 12px; }
+    .hero-metrics-grid .metric-block { text-align: left; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: var(--radius-md); padding: 14px 16px; }
+    .hero-metrics-grid .metric-label { font-weight: 600; letter-spacing: 0.6px; color: #8b9ab0; }
+    .metric-value { font-weight: 700; }
+
+    /* Cards e títulos */
+    .content-card { border-radius: var(--radius-lg); }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 18px; }
+
+    /* Registros do dia */
+    .punch-item { border-color: transparent; padding: 14px 18px; }
+    .punch-label { display: inline-flex; align-items: center; gap: 8px; }
+    .punch-label::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+    .punch-item:first-child .punch-label::before { background: var(--pos); }
+    .punch-item:last-child .punch-label::before { background: var(--c-laranja); }
+
+    /* Botões */
+    .btn-laranja, .btn-verde { font-weight: 600; padding: 14px 20px; }
+
+    /* Tabelas e etiquetas */
+    th { background: transparent; font-weight: 600; letter-spacing: 0.6px; padding: 10px 14px; }
+    td { padding: 14px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .tag { border-radius: 999px; padding: 3px 10px; }
+
+    /* Calendário */
+    .cal-cell { height: 36px; border-radius: 10px; }
+    .cal-cell.today { background: var(--c-laranja); color: #ffffff; border-color: var(--c-laranja); }
+    .holiday-item { border-radius: 10px; }
+
+    /* Abas, campos e janelas */
+    .main-nav-tabs { border-radius: var(--radius-md); }
+    .main-nav-tabs button { border-radius: 10px; }
+    input, select, textarea { padding: 10px 12px; }
+    dialog[open] { animation: dlgIn 0.18s ease-out; }
+    @keyframes dlgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @media (min-width: 641px) {
+      .hero-banner { padding: 28px 32px; }
+      .hero-metrics-grid .metric-value:not(.metric-text) { font-size: 30px; letter-spacing: -0.5px; margin-top: 4px; }
+      .content-card { padding: 24px; }
+      dialog { padding: 26px; }
+    }
+    @media (max-width: 640px) {
+      :root { --radius-lg: 16px; }
+    }
   </style>
 </head>
 <body>
