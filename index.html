@@ -483,7 +483,7 @@
           <details class="more-actions" id="moreActions">
             <summary class="btn">Mais ações ▾</summary>
             <div class="more-actions-menu">
-              <button class="btn" id="btnRegistrarAusencia" style="color:var(--neg);">Registrar falta / atestado</button>
+              <button class="btn" id="btnRegistrarAusencia" style="color:var(--neg);">Registrar falta / férias / folga</button>
               <button class="btn" id="btnExportCSV">Exportar extrato (CSV)</button>
               <button class="btn" id="btnSimularAtraso" title="Ferramenta de teste da gestão" style="display:none;">Simular atraso (30 min)</button>
             </div>
@@ -529,6 +529,32 @@
         <div id="avisoSemSaida" class="content-card" hidden style="border-left:4px solid var(--c-laranja); margin-bottom:16px;">
           <div class="card-title"><span>⚠️ Dia anterior sem saída</span></div>
           <p id="avisoSemSaidaTexto" style="font-size:13px; margin:0;"></p>
+        </div>
+
+        <div id="cardCalcSaida" class="content-card" style="margin-bottom:16px;">
+          <div class="card-title"><span>🧮 Calculadora de saída</span><span class="tag neutral" id="calcSaidaTag">—</span></div>
+          <div id="calcSaidaVazio" class="muted" style="font-size:13px;">Disponível quando o expediente de hoje estiver em andamento.</div>
+          <div id="calcSaidaCorpo" hidden>
+            <div class="grid-2" style="gap:12px;">
+              <div class="metric-block" style="background:var(--card-sub); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:12px;">
+                <div class="metric-label">Sair para cumprir a meta</div>
+                <div class="metric-value" id="calcSaidaMeta">--:--</div>
+                <small class="muted" id="calcSaidaMetaFalta"></small>
+              </div>
+              <div class="metric-block" style="background:var(--card-sub); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:12px;">
+                <div class="metric-label">Sair para zerar o saldo</div>
+                <div class="metric-value" id="calcSaidaZero">--:--</div>
+                <small class="muted" id="calcSaidaZeroFalta"></small>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:12px; margin-bottom:0;">
+              <label for="calcSaidaSimula">E se eu sair às…</label>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input type="time" id="calcSaidaSimula" style="max-width:150px;">
+                <span id="calcSaidaSimulaRes" class="muted" style="font-size:12px;">Escolha um horário para ver o saldo do dia e o acumulado.</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="dashboard-grid">
@@ -1119,8 +1145,18 @@
           <select id="faltaTipo">
             <option value="injustificada">Ausência a Compensar (Desconta Jornada)</option>
             <option value="atestado">Ausência Abonada / Justificada (0h)</option>
+            <option value="ferias">Férias (0h, sem desconto)</option>
+            <option value="recesso">Recesso (0h, sem desconto)</option>
+            <option value="compensada">Folga compensada (usa o saldo do banco)</option>
+            <option value="meio">Meio período (desconta metade da jornada)</option>
           </select>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label for="faltaDataFim">Até (opcional, para vários dias seguidos)</label>
+        <input type="date" id="faltaDataFim">
+        <small class="muted" style="font-size:11px;">Com período, fins de semana, feriados e dias que já têm ponto são pulados.</small>
       </div>
 
       <div class="form-group">
@@ -1290,6 +1326,20 @@
         <button type="button" class="btn" id="btnAddFolgaExtra" style="white-space:nowrap;">Adicionar</button>
       </div>
       <div class="holiday-list" id="cfgFolgasExtrasLista" style="max-height:120px;"></div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
+      <label>Avisos de fim de expediente</label>
+      <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer; text-transform:none; letter-spacing:0; font-size:12px; font-weight:500; color:var(--text-main);">
+        <input type="checkbox" class="chk" id="cfgAvisoFim" style="margin-top:2px; flex:0 0 16px;">
+        <span>Avisar 5 min antes (notificação) e 1 min antes (com som) do horário previsto de saída.<br>
+          <small class="muted" style="font-size:11px;">O horário previsto é a entrada de hoje + intervalo + meta do dia. Vale só neste aparelho e só com o sistema aberto (aba ou app instalado).</small></span>
+      </label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        <button type="button" class="btn" id="btnAvisoPermissao">Ativar notificações do sistema</button>
+        <button type="button" class="btn" id="btnAvisoTeste">Testar aviso</button>
+      </div>
+      <small class="muted" id="avisoPermissaoStatus" style="font-size:11px;"></small>
     </div>
 
     <div class="form-group" style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
@@ -3711,6 +3761,7 @@
       }
       const btnFolga = document.getElementById('btnTrabalharFolga');
       if (btnFolga) btnFolga.style.display = (folgaHojeAuto && !todayEntry) ? '' : 'none';
+      try { renderCalculadoraSaida(); } catch (e) { console.warn('Calculadora de saída:', e); }
 
       const sortedChronological = [...appState.entries].sort((a, b) => {
         const dDiff = new Date(a.date) - new Date(b.date);
@@ -4097,6 +4148,177 @@
       atualizarBotaoSom();
       if (somLigado()) tocarSomNotificacao();
     }
+
+    // ===== SALDO + CALCULADORA DE SAÍDA + AVISO DE FIM DE EXPEDIENTE =====
+    function saldoAcumuladoMin(excluirId) {
+      return (appState.entries || []).reduce((acc, e) => {
+        if (!e || e.status === 'pendente_aprovacao' || e.id === excluirId) return acc;
+        return acc + (typeof e.variation === 'number' ? e.variation : 0);
+      }, 0);
+    }
+    function fmtHoraDia(min) {
+      const mais = Math.floor(min / 1440);
+      const m = ((Math.round(min) % 1440) + 1440) % 1440;
+      const t = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      return mais > 0 ? `${t} (+${mais} dia)` : t;
+    }
+    function agoraEmMin() { const d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; }
+    function metaDeHoje() { return Core.isWeekendOrHoliday(getLocalDateStr()) ? 0 : (appState.config.expected || 360); }
+    // Saída prevista = entrada de hoje + intervalo + meta do dia (em minutos desde 00:00)
+    function saidaPrevistaMin(entry) {
+      if (!entry || !entry.entrada) return null;
+      return Core.toMinutes(entry.entrada) + (entry.intervalo || 0) + metaDeHoje();
+    }
+    function renderCalculadoraSaida() {
+      const vazio = document.getElementById('calcSaidaVazio'), corpo = document.getElementById('calcSaidaCorpo');
+      if (!vazio || !corpo) return;
+      const em = entradaDoDiaEmAndamento();
+      if (!em) { vazio.hidden = false; corpo.hidden = true; document.getElementById('calcSaidaTag').textContent = '—'; return; }
+      vazio.hidden = true; corpo.hidden = false;
+      const entradaMin = Core.toMinutes(em.entrada), interv = em.intervalo || 0, meta = metaDeHoje();
+      const agora = agoraEmMin();
+      const saldoAntes = saldoAcumuladoMin(em.id);
+      document.getElementById('calcSaidaTag').textContent = `Saldo anterior ${Core.fromMinutes(saldoAntes, true)}`;
+
+      const faltaTxt = (alvo) => {
+        const f = Math.ceil(alvo - agora);
+        return f > 0 ? `faltam ${Core.fromMinutes(f)}` : (f === 0 ? 'é agora' : `já passou ${Core.fromMinutes(-f)}`);
+      };
+      const saidaMeta = entradaMin + interv + meta;
+      document.getElementById('calcSaidaMeta').textContent = fmtHoraDia(saidaMeta);
+      document.getElementById('calcSaidaMetaFalta').textContent = meta === 0 ? 'hoje é folga: sem meta' : faltaTxt(saidaMeta);
+
+      // Para o saldo acumulado fechar em 00:00: líquido de hoje = meta - saldo anterior
+      const liquidoNecessario = meta - saldoAntes;
+      const elZero = document.getElementById('calcSaidaZero'), elZeroF = document.getElementById('calcSaidaZeroFalta');
+      if (liquidoNecessario <= 0) {
+        elZero.textContent = 'Já cobre';
+        elZeroF.textContent = `seu saldo anterior (${Core.fromMinutes(saldoAntes, true)}) já cobre o dia inteiro`;
+      } else {
+        const saidaZero = entradaMin + interv + liquidoNecessario;
+        elZero.textContent = fmtHoraDia(saidaZero);
+        elZeroF.textContent = faltaTxt(saidaZero);
+      }
+
+      const inp = document.getElementById('calcSaidaSimula'), res = document.getElementById('calcSaidaSimulaRes');
+      if (inp && inp.value) {
+        const calc = Core.calcPJ(em.entrada, inp.value, interv, false, appState.config.expected || 360, getLocalDateStr());
+        if (Core.toMinutes(inp.value) < entradaMin) {
+          res.textContent = 'Esse horário é antes da entrada de hoje.';
+        } else {
+          res.textContent = `Saldo do dia ${Core.fromMinutes(calc.saldo, true)} • acumulado ${Core.fromMinutes(saldoAntes + calc.saldo, true)}`;
+        }
+      }
+    }
+
+    // --- Aviso: 5 min antes (notificação) e 1 min antes (com som) ---
+    function avisoFimLigado() { return localStorage.getItem('realtime_aviso_fim') !== 'off'; }
+    function notificacaoSistema(titulo, corpo, tag) {
+      try {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        const opts = { body: corpo, tag, renotify: true, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', requireInteraction: tag === 'bh-fim-1' };
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+          navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg && reg.showNotification) reg.showNotification(titulo, opts);
+            else { const n = new Notification(titulo, opts); n.onclick = () => { window.focus(); n.close(); }; }
+          }).catch(() => { try { new Notification(titulo, opts); } catch (e) {} });
+        } else { const n = new Notification(titulo, opts); n.onclick = () => { window.focus(); n.close(); }; }
+      } catch (e) {}
+    }
+    // Som mais insistente que o de notificação comum: três "bips" duplos subindo de tom
+    function tocarSomFimExpediente() {
+      tocarTons([
+        [880, 0, 0.16], [1175, 0.2, 0.16],
+        [880, 0.7, 0.16], [1175, 0.9, 0.16],
+        [1318.5, 1.4, 0.35]
+      ], 'sine', 0.35);
+      if (navigator.vibrate) navigator.vibrate([250, 100, 250, 100, 400]);
+    }
+    function dispararAvisoFim(nivel, saidaMin, restanteMin) {
+      const hora = fmtHoraDia(saidaMin);
+      if (nivel === 5) {
+        const t = 'Faltam 5 minutos para sua saída';
+        const c = `Saída prevista às ${hora}. Não esqueça de encerrar o expediente.`;
+        showToast(c, { title: t, tone: 'info', icon: '⏰', duration: 12000 });
+        notificacaoSistema(t, c, 'bh-fim-5');
+      } else {
+        const passou = restanteMin <= 0;
+        const t = passou ? 'Já passou da hora de sair' : 'Falta 1 minuto para sua saída';
+        const c = passou ? `A saída prevista era ${hora}. Encerre o expediente para o saldo ficar certo.` : `Saída prevista às ${hora}. Encerre o expediente agora para não esquecer.`;
+        showToast(c, { title: t, tone: 'absence', icon: '🔔', duration: 14000 });
+        notificacaoSistema(t, c, 'bh-fim-1');
+        tocarSomFimExpediente();
+      }
+    }
+    function verificarAvisoFimExpediente() {
+      if (!avisoFimLigado() || currentUserId === 'guest') return;
+      const em = entradaDoDiaEmAndamento();
+      if (!em || em.saida) return;
+      const saidaMin = saidaPrevistaMin(em);
+      if (saidaMin === null || metaDeHoje() === 0) return;
+      if (saidaMin > 1440) return; // jornada que vira o dia: sem aviso automático
+      const restante = saidaMin - agoraEmMin();
+      const chave = (n) => `realtime_aviso_${currentUserId}_${em.date}_${em.id}_${n}`;
+      // 1 min antes (e até 2 min depois, para o caso do navegador ter atrasado o relógio da aba)
+      if (restante <= 1 && restante > -2) {
+        if (!localStorage.getItem(chave(1))) {
+          localStorage.setItem(chave(1), '1'); localStorage.setItem(chave(5), '1');
+          dispararAvisoFim(1, saidaMin, restante);
+        }
+        return;
+      }
+      if (restante <= 5 && restante > 1) {
+        if (!localStorage.getItem(chave(5))) {
+          localStorage.setItem(chave(5), '1');
+          dispararAvisoFim(5, saidaMin, restante);
+        }
+      }
+    }
+    function limparAvisosAntigos() {
+      try {
+        const hoje = getLocalDateStr();
+        Object.keys(localStorage).forEach(k => {
+          const m = k.match(/^realtime_aviso_.*?_(\d{4}-\d{2}-\d{2})_/);
+          if (m && m[1] < hoje) localStorage.removeItem(k);
+        });
+      } catch (e) {}
+    }
+    function atualizarStatusPermissao() {
+      const el = document.getElementById('avisoPermissaoStatus'), bt = document.getElementById('btnAvisoPermissao');
+      if (!el) return;
+      if (!('Notification' in window)) { el.textContent = 'Este navegador não oferece notificações do sistema. Os avisos aparecem na tela e tocam o som.'; if (bt) bt.disabled = true; return; }
+      const p = Notification.permission;
+      el.textContent = p === 'granted' ? 'Notificações do sistema ativadas neste aparelho.'
+        : p === 'denied' ? 'Notificações bloqueadas no navegador. Libere nas configurações do site para receber o aviso fora da aba.'
+        : 'Ainda não ativadas: o aviso aparece só dentro do sistema e toca o som.';
+      if (bt) bt.disabled = p === 'granted';
+    }
+    (function iniciarAvisoFim() {
+      const chk = document.getElementById('cfgAvisoFim');
+      if (chk) {
+        chk.checked = avisoFimLigado();
+        chk.addEventListener('change', () => { localStorage.setItem('realtime_aviso_fim', chk.checked ? 'on' : 'off'); });
+      }
+      const btP = document.getElementById('btnAvisoPermissao');
+      if (btP) btP.addEventListener('click', async () => {
+        try { destravarAudio(); await Notification.requestPermission(); } catch (e) {}
+        atualizarStatusPermissao();
+      });
+      const btT = document.getElementById('btnAvisoTeste');
+      if (btT) btT.addEventListener('click', () => {
+        destravarAudio();
+        dispararAvisoFim(1, agoraEmMin() + 1, 1);
+      });
+      const sim = document.getElementById('calcSaidaSimula');
+      if (sim) sim.addEventListener('input', () => { try { renderCalculadoraSaida(); } catch (e) {} });
+      const btnCfg = document.getElementById('btnSettings');
+      if (btnCfg) btnCfg.addEventListener('click', () => { if (chk) chk.checked = avisoFimLigado(); atualizarStatusPermissao(); });
+      atualizarStatusPermissao();
+      limparAvisosAntigos();
+      setInterval(verificarAvisoFimExpediente, 15 * 1000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) verificarAvisoFimExpediente(); });
+      setInterval(() => { try { renderCalculadoraSaida(); } catch (e) {} }, 30 * 1000);
+    })();
 
     // ===== ANIVERSÁRIOS DA EQUIPE (tabela compartilhada bh_aniversarios: só dia e mês) =====
     let sharedBirthdays = [];
@@ -4622,32 +4844,72 @@
         showToast('Configurações de jornada salvas!');
       });
 
-      document.getElementById('formFalta').addEventListener('submit', (e) => {
+      document.getElementById('formFalta').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = document.getElementById('faltaData').value;
+        const fim = document.getElementById('faltaDataFim').value;
         const tipo = document.getElementById('faltaTipo').value;
         const motivo = document.getElementById('faltaMotivo').value;
+        if (!data) return;
+        if (fim && fim < data) { showToast('A data final não pode ser antes da inicial.'); return; }
 
-        const isAbonada = tipo === 'atestado';
-        const isFimDeSemana = Core.isWeekendOrHoliday(data);
-        const varMin = (isAbonada || isFimDeSemana) ? 0 : -(appState.config.expected || 360);
+        const meta = appState.config.expected || 360;
+        // [tipo gravado, rótulo, variação por dia]. Usa só os tipos que o sistema já conhece (falta/atestado).
+        const TIPOS = {
+          injustificada: { t: 'falta',    rot: '[Ausência]',          v: -meta },
+          atestado:      { t: 'atestado', rot: '[Atestado]',          v: 0 },
+          ferias:        { t: 'atestado', rot: '[Férias]',            v: 0 },
+          recesso:       { t: 'atestado', rot: '[Recesso]',           v: 0 },
+          compensada:    { t: 'falta',    rot: '[Folga compensada]',  v: -meta },
+          meio:          { t: 'falta',    rot: '[Meio período]',      v: -Math.round(meta / 2) }
+        };
+        const cfg = TIPOS[tipo] || TIPOS.injustificada;
 
-        appState.entries.push({
-          id: 'falta_' + Date.now(),
-          date: data,
-          type: isAbonada ? 'atestado' : 'falta',
-          entrada: '--:--',
-          saida: '--:--',
-          intervalo: 0,
-          variation: varMin,
-          obs: `${isAbonada ? '[Atestado] ' : '[Ausência] '} ${motivo}`,
-          status: 'ativo',
-          updatedAt: Date.now()
+        // Lista de datas: um dia só (como sempre foi) ou o período, pulando folgas e dias com ponto
+        const datas = [];
+        if (!fim || fim === data) {
+          datas.push(data);
+        } else {
+          const diasComPonto = new Set(appState.entries.filter(x => x.type === 'trabalhado' && x.status !== 'pendente_aprovacao').map(x => x.date));
+          const cur = new Date(data + 'T12:00:00'), ult = new Date(fim + 'T12:00:00');
+          while (cur <= ult && datas.length < 62) {
+            const ds = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+            if (!Core.isWeekendOrHoliday(ds) && !diasComPonto.has(ds)) datas.push(ds);
+            cur.setDate(cur.getDate() + 1);
+          }
+          if (!datas.length) { showToast('Nenhum dia útil nesse período.'); return; }
+        }
+
+        const custoDia = (ds) => (Core.isWeekendOrHoliday(ds) ? 0 : -cfg.v);
+        const custoTotal = datas.reduce((a, ds) => a + custoDia(ds), 0);
+        if (tipo === 'compensada' && custoTotal > 0) {
+          const saldoAtual = typeof saldoAcumuladoMin === 'function' ? saldoAcumuladoMin() : 0;
+          if (saldoAtual - custoTotal < 0) {
+            const ok = await pedirConfirmacao(`Seu saldo atual é ${Core.fromMinutes(saldoAtual, true)} e essa folga usa ${Core.fromMinutes(custoTotal)}. O banco ficará negativo (${Core.fromMinutes(saldoAtual - custoTotal)}). Registrar mesmo assim?`);
+            if (!ok) return;
+          }
+        }
+
+        const base = Date.now();
+        datas.forEach((ds, i) => {
+          appState.entries.push({
+            id: 'falta_' + (base + i) + '_' + Math.random().toString(36).slice(2, 6),
+            date: ds,
+            type: cfg.t,
+            entrada: '--:--',
+            saida: '--:--',
+            intervalo: 0,
+            variation: custoDia(ds) === 0 ? 0 : cfg.v,
+            obs: `${cfg.rot} ${motivo}`,
+            status: 'ativo',
+            updatedAt: base + i
+          });
         });
 
         saveLocal();
         document.getElementById('modalFalta').close();
-        showToast('Sua ausência foi salva.', { title: 'Ausência registrada', tone: 'absence' });
+        document.getElementById('formFalta').reset();
+        showToast(datas.length > 1 ? `${datas.length} dias registrados.` : 'Sua ausência foi salva.', { title: 'Ausência registrada', tone: 'absence' });
       });
 
       document.getElementById('formSolicitarAjuste').addEventListener('submit', (e) => {
