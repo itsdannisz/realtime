@@ -2,7 +2,7 @@
    - Páginas: tenta a internet primeiro (sempre a versão mais nova) e usa a cópia guardada se estiver offline.
    - Arquivos de apoio (ícones, fontes, biblioteca do Supabase): usa a cópia guardada e atualiza em segundo plano.
    - NUNCA guarda chamadas ao Supabase nem à detecção de IP: os dados sempre vêm ao vivo. */
-const VERSAO = 'realtime-v1';
+const VERSAO = 'realtime-v2';
 const BASE = [
   './',
   './manifest.json',
@@ -45,13 +45,21 @@ self.addEventListener('fetch', (event) => {
   // Abrir o app / navegar: internet primeiro, cópia guardada se estiver offline
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
+      const guardado = await caches.match('./');
       try {
-        const nova = await fetch(req);
-        const cache = await caches.open(VERSAO);
-        cache.put('./', nova.clone());
-        return nova;
+        // Com cópia guardada, não espera a internet por mais de 4 s; sem cópia (1ª visita), espera normalmente
+        const pedido = guardado
+          ? Promise.race([fetch(req), new Promise((_, rej) => setTimeout(() => rej(new Error('lento')), 4000))])
+          : fetch(req);
+        const nova = await pedido;
+        if (nova.ok) {
+          const cache = await caches.open(VERSAO);
+          cache.put('./', nova.clone());
+          return nova;
+        }
+        return guardado || nova; // resposta com erro: prefere a última cópia boa
       } catch (e) {
-        return (await caches.match('./')) || Response.error();
+        return guardado || Response.error();
       }
     })());
     return;
