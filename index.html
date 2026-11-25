@@ -1314,7 +1314,7 @@
       <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">Central de Notificações</h3>
       <div style="display:flex; gap:6px; align-items:center;">
         <button type="button" class="btn" id="btnSomNotif" style="padding:3px 8px; font-size: 12px;">🔊 Som: ligado</button>
-        <button type="button" class="btn" id="btnTestarSom" style="padding:3px 8px; font-size: 12px;">▶ Testar</button>
+        <button type="button" class="btn" id="btnTestarSom" style="padding:3px 8px; font-size: 12px;" onclick="testarSom()">▶ Testar</button>
         <button type="button" class="btn" data-close style="border:0; padding:4px 8px;">✕</button>
       </div>
     </div>
@@ -4136,6 +4136,14 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
       const btn = document.getElementById('btnSomNotif');
       if (btn) btn.textContent = somLigado() ? '🔊 Som: ligado' : '🔇 Som: desligado';
     }
+function testarSom() {
+  if (!somLigado()) {
+    showToast('O som está desligado. Ligue em "Som: desligado".', { tone: 'warn' });
+    return;
+  }
+  tocarSomSolicitacao();
+  showToast('Se você ouviu 3 toques graves, o som das solicitações está funcionando.', { title: 'Teste de som', tone: 'info' });
+}
     function alternarSomNotif() {
       localStorage.setItem('realtime_notif_sound', somLigado() ? 'off' : 'on');
       atualizarBotaoSom();
