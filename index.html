@@ -1404,6 +1404,16 @@
     <button type="button" class="btn-laranja" data-close style="width:100%;">Ok</button>
   </dialog>
 
+<dialog id="modalEntradaCedo" style="max-width:420px; text-align:center;">
+  <h3 style="font-size:17px; font-weight:800; margin-bottom:6px;">Você abriu o sistema cedo</h3>
+  <p id="cedoTexto" class="muted" style="font-size:13px; margin-bottom:16px;"></p>
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <button type="button" class="btn-laranja" id="btnCedoAgora">Vou trabalhar mais cedo (contar a partir de agora)</button>
+    <button type="button" class="btn-verde" id="btnCedoHorario">Começar a contar no horário</button>
+  </div>
+  <p id="cedoRodape" class="muted" style="font-size:12px; margin-top:12px;"></p>
+</dialog>
+
   <!-- SUPABASE SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
@@ -2194,102 +2204,135 @@
       return removeu;
     }
 
+const JANELA_ANTECIPADA_MIN = 5; // o ponto só abre sozinho a partir de (entrada − 5 min)
+let aguardandoEntradaCedo = false;
+
+function perguntarEntradaCedo() {
+  const dlg = document.getElementById('modalEntradaCedo');
+  if (!dlg) return;
+  const ent = appState.config.entrada || '09:00';
+  const abre = Core.fromMinutes(Core.toMinutes(ent) - JANELA_ANTECIPADA_MIN);
+  const agora = new Date();
+  const hhmm = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+  aguardandoEntradaCedo = true;
+  document.getElementById('cedoTexto').textContent = `Agora são ${hhmm}. O expediente começa às ${ent}. Você vai trabalhar antes do horário ou quer contar só a partir das ${ent}?`;
+  document.getElementById('btnCedoHorario').textContent = `Começar a contar às ${ent}`;
+  document.getElementById('cedoRodape').textContent = `Se não escolher, o ponto abre sozinho às ${abre}.`;
+  if (!dlg.open) dlg.showModal();
+}
     let checkInEmAndamento = false;
-    async function executarCheckIn(forcarInicio = false) {
-      // Trava: se já há um check-in rodando, não começa outro (evita registros duplicados)
-      if (checkInEmAndamento) return;
-      checkInEmAndamento = true;
-      try {
-        await executarCheckInInterno(forcarInicio);
-      } finally {
-        checkInEmAndamento = false;
-      }
-    }
+    async function executarCheckIn(forcarInicio = false, horaFixa = null) {
+  if (checkInEmAndamento) return;
+  checkInEmAndamento = true;
+  try {
+    await executarCheckInInterno(forcarInicio, horaFixa);
+  } finally {
+    checkInEmAndamento = false;
+  }
+}
 
-    async function executarCheckInInterno(forcarInicio = false) {
-      const todayStr = getLocalDateStr();
-      // Folga automática: em fim de semana, feriado ou folga extra o sistema NÃO abre o ponto sozinho.
-      // Para trabalhar mesmo assim, é só usar "Trabalhar hoje mesmo assim" (forcarInicio).
-      if (!forcarInicio && appState.config.folgaAuto !== false && Core.isWeekendOrHoliday(todayStr)
-          && !appState.entries.some(e => e.date === todayStr)) {
-        instanteLoginAtual = null;
-        renderDashboard();
-        return;
-      }
-      // A hora da entrada é a de quando o sistema abriu, não a de quando a internet terminou de responder
-      const instanteAbertura = (instanteLoginAtual && !forcarInicio) ? instanteLoginAtual : new Date();
+async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
+  const todayStr = getLocalDateStr();
+
+  // Folga automática
+  if (!forcarInicio && appState.config.folgaAuto !== false && Core.isWeekendOrHoliday(todayStr)
+      && !appState.entries.some(e => e.date === todayStr)) {
+    instanteLoginAtual = null;
+    renderDashboard();
+    return;
+  }
+
+  // Cedo demais: pergunta em vez de abrir o ponto
+  if (!forcarInicio && !appState.entries.some(e => e.date === todayStr)) {
+    const d0 = instanteLoginAtual || new Date();
+    const minAgora = d0.getHours() * 60 + d0.getMinutes();
+    const minEntrada = Core.toMinutes(appState.config.entrada || '09:00');
+    if (minAgora < minEntrada - JANELA_ANTECIPADA_MIN) {
       instanteLoginAtual = null;
-
-      const ip = await detectUserIP();
-      // Procura o ponto do dia DEPOIS de esperar o IP (outro fluxo pode ter criado nesse meio tempo)
-      let entry = appState.entries.find(e => e.date === todayStr);
-      const officeIps = (appState.config.officeIp || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
-      const isOffice = officeIps.length > 0 && officeIps.some(oIp => ip === oIp || ip.startsWith(oIp));
-      let locType = isOffice ? 'escritorio' : 'home';
-      // Se a pessoa já escolheu o local do dia manualmente, a detecção por IP não sobrescreve
-      if (entry && entry.locManual && entry.location) locType = entry.location;
-
-      atualizarBadgeLocal(locType, ip, !!(entry && entry.locManual));
-
-      if (!entry || forcarInicio) {
-        const now = instanteAbertura;
-        const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const scheduledStart = appState.config.entrada || '09:00';
-        const ehFolgaHoje = Core.isWeekendOrHoliday(todayStr);
-        const delayMin = ehFolgaHoje ? 0 : Math.max(0, Core.toMinutes(timeNow) - Core.toMinutes(scheduledStart));
-        const rotuloLocal = locType === 'escritorio' ? 'Presencial' : 'Home Office';
-
-        let obs = ehFolgaHoje
-          ? `Trabalho em dia de folga (${Core.infoDia(todayStr).nome}) — as horas viram crédito (${rotuloLocal})`
-          : (delayMin > 5
-            ? `Início com atraso de ${delayMin} min (${rotuloLocal})`
-            : `Início regular (${rotuloLocal})`);
-
-        if (entry) removerEntradasDoDia(todayStr);
-
-        appState.entries.push({
-          id: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-          date: todayStr,
-          type: 'trabalhado',
-          entrada: timeNow,
-          saida: '',
-          intervalo: appState.config.intervalo !== undefined ? appState.config.intervalo : 60,
-          ip: ip,
-          location: locType,
-          variation: 0,
-          obs: obs,
-          status: 'ativo',
-          updatedAt: Date.now()
-        });
-
-        saveLocal();
-        showToast(`Início às ${timeNow} · ${locType === 'escritorio' ? 'Escritório' : 'Home Office'}`, { title: 'Entrada registrada', tone: 'time' });
-      } else {
-        const ipReal = ip && ip !== 'Rede Conectada' && ip !== 'Offline/Local';
-        if (ipReal && (!entry.ip || entry.ip === 'Offline/Local' || entry.ip === 'Rede Conectada')) {
-          entry.ip = ip;
-          entry.location = locType;
-          saveLocal();
-        }
-      }
+      perguntarEntradaCedo();
+      renderDashboard();
+      return;
     }
+  }
+
+  const instanteAbertura = (instanteLoginAtual && !forcarInicio) ? instanteLoginAtual : new Date();
+  instanteLoginAtual = null;
+
+  const ip = await detectUserIP();
+  let entry = appState.entries.find(e => e.date === todayStr);
+  const officeIps = (appState.config.officeIp || '').split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
+  const isOffice = officeIps.length > 0 && officeIps.some(oIp => ip === oIp || ip.startsWith(oIp));
+  let locType = isOffice ? 'escritorio' : 'home';
+  if (entry && entry.locManual && entry.location) locType = entry.location;
+
+  atualizarBadgeLocal(locType, ip, !!(entry && entry.locManual));
+
+  if (!entry || forcarInicio) {
+    const now = instanteAbertura;
+    const timeNow = horaFixa || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const scheduledStart = appState.config.entrada || '09:00';
+    const ehFolgaHoje = Core.isWeekendOrHoliday(todayStr);
+    const delayMin = ehFolgaHoje ? 0 : Math.max(0, Core.toMinutes(timeNow) - Core.toMinutes(scheduledStart));
+    const rotuloLocal = locType === 'escritorio' ? 'Presencial' : 'Home Office';
+
+    let obs = ehFolgaHoje
+      ? `Trabalho em dia de folga (${Core.infoDia(todayStr).nome}) — as horas viram crédito (${rotuloLocal})`
+      : (delayMin > 5
+        ? `Início com atraso de ${delayMin} min (${rotuloLocal})`
+        : `Início regular (${rotuloLocal})`);
+
+    if (entry) removerEntradasDoDia(todayStr);
+
+    appState.entries.push({
+      id: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      date: todayStr,
+      type: 'trabalhado',
+      entrada: timeNow,
+      saida: '',
+      intervalo: appState.config.intervalo !== undefined ? appState.config.intervalo : 60,
+      ip: ip,
+      location: locType,
+      variation: 0,
+      obs: obs,
+      status: 'ativo',
+      updatedAt: Date.now()
+    });
+
+    saveLocal();
+    showToast(`Início às ${timeNow} · ${locType === 'escritorio' ? 'Escritório' : 'Home Office'}`, { title: 'Entrada registrada', tone: 'time' });
+  } else {
+    const ipReal = ip && ip !== 'Rede Conectada' && ip !== 'Offline/Local';
+    if (ipReal && (!entry.ip || entry.ip === 'Offline/Local' || entry.ip === 'Rede Conectada')) {
+      entry.ip = ip;
+      entry.location = locType;
+      saveLocal();
+    }
+  }
+}
 
     async function finalizarDiaInstantaneo() {
-      const now = new Date();
-      const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const todayStr = getLocalDateStr();
-      
-      let entry = appState.entries.find(e => e.date === todayStr);
+  const now = new Date();
+  const timeNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const todayStr = getLocalDateStr();
 
-      if (!entry || !entry.entrada) {
-        if (appState.config.folgaAuto !== false && Core.isWeekendOrHoliday(todayStr)) {
-          const okFolga = await pedirConfirmacao(`Hoje é folga (${Core.infoDia(todayStr).nome}). Quer registrar trabalho hoje mesmo assim? As horas entram como crédito no banco.`);
-          if (!okFolga) return;
-        }
-        showToast('Vamos iniciar agora para você!', { title: 'O expediente não estava iniciado', tone: 'info' });
-        executarCheckIn(true);
-        return;
-      }
+  let entry = appState.entries.find(e => e.date === todayStr);
+
+  if (!entry || !entry.entrada) {
+    if (appState.config.folgaAuto !== false && Core.isWeekendOrHoliday(todayStr)) {
+      const okFolga = await pedirConfirmacao(`Hoje é folga (${Core.infoDia(todayStr).nome}). Quer registrar trabalho hoje mesmo assim? As horas entram como crédito no banco.`);
+      if (!okFolga) return;
+    }
+    showToast('Vamos iniciar agora para você!', { title: 'O expediente não estava iniciado', tone: 'info' });
+    executarCheckIn(true);
+    return;
+  }
+
+  if (!entry.saida && Core.toMinutes(timeNow) < Core.toMinutes(entry.entrada)) {
+    showToast(`A entrada está marcada para ${entry.entrada}. Ainda não dá para encerrar.`, { tone: 'warn', title: 'Expediente ainda não começou' });
+    return;
+  }
+
+  // (daqui para baixo: "if (entry.saida && !await pedirConfirmacao(..." segue igual)
 
       if (entry.saida && !await pedirConfirmacao(`O expediente de hoje já foi encerrado às ${entry.saida}. Deseja atualizar o horário de encerramento para agora (${timeNow})?`)) {
         return;
@@ -3684,7 +3727,9 @@
           document.getElementById('entrySaidaLocation').textContent = `Expediente encerrado às ${todayEntry.saida}`;
         } else {
           const timeNowStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-          const calcAgora = Core.calcPJ(todayEntry.entrada, timeNowStr, todayEntry.intervalo, false, appState.config.expected || 360, todayStr);
+          const calcAgora = Core.toMinutes(timeNowStr) < Core.toMinutes(todayEntry.entrada)
+  ? { totalLiquido: 0 }
+  : Core.calcPJ(todayEntry.entrada, timeNowStr, todayEntry.intervalo, false, appState.config.expected || 360, todayStr);
           document.getElementById('statHorasHoje').textContent = Core.fromMinutes(calcAgora.totalLiquido);
           document.getElementById('statSaldoHoje').textContent = 'Calculando ao sair';
           document.getElementById('statSaldoHoje').className = 'metric-value metric-text';
@@ -3796,18 +3841,18 @@
 
     // Avisa quando um dia anterior ficou com entrada e sem saída (o saldo desse dia vale 0)
     function atualizarAvisoSemSaida() {
-      const box = document.getElementById('avisoSemSaida');
-      if (!box) return;
-      const hoje = getLocalDateStr();
-      const dias = [...new Set((appState.entries || [])
-        .filter(e => e.type === 'trabalhado' && e.date < hoje && e.status !== 'pendente_aprovacao' && !/^\d{2}:\d{2}$/.test(e.saida || ''))
-        .map(e => e.date))].sort();
-      if (dias.length === 0) { box.hidden = true; return; }
-      const fmt = (d) => d.split('-').reverse().slice(0, 2).join('/');
-      document.getElementById('avisoSemSaidaTexto').textContent =
-        `${dias.length === 1 ? 'O dia' : 'Os dias'} ${dias.map(fmt).join(', ')} ${dias.length === 1 ? 'tem' : 'têm'} entrada e nenhuma saída, então o saldo ${dias.length === 1 ? 'dele' : 'deles'} vale 0. Use "Solicitar ajuste" para informar o horário em que você saiu.`;
-      box.hidden = false;
-    }
+  const box = document.getElementById('avisoSemSaida');
+  if (!box) return;
+  const hoje = getLocalDateStr();
+  const dias = [...new Set((appState.entries || [])
+    .filter(e => e.type === 'trabalhado' && e.date < hoje && e.status !== 'pendente_aprovacao' && !/^\d{2}:\d{2}$/.test(e.saida || ''))
+    .map(e => e.date))].sort();
+  if (dias.length === 0) { box.hidden = true; return; }
+  const fmt = (d) => d.split('-').reverse().slice(0, 2).join('/');
+  document.getElementById('avisoSemSaidaTexto').textContent =
+    `${dias.length === 1 ? 'O dia' : 'Os dias'} ${dias.map(fmt).join(', ')} ${dias.length === 1 ? 'tem' : 'têm'} entrada e nenhuma saída, então o saldo ${dias.length === 1 ? 'dele' : 'deles'} vale 0. Use "Solicitar ajuste" para informar o horário em que você saiu.`;
+  box.hidden = false;
+}
 
     // ===== SELEÇÃO EM MASSA / EDIÇÃO (GESTÃO) =====
     let selectedEntryIds = new Set();
@@ -4342,6 +4387,15 @@
 
     /* TODOS OS LISTENERS 100% REGISTRADOS E CONECTADOS */
     function setupEventListeners() {
+      const dlgCedo = document.getElementById('modalEntradaCedo');
+      dlgCedo.addEventListener('cancel', (ev) => ev.preventDefault()); // Esc não fecha: precisa escolher ou esperar
+      document.getElementById('btnCedoAgora').addEventListener('click', () => {
+        aguardandoEntradaCedo = false; dlgCedo.close(); executarCheckIn(true);
+      });
+      document.getElementById('btnCedoHorario').addEventListener('click', () => {
+        aguardandoEntradaCedo = false; dlgCedo.close();
+        executarCheckIn(true, appState.config.entrada || '09:00');
+      });
       const fPerfilC = document.getElementById('formGestaoPerfil');
       if (fPerfilC) fPerfilC.addEventListener('submit', salvarPerfilColab);
       const fPontoC = document.getElementById('formGestaoPonto');
@@ -5037,17 +5091,28 @@
     // Também tenta de novo o IP quando a detecção falhou na primeira vez (para o local não ficar errado).
     let diaVigente = getLocalDateStr();
     function verificarViradaDeDia() {
-      if (document.hidden || document.getElementById('appScreen').hidden) return;
-      const hoje = getLocalDateStr();
-      if (hoje !== diaVigente) {
-        diaVigente = hoje;
-        instanteLoginAtual = new Date();
-        executarCheckIn().then(() => { try { renderDashboard(); renderMiniCalendar(); } catch (e) {} });
-        return;
-      }
-      const e = appState.entries.find(x => x.date === hoje);
-      if (e && (!e.ip || e.ip === 'Offline/Local' || e.ip === 'Rede Conectada')) executarCheckIn();
+  if (document.hidden || document.getElementById('appScreen').hidden) return;
+  const hoje = getLocalDateStr();
+  if (hoje !== diaVigente) {
+    diaVigente = hoje;
+    instanteLoginAtual = new Date();
+    executarCheckIn().then(() => { try { renderDashboard(); renderMiniCalendar(); } catch (e) {} });
+    return;
+  }
+  if (aguardandoEntradaCedo) {
+    const d = new Date();
+    const minAgora = d.getHours() * 60 + d.getMinutes();
+    if (minAgora >= Core.toMinutes(appState.config.entrada || '09:00') - JANELA_ANTECIPADA_MIN) {
+      aguardandoEntradaCedo = false;
+      const dlg = document.getElementById('modalEntradaCedo');
+      if (dlg && dlg.open) dlg.close();
+      executarCheckIn();
     }
+    return;
+  }
+  const e = appState.entries.find(x => x.date === hoje);
+  if (e && (!e.ip || e.ip === 'Offline/Local' || e.ip === 'Rede Conectada')) executarCheckIn();
+}
     setInterval(verificarViradaDeDia, 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) verificarViradaDeDia(); });
 
