@@ -881,20 +881,39 @@
       <p id="ajusteAviso" class="muted" style="font-size:12px; margin-bottom:14px;">
         Por segurança, os horários registrados pelo PC não podem ser editados diretamente. Envie sua solicitação com a justificativa para aprovação da Danielle / Gestão.
       </p>
-      <input type="hidden" id="ajusteEntryId">
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="ajusteData" required>
+            <input type="hidden" id="ajusteEntryId">
+      <div class="form-group" id="ajusteBoxModo">
+        <label>Quantos dias?</label>
+        <div style="display:flex; gap:14px; font-size:13px;">
+          <label style="display:flex; gap:5px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; color:var(--text-main);"><input type="radio" name="ajusteModo" value="um" checked> Um dia</label>
+          <label style="display:flex; gap:5px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; color:var(--text-main);"><input type="radio" name="ajusteModo" value="varios"> Vários dias</label>
+        </div>
       </div>
-      <div class="grid-2">
+
+      <div id="ajusteBlocoUm">
         <div class="form-group">
-          <label id="ajusteLabelEntrada">Horário Correto de Entrada</label>
-          <input type="time" id="ajusteEntrada" required>
+          <label>Data</label>
+          <input type="date" id="ajusteData" required>
         </div>
-        <div class="form-group" id="ajusteGrupoSaida">
-          <label>Horário Correto de Saída</label>
-          <input type="time" id="ajusteSaida" required>
+        <div class="grid-2">
+          <div class="form-group">
+            <label id="ajusteLabelEntrada">Horário Correto de Entrada</label>
+            <input type="time" id="ajusteEntrada" required>
+          </div>
+          <div class="form-group" id="ajusteGrupoSaida">
+            <label>Horário Correto de Saída</label>
+            <input type="time" id="ajusteSaida" required>
+          </div>
         </div>
+      </div>
+
+      <div id="ajusteBlocoVarios" hidden>
+                <div class="form-group" id="ajusteGrupoAbono">
+          <label>Abono da gestão (minutos) — opcional</label>
+          <textarea id="ajusteTextoVarios" rows="6" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="10/11 08:55 17:30&#10;11/11 9h 18h almoço 90&#10;12/11/2026 09:10 - 17:00"></textarea>
+          <small class="muted" style="font-size: 12px;">Aceita 09:00, 9h ou 9h30. Sem o ano, vale o ano atual. O intervalo e o local abaixo valem para todas as linhas; para mudar o almoço de um dia, escreva "almoço 30" na linha.</small>
+        </div>
+        <div id="ajustePreviewVarios" style="margin-bottom:10px;"></div>
       </div>
       <div id="ajusteCamposDiaFechado">
         <div class="form-group">
@@ -2393,6 +2412,9 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
         grupoSaida.style.display = 'none'; campos.style.display = 'none';
         saidaEl.required = false;
         btn.textContent = 'Corrigir entrada';
+        document.getElementById('ajusteBoxModo').style.display = 'none';
+        document.getElementById('ajusteBlocoUm').hidden = false;
+        document.getElementById('ajusteBlocoVarios').hidden = true;
         document.getElementById('ajusteMotivo').placeholder = 'Ex: O computador demorou para ligar / abrir o sistema.';
       } else {
         delete form.dataset.modo;
@@ -2405,7 +2427,147 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
         btn.textContent = 'Enviar para Aprovação';
         document.getElementById('ajusteMotivo').placeholder = 'Ex: Falha na conexão ao iniciar ou esquecimento justificado...';
       }
+        document.getElementById('ajusteBoxModo').style.display = '';
+        document.getElementById('ajustePreviewVarios').innerHTML = '';
+        aplicarModoAjuste();
       document.getElementById('modalSolicitarAjuste').showModal();
+    }
+    // ===== AJUSTE DE VÁRIOS DIAS (um lote, uma linha por dia) =====
+    let ajusteVariosTimer = null;
+    function modoAjusteVarios() {
+      const r = document.querySelector('input[name="ajusteModo"]:checked');
+      return !!r && r.value === 'varios';
+    }
+    function aplicarModoAjuste() {
+      const varios = modoAjusteVarios();
+      document.getElementById('ajusteBlocoUm').hidden = varios;
+      document.getElementById('ajusteBlocoVarios').hidden = !varios;
+      document.getElementById('ajusteGrupoAbono').style.display = varios ? 'none' : '';
+      document.getElementById('ajusteData').required = !varios;
+      document.getElementById('ajusteEntrada').required = !varios;
+      document.getElementById('ajusteSaida').required = !varios;
+      const btn = document.getElementById('btnEnviarAjuste');
+      btn.textContent = varios ? 'Enviar lote para Aprovação' : 'Enviar para Aprovação';
+      btn.disabled = false;
+      if (varios) conferirAjusteVarios();
+    }
+    function analisarAjusteVarios() {
+      const texto = document.getElementById('ajusteTextoVarios').value;
+      const anoPadrao = new Date().getFullYear();
+      const hojeStr = getLocalDateStr();
+      let intPadrao = parseInt(document.getElementById('ajusteIntervalo').value, 10);
+      if (isNaN(intPadrao) || intPadrao < 0 || intPadrao > 480) intPadrao = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+      const meta = appState.config.expected || 360;
+      const p2 = (n) => String(n).padStart(2, '0');
+      const vistos = new Set();
+      const linhas = [];
+
+      texto.split(/\r?\n/).forEach((bruta, i) => {
+        const original = bruta.trim();
+        if (!original) return;
+        const r = { n: i + 1, bruta: original, ok: false, erro: '' };
+        linhas.push(r);
+        if (linhas.length > 62) { r.erro = 'Limite de 62 linhas por envio'; return; }
+
+        const md = original.match(/(^|[^\d:])(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?(?![\d:])/);
+        if (!md) { r.erro = 'Não achei a data'; return; }
+        const dia = parseInt(md[2], 10), mes = parseInt(md[3], 10);
+        let ano = md[4] ? parseInt(md[4], 10) : anoPadrao;
+        if (md[4] && md[4].length === 2) ano += 2000;
+        const dt = new Date(ano, mes - 1, dia);
+        if (dt.getFullYear() !== ano || dt.getMonth() !== mes - 1 || dt.getDate() !== dia) { r.erro = 'Data inválida'; return; }
+        const dateStr = `${ano}-${p2(mes)}-${p2(dia)}`;
+        r.date = dateStr;
+
+        let resto = original.replace(md[0], ' ');
+        let intervalo = intPadrao;
+        const mi = resto.match(/(?:almo[cç]o|interv\w*)\s*:?\s*(\d{1,3})\s*(?:min\w*|m)?/i);
+        if (mi) { intervalo = parseInt(mi[1], 10); resto = resto.replace(mi[0], ' '); }
+        if (intervalo > 480) { r.erro = 'Intervalo acima de 480 min'; return; }
+
+        const horas = [...resto.matchAll(/(\d{1,2})(?::|h)(\d{2})?(?!\d)/gi)];
+        if (horas.length < 2) { r.erro = 'Faltou entrada ou saída'; return; }
+        const hm = (m) => ({ h: parseInt(m[1], 10), m: m[2] ? parseInt(m[2], 10) : 0 });
+        const a = hm(horas[0]), b = hm(horas[1]);
+        if (a.h > 23 || a.m > 59 || b.h > 23 || b.m > 59) { r.erro = 'Horário inválido'; return; }
+        const entrada = `${p2(a.h)}:${p2(a.m)}`, saida = `${p2(b.h)}:${p2(b.m)}`;
+        if (Core.toMinutes(saida) <= Core.toMinutes(entrada)) { r.erro = 'Saída não é depois da entrada'; return; }
+        if (dateStr > hojeStr) { r.erro = 'Data no futuro'; return; }
+        if (vistos.has(dateStr)) { r.erro = 'Dia repetido na lista'; return; }
+        vistos.add(dateStr);
+
+        const calc = Core.calcPJ(entrada, saida, intervalo, false, meta, dateStr);
+        const existente = appState.entries.find(e => e.date === dateStr && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
+        Object.assign(r, { ok: true, entrada, saida, intervalo, calc, meta, existente: existente || null });
+      });
+      return linhas;
+    }
+    function conferirAjusteVarios() {
+      const box = document.getElementById('ajustePreviewVarios');
+      const btn = document.getElementById('btnEnviarAjuste');
+      if (!box) return;
+      const linhas = analisarAjusteVarios();
+      const validas = linhas.filter(l => l.ok);
+      if (!linhas.length) {
+        box.innerHTML = '<p class="muted" style="font-size:12px;">Escreva os dias acima para conferir.</p>';
+        btn.disabled = true;
+        return;
+      }
+      const dataBR = (d) => d.split('-').reverse().join('/');
+      const total = validas.reduce((s, l) => s + l.calc.saldo, 0);
+      const erros = linhas.length - validas.length;
+      const corpo = linhas.map(l => l.ok ? `
+        <tr>
+          <td>${dataBR(l.date)}${l.existente ? ' <span class="tag neutral" title="Substitui o ponto de ' + esc(l.existente.entrada) + ' → ' + esc(l.existente.saida || '--:--') + ' se for aprovado">já tem ponto</span>' : ''}</td>
+          <td class="mono">${l.entrada} → ${l.saida}</td>
+          <td class="mono">${l.intervalo} min</td>
+          <td class="mono ${l.calc.saldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(l.calc.saldo, true)}</td>
+        </tr>` : `
+        <tr><td colspan="4"><span class="tag neg">Linha ${l.n}</span> <span class="neg">${esc(l.erro)}</span> <small class="muted">— ${esc(l.bruta)}</small></td></tr>`).join('');
+      box.innerHTML = `
+        <div class="bulk-bar" style="margin-bottom:10px;">
+          <strong>${validas.length} dia(s) prontos</strong>
+          <span>• saldo total <strong class="mono ${total >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(total, true)}</strong></span>
+          ${erros ? `<span class="neg">• ${erros} linha(s) com problema (não serão enviadas)</span>` : ''}
+        </div>
+        <div class="table-container" style="max-height:220px; overflow-y:auto;">
+          <table>
+            <thead><tr><th>Data</th><th>Horário</th><th>Almoço</th><th>Saldo</th></tr></thead>
+            <tbody>${corpo}</tbody>
+          </table>
+        </div>`;
+      btn.disabled = validas.length === 0;
+    }
+    function enviarAjusteVarios() {
+      const motivo = document.getElementById('ajusteMotivo').value.trim();
+      if (!motivo) { showToast('Escreva a justificativa.', { tone: 'warn', title: 'Falta a justificativa' }); return; }
+      const linhas = analisarAjusteVarios().filter(l => l.ok);
+      if (!linhas.length) { showToast('Nenhuma linha válida para enviar.', { tone: 'warn' }); return; }
+      const agora = Date.now();
+      const lote = 'lote_' + agora + '_' + Math.random().toString(36).slice(2, 6);
+      const local = document.getElementById('ajusteLocal').value || 'home';
+      const padrao = appState.config.intervalo !== undefined ? appState.config.intervalo : 60;
+      linhas.forEach((l, i) => {
+        appState.entries.push({
+          id: 'ajuste_' + agora + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
+          date: l.date,
+          type: 'trabalhado',
+          entrada: l.entrada, saida: l.saida,
+          intervalo: l.intervalo,
+          location: local,
+          locManual: true,
+          variation: l.calc.saldo,
+          meta: l.meta,
+          lote,
+          obs: `[Solicitação] ${motivo}` + (l.intervalo !== padrao ? ` (almoço de ${l.intervalo} min)` : ''),
+          status: 'pendente_aprovacao',
+          enviadaEm: agora,
+          updatedAt: agora
+        });
+      });
+      saveLocal();
+      document.getElementById('modalSolicitarAjuste').close();
+      showToast(`${linhas.length} dia(s) enviados em um lote para a gestão.`, { title: 'Solicitação enviada', tone: 'success' });
     }
     function enviarCorrecaoEntrada() {
       const e = entradaDoDiaEmAndamento();
@@ -4556,6 +4718,12 @@ function testarSom() {
 
       document.getElementById('btnRegistrarAusencia').addEventListener('click', () => document.getElementById('modalFalta').showModal());
       document.getElementById('btnSolicitarAjuste').addEventListener('click', abrirModalAjuste);
+      document.querySelectorAll('input[name="ajusteModo"]').forEach(r => r.addEventListener('change', aplicarModoAjuste));
+      ['ajusteTextoVarios', 'ajusteIntervalo'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+        if (!modoAjusteVarios()) return;
+        clearTimeout(ajusteVariosTimer);
+        ajusteVariosTimer = setTimeout(conferirAjusteVarios, 250);
+      }));
       document.getElementById('timeEntradaDisplay').addEventListener('click', () => { if (entradaDoDiaEmAndamento()) abrirModalAjuste(); });
       document.getElementById('btnLancarAntigos').addEventListener('click', abrirLancarAntigos);
       document.getElementById('formLancarAntigos').addEventListener('submit', enviarHorariosAntigos);
@@ -4717,6 +4885,7 @@ function testarSom() {
       document.getElementById('formSolicitarAjuste').addEventListener('submit', (e) => {
         e.preventDefault();
         if (e.target.dataset.modo === 'andamento') { enviarCorrecaoEntrada(); return; }
+        if (modoAjusteVarios()) { enviarAjusteVarios(); return; }
         const data = document.getElementById('ajusteData').value;
         const entrada = document.getElementById('ajusteEntrada').value;
         const saida = document.getElementById('ajusteSaida').value;
