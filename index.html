@@ -306,6 +306,43 @@
 
     @media (max-width: 900px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); } .dashboard-grid > * { min-width: 0; } }
 
+
+    /* ===== AJUSTE DE VÁRIOS DIAS: calendário de marcação ===== */
+    #modalSolicitarAjuste { max-width: 600px; max-height: calc(100vh - 32px); overflow-y: auto; }
+    .aj-cal-box { background: var(--card-sub); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px; }
+    .aj-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .aj-cal-head strong { font-size: 13px; }
+    .aj-cal-head .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .aj-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .aj-cal-sem span { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; padding-bottom: 2px; }
+    .aj-d { position: relative; height: 38px; border: 1.5px solid transparent; border-radius: 8px; background: var(--card-white); color: var(--text-main); font-family: var(--font-mono); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; width: auto; }
+    .aj-d.vazio { background: transparent; cursor: default; }
+    .aj-d.fds { color: var(--text-dim); }
+    .aj-d:disabled { opacity: 0.3; cursor: not-allowed; }
+    .aj-d.hoje { border-color: var(--text-muted); }
+    .aj-d.semreg { border-color: var(--c-laranja); }
+    .aj-d.semsaida { border-color: var(--neg); }
+    .aj-d.tem::after { content: ''; position: absolute; bottom: 4px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--pos); }
+    .aj-d.sel { background: var(--c-laranja); color: #fff; border-color: var(--c-laranja); }
+    .aj-d.sel::after { background: #fff; }
+    .aj-d:not(:disabled):not(.vazio):hover { border-color: var(--c-laranja); }
+    .aj-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
+    .aj-leg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; border: 1.5px solid transparent; }
+    .aj-leg i.semreg { border-color: var(--c-laranja); }
+    .aj-leg i.semsaida { border-color: var(--neg); }
+    .aj-leg i.tem { background: var(--pos); border-radius: 50%; width: 7px; height: 7px; }
+    .aj-cal-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .aj-row { background: var(--card-sub); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 6px; }
+    .aj-row.erro { border-color: var(--neg); }
+    .aj-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+    .aj-saldo { margin-left: auto; font-size: 12px; font-weight: 700; text-align: right; }
+    .aj-top .btn { padding: 2px 8px; }
+    .aj-campos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .aj-campos label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .aj-campos input { padding: 6px 8px; font-size: 13px; }
+    details.aj-texto { margin-bottom: 12px; font-size: 12px; }
+    details.aj-texto summary { cursor: pointer; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
+
     /* ===== AJUSTES PARA CELULAR ===== */
     .metric-value { overflow-wrap: anywhere; line-height: 1.15; }
     .metric-value.metric-text { font-family: var(--font-main); font-size: 16px; letter-spacing: 0; font-weight: 700; }
@@ -908,12 +945,46 @@
       </div>
 
       <div id="ajusteBlocoVarios" hidden>
-                <div class="form-group" id="ajusteGrupoAbono">
-          <label>Abono da gestão (minutos) — opcional</label>
-          <textarea id="ajusteTextoVarios" rows="6" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="10/11 08:55 17:30&#10;11/11 9h 18h almoço 90&#10;12/11/2026 09:10 - 17:00"></textarea>
-          <small class="muted" style="font-size: 12px;">Aceita 09:00, 9h ou 9h30. Sem o ano, vale o ano atual. O intervalo e o local abaixo valem para todas as linhas; para mudar o almoço de um dia, escreva "almoço 30" na linha.</small>
+        <div class="form-group">
+          <label>1. Marque os dias</label>
+          <div class="aj-cal-box">
+            <div class="aj-cal-head">
+              <button type="button" class="btn" id="ajCalPrev" aria-label="Mês anterior">‹</button>
+              <strong id="ajCalTitulo"></strong>
+              <button type="button" class="btn" id="ajCalNext" aria-label="Próximo mês">›</button>
+            </div>
+            <div class="aj-cal-grid aj-cal-sem"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+            <div class="aj-cal-grid" id="ajCalDias"></div>
+            <div class="aj-leg">
+              <span><i class="semreg"></i>sem registro</span>
+              <span><i class="semsaida"></i>sem saída</span>
+              <span><i class="tem"></i>já tem ponto</span>
+            </div>
+            <div class="aj-cal-acoes">
+              <button type="button" class="btn" id="ajCalFaltantes">Marcar os dias que faltam neste mês</button>
+              <button type="button" class="btn" id="ajCalLimpar">Limpar marcação</button>
+            </div>
+          </div>
         </div>
+
+        <div class="form-group">
+          <label>2. Horário padrão (preenche os dias marcados)</label>
+          <div class="grid-2">
+            <input type="time" id="ajusteVarEntrada" aria-label="Entrada padrão">
+            <input type="time" id="ajusteVarSaida" aria-label="Saída padrão">
+          </div>
+          <div><button type="button" class="btn" id="ajCalAplicar">Aplicar a todos os dias marcados</button></div>
+          <small class="muted" style="font-size: 12px;">Depois ajuste individualmente o dia que fugiu do padrão (entrada, saída ou almoço).</small>
+        </div>
+
+        <div id="ajusteListaDias"></div>
         <div id="ajustePreviewVarios" style="margin-bottom:10px;"></div>
+
+        <details class="aj-texto">
+          <summary>Prefiro digitar em texto (uma linha por dia)</summary>
+          <textarea id="ajusteTextoVarios" rows="5" spellcheck="false" style="font-family:var(--font-mono); font-size:12px;" placeholder="10/11 08:55 17:30&#10;11/11 9h 18h almoço 90&#10;12/11/2026 09:10 - 17:00"></textarea>
+          <small class="muted" style="font-size: 12px;">Aceita 09:00, 9h ou 9h30. Sem o ano, vale o ano atual. Para mudar o almoço de um dia, escreva "almoço 30" na linha. Soma com os dias marcados no calendário.</small>
+        </details>
       </div>
       <div id="ajusteCamposDiaFechado">
         <div class="form-group">
@@ -921,7 +992,7 @@
           <input type="number" id="ajusteIntervalo" min="0" max="480" step="5" value="60" required>
           <small class="muted" style="font-size: 12px;">Ex.: 60 = 1h, 120 = 2h. É descontado do total do dia.</small>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="ajusteGrupoAbono">
           <label>Abono da gestão (minutos) — opcional</label>
           <input type="number" id="ajusteAbono" min="0" max="480" step="1" value="0">
           <small class="muted" style="font-size: 12px;">Minutos que a gestão decidiu NÃO contar como crédito no banco (ex.: 42). Os horários reais continuam registrados.</small>
@@ -2429,6 +2500,8 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
       }
         document.getElementById('ajusteBoxModo').style.display = '';
         document.getElementById('ajustePreviewVarios').innerHTML = '';
+        ajusteSel.clear();
+        calMes = { a: new Date().getFullYear(), m: new Date().getMonth() };
         aplicarModoAjuste();
       document.getElementById('modalSolicitarAjuste').showModal();
     }
@@ -2449,8 +2522,150 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
       const btn = document.getElementById('btnEnviarAjuste');
       btn.textContent = varios ? 'Enviar lote para Aprovação' : 'Enviar para Aprovação';
       btn.disabled = false;
-      if (varios) conferirAjusteVarios();
+      if (varios) { renderCalendarioAjuste(); renderListaDias(); conferirAjusteVarios(); }
     }
+    // ===== CALENDÁRIO PARA MARCAR OS DIAS =====
+    const ajusteSel = new Map(); // 'AAAA-MM-DD' -> { entrada, saida, intervalo ('' = usa o almoço padrão) }
+    let calMes = { a: new Date().getFullYear(), m: new Date().getMonth() };
+    const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const SEM_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+    const HORA_OK = /^\d{2}:\d{2}$/;
+    const MAX_DIAS_LOTE = 62;
+
+    function dataCal(a, m, d) { return `${a}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
+    // Como está o dia hoje: sem nada, com entrada e sem saída, ou já com ponto
+    function infoDiaCal(ds) {
+      const hoje = getLocalDateStr();
+      const es = (appState.entries || []).filter(e => e.date === ds);
+      if (!es.length) return { tipo: 'vazio' };
+      const t = es.find(e => e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
+      if (t && ds < hoje && !HORA_OK.test(t.saida || '')) return { tipo: 'semsaida', entrada: t.entrada || '' };
+      return { tipo: 'tem' };
+    }
+    function renderCalendarioAjuste() {
+      const box = document.getElementById('ajCalDias');
+      if (!box) return;
+      const { a, m } = calMes;
+      const hoje = getLocalDateStr();
+      document.getElementById('ajCalTitulo').textContent = `${MESES_PT[m]} de ${a}`;
+      const agora = new Date();
+      document.getElementById('ajCalNext').disabled = (a > agora.getFullYear()) || (a === agora.getFullYear() && m >= agora.getMonth());
+      const vazios = new Date(a, m, 1).getDay();
+      const total = new Date(a, m + 1, 0).getDate();
+      let html = '<span class="aj-d vazio"></span>'.repeat(vazios);
+      for (let d = 1; d <= total; d++) {
+        const ds = dataCal(a, m, d);
+        const dow = new Date(a, m, d).getDay();
+        const info = infoDiaCal(ds);
+        const cls = ['aj-d'];
+        if (dow === 0 || dow === 6) cls.push('fds');
+        if (ds === hoje) cls.push('hoje');
+        if (info.tipo === 'vazio' && dow !== 0 && dow !== 6 && ds <= hoje) cls.push('semreg');
+        if (info.tipo === 'semsaida') cls.push('semsaida');
+        if (info.tipo !== 'vazio') cls.push('tem');
+        if (ajusteSel.has(ds)) cls.push('sel');
+        const dica = info.tipo === 'semsaida' ? 'Tem entrada e nenhuma saída' : info.tipo === 'tem' ? 'Já tem ponto neste dia' : '';
+        html += `<button type="button" class="${cls.join(' ')}" data-date="${ds}" ${ds > hoje ? 'disabled' : ''} ${dica ? `title="${dica}"` : ''} aria-pressed="${ajusteSel.has(ds)}">${d}</button>`;
+      }
+      box.innerHTML = html;
+    }
+    function novoDiaAjuste(ds) {
+      const pe = document.getElementById('ajusteVarEntrada').value || '';
+      const ps = document.getElementById('ajusteVarSaida').value || '';
+      const info = infoDiaCal(ds);
+      // Dia que ficou sem saída: mantém a entrada que já existe e só falta informar a saída
+      const entrada = (info.tipo === 'semsaida' && HORA_OK.test(info.entrada)) ? info.entrada : pe;
+      return { entrada, saida: ps, intervalo: '' };
+    }
+    function atualizarAjusteVarios() { renderCalendarioAjuste(); renderListaDias(); conferirAjusteVarios(); }
+    function alternarDiaAjuste(ds) {
+      if (ajusteSel.has(ds)) ajusteSel.delete(ds);
+      else {
+        if (ajusteSel.size >= MAX_DIAS_LOTE) { showToast(`Limite de ${MAX_DIAS_LOTE} dias por envio.`, { tone: 'warn' }); return; }
+        ajusteSel.set(ds, novoDiaAjuste(ds));
+      }
+      atualizarAjusteVarios();
+    }
+    function marcarDiasQueFaltam() {
+      const { a, m } = calMes;
+      const hoje = getLocalDateStr();
+      const total = new Date(a, m + 1, 0).getDate();
+      let novos = 0;
+      for (let d = 1; d <= total; d++) {
+        const ds = dataCal(a, m, d), dow = new Date(a, m, d).getDay();
+        if (ds > hoje || dow === 0 || dow === 6 || ajusteSel.has(ds) || ajusteSel.size >= MAX_DIAS_LOTE) continue;
+        if (infoDiaCal(ds).tipo === 'tem') continue;
+        ajusteSel.set(ds, novoDiaAjuste(ds)); novos++;
+      }
+      if (!novos) showToast('Não há dias úteis sem registro (ou sem saída) neste mês.', { tone: 'info' });
+      atualizarAjusteVarios();
+    }
+    function aplicarPadraoATodos(soVazios) {
+      const pe = document.getElementById('ajusteVarEntrada').value || '';
+      const ps = document.getElementById('ajusteVarSaida').value || '';
+      if (!soVazios && !pe && !ps) { showToast('Preencha o horário padrão de entrada e/ou saída primeiro.', { tone: 'warn' }); return; }
+      ajusteSel.forEach((v, ds) => {
+        const semSaida = infoDiaCal(ds).tipo === 'semsaida';
+        if (pe && (!soVazios || !v.entrada) && !(semSaida && v.entrada)) v.entrada = pe;
+        if (ps && (!soVazios || !v.saida)) v.saida = ps;
+      });
+      renderListaDias(); conferirAjusteVarios();
+    }
+    function renderListaDias() {
+      const box = document.getElementById('ajusteListaDias');
+      if (!box) return;
+      const datas = [...ajusteSel.keys()].sort();
+      box.innerHTML = datas.map(ds => {
+        const v = ajusteSel.get(ds);
+        const [a, m, d] = ds.split('-');
+        const dow = SEM_CURTO[new Date(+a, +m - 1, +d).getDay()];
+        const ex = (appState.entries || []).find(e => e.date === ds && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
+        const tag = ex ? ` <span class="tag neutral" title="Substitui o ponto de ${esc(ex.entrada || '--:--')} → ${esc(ex.saida || '--:--')} se for aprovado">já tem ponto</span>` : '';
+        return `<div class="aj-row" data-date="${ds}">
+          <div class="aj-top"><strong>${d}/${m}</strong><small class="muted">${dow}</small>${tag}<span class="aj-saldo mono"></span><button type="button" class="btn aj-rm" title="Tirar este dia" aria-label="Tirar o dia ${d}/${m}">✕</button></div>
+          <div class="aj-campos">
+            <label>Entrada<input type="time" class="aj-ent" value="${esc(v.entrada)}"></label>
+            <label>Saída<input type="time" class="aj-sai" value="${esc(v.saida)}"></label>
+            <label>Almoço (min)<input type="number" class="aj-int" min="0" max="480" step="5" value="${esc(String(v.intervalo))}" placeholder="padrão"></label>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    function iniciarEventosCalendarioAjuste() {
+      document.getElementById('ajCalDias').addEventListener('click', (ev) => {
+        const b = ev.target.closest('button.aj-d');
+        if (b && !b.disabled) alternarDiaAjuste(b.dataset.date);
+      });
+      document.getElementById('ajCalPrev').addEventListener('click', () => {
+        calMes = calMes.m === 0 ? { a: calMes.a - 1, m: 11 } : { a: calMes.a, m: calMes.m - 1 };
+        renderCalendarioAjuste();
+      });
+      document.getElementById('ajCalNext').addEventListener('click', () => {
+        calMes = calMes.m === 11 ? { a: calMes.a + 1, m: 0 } : { a: calMes.a, m: calMes.m + 1 };
+        renderCalendarioAjuste();
+      });
+      document.getElementById('ajCalFaltantes').addEventListener('click', marcarDiasQueFaltam);
+      document.getElementById('ajCalLimpar').addEventListener('click', () => { ajusteSel.clear(); atualizarAjusteVarios(); });
+      document.getElementById('ajCalAplicar').addEventListener('click', () => aplicarPadraoATodos(false));
+      // mudou o horário padrão: completa só os campos que ainda estão vazios
+      ['ajusteVarEntrada', 'ajusteVarSaida'].forEach(id => document.getElementById(id).addEventListener('change', () => aplicarPadraoATodos(true)));
+      const lista = document.getElementById('ajusteListaDias');
+      lista.addEventListener('input', (ev) => {
+        const row = ev.target.closest('.aj-row'); if (!row) return;
+        const v = ajusteSel.get(row.dataset.date); if (!v) return;
+        if (ev.target.classList.contains('aj-ent')) v.entrada = ev.target.value;
+        else if (ev.target.classList.contains('aj-sai')) v.saida = ev.target.value;
+        else if (ev.target.classList.contains('aj-int')) v.intervalo = ev.target.value;
+        conferirAjusteVarios();
+      });
+      lista.addEventListener('click', (ev) => {
+        const rm = ev.target.closest('.aj-rm'); if (!rm) return;
+        ajusteSel.delete(rm.closest('.aj-row').dataset.date);
+        atualizarAjusteVarios();
+      });
+    }
+
+    // Junta os dias marcados no calendário com as linhas digitadas (se houver) e valida tudo
     function analisarAjusteVarios() {
       const texto = document.getElementById('ajusteTextoVarios').value;
       const anoPadrao = new Date().getFullYear();
@@ -2462,12 +2677,36 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
       const vistos = new Set();
       const linhas = [];
 
+      // validações comuns (calendário e texto)
+      const validar = (r, dateStr, entrada, saida, intervalo) => {
+        r.date = dateStr;
+        if (isNaN(intervalo) || intervalo < 0 || intervalo > 480) { r.erro = 'Almoço deve ser de 0 a 480 min'; return; }
+        if (!HORA_OK.test(entrada || '') || !HORA_OK.test(saida || '')) { r.erro = 'Preencha entrada e saída'; return; }
+        if (Core.toMinutes(saida) <= Core.toMinutes(entrada)) { r.erro = 'Saída não é depois da entrada'; return; }
+        if (dateStr > hojeStr) { r.erro = 'Data no futuro'; return; }
+        if (vistos.has(dateStr)) { r.erro = 'Dia repetido'; return; }
+        vistos.add(dateStr);
+        const calc = Core.calcPJ(entrada, saida, intervalo, false, meta, dateStr);
+        const existente = appState.entries.find(e => e.date === dateStr && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
+        Object.assign(r, { ok: true, entrada, saida, intervalo, calc, meta, existente: existente || null });
+      };
+
+      // 1) dias marcados no calendário
+      [...ajusteSel.keys()].sort().forEach(ds => {
+        const v = ajusteSel.get(ds);
+        const r = { n: linhas.length + 1, bruta: ds, ok: false, erro: '', origem: 'cal' };
+        linhas.push(r);
+        const intervalo = String(v.intervalo).trim() === '' ? intPadrao : parseInt(v.intervalo, 10);
+        validar(r, ds, v.entrada, v.saida, intervalo);
+      });
+
+      // 2) linhas digitadas
       texto.split(/\r?\n/).forEach((bruta, i) => {
         const original = bruta.trim();
         if (!original) return;
-        const r = { n: i + 1, bruta: original, ok: false, erro: '' };
+        const r = { n: i + 1, bruta: original, ok: false, erro: '', origem: 'texto' };
         linhas.push(r);
-        if (linhas.length > 62) { r.erro = 'Limite de 62 linhas por envio'; return; }
+        if (linhas.length > MAX_DIAS_LOTE) { r.erro = `Limite de ${MAX_DIAS_LOTE} dias por envio`; return; }
 
         const md = original.match(/(^|[^\d:])(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?(?![\d:])/);
         if (!md) { r.erro = 'Não achei a data'; return; }
@@ -2477,28 +2716,18 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
         const dt = new Date(ano, mes - 1, dia);
         if (dt.getFullYear() !== ano || dt.getMonth() !== mes - 1 || dt.getDate() !== dia) { r.erro = 'Data inválida'; return; }
         const dateStr = `${ano}-${p2(mes)}-${p2(dia)}`;
-        r.date = dateStr;
 
         let resto = original.replace(md[0], ' ');
         let intervalo = intPadrao;
         const mi = resto.match(/(?:almo[cç]o|interv\w*)\s*:?\s*(\d{1,3})\s*(?:min\w*|m)?/i);
         if (mi) { intervalo = parseInt(mi[1], 10); resto = resto.replace(mi[0], ' '); }
-        if (intervalo > 480) { r.erro = 'Intervalo acima de 480 min'; return; }
 
         const horas = [...resto.matchAll(/(\d{1,2})(?::|h)(\d{2})?(?!\d)/gi)];
-        if (horas.length < 2) { r.erro = 'Faltou entrada ou saída'; return; }
+        if (horas.length < 2) { r.date = dateStr; r.erro = 'Faltou entrada ou saída'; return; }
         const hm = (m) => ({ h: parseInt(m[1], 10), m: m[2] ? parseInt(m[2], 10) : 0 });
         const a = hm(horas[0]), b = hm(horas[1]);
-        if (a.h > 23 || a.m > 59 || b.h > 23 || b.m > 59) { r.erro = 'Horário inválido'; return; }
-        const entrada = `${p2(a.h)}:${p2(a.m)}`, saida = `${p2(b.h)}:${p2(b.m)}`;
-        if (Core.toMinutes(saida) <= Core.toMinutes(entrada)) { r.erro = 'Saída não é depois da entrada'; return; }
-        if (dateStr > hojeStr) { r.erro = 'Data no futuro'; return; }
-        if (vistos.has(dateStr)) { r.erro = 'Dia repetido na lista'; return; }
-        vistos.add(dateStr);
-
-        const calc = Core.calcPJ(entrada, saida, intervalo, false, meta, dateStr);
-        const existente = appState.entries.find(e => e.date === dateStr && e.type === 'trabalhado' && e.status !== 'pendente_aprovacao');
-        Object.assign(r, { ok: true, entrada, saida, intervalo, calc, meta, existente: existente || null });
+        if (a.h > 23 || a.m > 59 || b.h > 23 || b.m > 59) { r.date = dateStr; r.erro = 'Horário inválido'; return; }
+        validar(r, dateStr, `${p2(a.h)}:${p2(a.m)}`, `${p2(b.h)}:${p2(b.m)}`, intervalo);
       });
       return linhas;
     }
@@ -2508,15 +2737,27 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
       if (!box) return;
       const linhas = analisarAjusteVarios();
       const validas = linhas.filter(l => l.ok);
+
+      // saldo (ou aviso) em cada dia marcado no calendário
+      linhas.filter(l => l.origem === 'cal').forEach(l => {
+        const row = document.querySelector(`#ajusteListaDias .aj-row[data-date="${l.bruta}"]`);
+        if (!row) return;
+        row.classList.toggle('erro', !l.ok && l.erro !== 'Preencha entrada e saída');
+        row.querySelector('.aj-saldo').innerHTML = l.ok
+          ? `<span class="${l.calc.saldo >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(l.calc.saldo, true)}</span>`
+          : `<span class="muted" style="font-size:11px; font-weight:600;">${esc(l.erro)}</span>`;
+      });
+
       if (!linhas.length) {
-        box.innerHTML = '<p class="muted" style="font-size:12px;">Escreva os dias acima para conferir.</p>';
+        box.innerHTML = '<p class="muted" style="font-size:12px;">Marque os dias no calendário para conferir.</p>';
         btn.disabled = true;
         return;
       }
       const dataBR = (d) => d.split('-').reverse().join('/');
       const total = validas.reduce((s, l) => s + l.calc.saldo, 0);
       const erros = linhas.length - validas.length;
-      const corpo = linhas.map(l => l.ok ? `
+      const doTexto = linhas.filter(l => l.origem === 'texto');
+      const corpo = doTexto.map(l => l.ok ? `
         <tr>
           <td>${dataBR(l.date)}${l.existente ? ' <span class="tag neutral" title="Substitui o ponto de ' + esc(l.existente.entrada) + ' → ' + esc(l.existente.saida || '--:--') + ' se for aprovado">já tem ponto</span>' : ''}</td>
           <td class="mono">${l.entrada} → ${l.saida}</td>
@@ -2528,14 +2769,14 @@ async function executarCheckInInterno(forcarInicio = false, horaFixa = null) {
         <div class="bulk-bar" style="margin-bottom:10px;">
           <strong>${validas.length} dia(s) prontos</strong>
           <span>• saldo total <strong class="mono ${total >= 0 ? 'pos' : 'neg'}">${Core.fromMinutes(total, true)}</strong></span>
-          ${erros ? `<span class="neg">• ${erros} linha(s) com problema (não serão enviadas)</span>` : ''}
+          ${erros ? `<span class="neg">• ${erros} dia(s) incompletos ou com problema (não serão enviados)</span>` : ''}
         </div>
-        <div class="table-container" style="max-height:220px; overflow-y:auto;">
+        ${doTexto.length ? `<div class="table-container" style="max-height:220px; overflow-y:auto;">
           <table>
-            <thead><tr><th>Data</th><th>Horário</th><th>Almoço</th><th>Saldo</th></tr></thead>
+            <thead><tr><th>Data (texto)</th><th>Horário</th><th>Almoço</th><th>Saldo</th></tr></thead>
             <tbody>${corpo}</tbody>
           </table>
-        </div>`;
+        </div>` : ''}`;
       btn.disabled = validas.length === 0;
     }
     function enviarAjusteVarios() {
@@ -4719,6 +4960,7 @@ function testarSom() {
       document.getElementById('btnRegistrarAusencia').addEventListener('click', () => document.getElementById('modalFalta').showModal());
       document.getElementById('btnSolicitarAjuste').addEventListener('click', abrirModalAjuste);
       document.querySelectorAll('input[name="ajusteModo"]').forEach(r => r.addEventListener('change', aplicarModoAjuste));
+      iniciarEventosCalendarioAjuste();
       ['ajusteTextoVarios', 'ajusteIntervalo'].forEach(id => document.getElementById(id).addEventListener('input', () => {
         if (!modoAjusteVarios()) return;
         clearTimeout(ajusteVariosTimer);
